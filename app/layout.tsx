@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${figtree.variable} ${zillaSlab.variable}`}>
-      <body>
+      <body className="flex min-h-dvh flex-col">
         <Navbar />
         {children}
       </body>
