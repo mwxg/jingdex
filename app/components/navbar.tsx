@@ -25,12 +25,12 @@ export function Navbar() {
           />
         </Link>
 
-        <div className="flex items-center gap-6 font-sans text-sm font-bold text-muted">
+        <div className="flex h-full items-center font-sans text-sm font-bold text-muted">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="transition-colors hover:text-primary"
+              className="flex h-full items-center px-3 transition-colors hover:text-primary"
             >
               {link.label}
             </Link>
