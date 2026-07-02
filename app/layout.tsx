@@ -5,7 +5,6 @@ import {
   Noto_Sans_TC,
   Zilla_Slab,
 } from "next/font/google";
-import { Navbar } from "../components/navbar";
 import "./globals.css";
 
 const figtree = Figtree({
@@ -49,10 +48,7 @@ export default function RootLayout({
       lang="en"
       className={`${figtree.variable} ${zillaSlab.variable} ${notoSansSc.variable} ${notoSansTc.variable}`}
     >
-      <body className="flex min-h-dvh flex-col">
-        <Navbar />
-        {children}
-      </body>
+      <body className="flex min-h-dvh flex-col">{children}</body>
     </html>
   );
 }

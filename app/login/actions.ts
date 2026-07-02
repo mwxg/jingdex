@@ -51,10 +51,15 @@ export async function signUp(
   const username = getRequiredString(formData, "username");
   const email = getRequiredString(formData, "email").toLowerCase();
   const password = getRequiredString(formData, "password");
+  const confirmPassword = getRequiredString(formData, "confirmPassword");
   const usernameError = validateUsername(username);
 
   if (usernameError) {
     return { message: usernameError };
+  }
+
+  if (password !== confirmPassword) {
+    return { message: "Passwords do not match." };
   }
 
   if (!email || !password) {
@@ -62,6 +67,20 @@ export async function signUp(
   }
 
   const supabase = await createClient();
+  const { data: existingProfile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (profileError) {
+    return { message: profileError.message };
+  }
+
+  if (existingProfile) {
+    return { message: "Username is already taken." };
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,

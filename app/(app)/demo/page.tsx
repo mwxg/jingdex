@@ -1,9 +1,9 @@
 import { PopupDemo } from "./popup-demo";
 
 const studyItems = [
-  { hanzi: "学习", pinyin: "xuéxí", meaning: "to study", status: "New" },
-  { hanzi: "复习", pinyin: "fùxí", meaning: "to review", status: "Due" },
-  { hanzi: "记得", pinyin: "jìde", meaning: "to remember", status: "Done" },
+  { hanzi: "å­¦ä¹ ", pinyin: "xuÃ©xÃ­", meaning: "to study", status: "New" },
+  { hanzi: "å¤ä¹ ", pinyin: "fÃ¹xÃ­", meaning: "to review", status: "Due" },
+  { hanzi: "è®°å¾—", pinyin: "jÃ¬de", meaning: "to remember", status: "Done" },
 ];
 
 const deckStats = [
@@ -13,17 +13,17 @@ const deckStats = [
 ];
 
 const pinyinInputs = [
-  { input: "xue2xi2", display: "xuéxí" },
-  { input: "xuéxí", display: "xuéxí" },
-  { input: "fu4xi2", display: "fùxí" },
-  { input: "fùxí", display: "fùxí" },
-  { input: "ji4de", display: "jìde" },
-  { input: "jìde", display: "jìde" },
+  { input: "xue2xi2", display: "xuÃ©xÃ­" },
+  { input: "xuÃ©xÃ­", display: "xuÃ©xÃ­" },
+  { input: "fu4xi2", display: "fÃ¹xÃ­" },
+  { input: "fÃ¹xÃ­", display: "fÃ¹xÃ­" },
+  { input: "ji4de", display: "jÃ¬de" },
+  { input: "jÃ¬de", display: "jÃ¬de" },
   { input: "ma5", display: "ma" },
-  { input: "nv3", display: "nǚ" },
-  { input: "nǚ", display: "nǚ" },
-  { input: "lü4", display: "lǜ" },
-  { input: "lǜ", display: "lǜ" },
+  { input: "nv3", display: "nÇš" },
+  { input: "nÇš", display: "nÇš" },
+  { input: "lÃ¼4", display: "lÇœ" },
+  { input: "lÇœ", display: "lÇœ" },
 ];
 
 function Section({
@@ -104,7 +104,7 @@ export default function Demo() {
               </span>
               <input
                 className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-chinese text-base font-normal text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
-                placeholder="精"
+                placeholder="ç²¾"
                 type="text"
               />
             </label>
@@ -114,7 +114,7 @@ export default function Demo() {
               </span>
               <input
                 className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
-                placeholder="jing1 or jīng"
+                placeholder="jing1 or jÄ«ng"
                 type="text"
               />
             </label>
@@ -221,7 +221,7 @@ export default function Demo() {
                 Vocabulary
               </p>
               <h3 className="mt-3 font-chinese text-6xl font-bold text-foreground">
-                练习
+                ç»ƒä¹ 
               </h3>
               <p className="mt-4 max-w-xl font-sans text-lg leading-8 text-muted">
                 Practice pairs recognition with recall. Mark each answer after

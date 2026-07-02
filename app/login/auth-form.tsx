@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { AuthFormState } from "@/lib/auth/validation";
 import { completeProfile, signIn, signUp } from "./actions";
 
@@ -8,7 +8,31 @@ function SubmitButton({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <button
       type="submit"
-      className="h-11 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90"
+      className="h-11 w-full rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90"
+    >
+      {children}
+    </button>
+  );
+}
+
+function ModeButton({
+  active,
+  children,
+  onClick,
+}: Readonly<{
+  active: boolean;
+  children: React.ReactNode;
+  onClick: () => void;
+}>) {
+  return (
+    <button
+      type="button"
+      className={`h-10 flex-1 rounded-lg font-sans text-sm font-bold transition-colors ${
+        active
+          ? "bg-primary text-text-light"
+          : "text-muted hover:bg-muted-background hover:text-foreground"
+      }`}
+      onClick={onClick}
     >
       {children}
     </button>
@@ -74,6 +98,7 @@ export function AuthForm({
   const [signInState, signInAction] = useActionState(signIn, {});
   const [signUpState, signUpAction] = useActionState(signUp, {});
   const [profileState, profileAction] = useActionState(completeProfile, {});
+  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
 
   if (isLoggedIn && !hasProfile) {
     return (
@@ -86,50 +111,48 @@ export function AuthForm({
     );
   }
 
-  return (
-    <div className="grid gap-8 lg:grid-cols-2">
-      <form action={signInAction} className="space-y-5">
-        <input name="next" type="hidden" value={nextPath} />
-        <div>
-          <h2 className="font-heading text-3xl font-semibold text-foreground">
-            Sign in
-          </h2>
-          <p className="mt-2 font-sans text-base leading-7 text-muted">
-            Return to your decks and study queue.
-          </p>
-        </div>
-        <Message state={signInState} />
-        <Field autoComplete="email" label="Email" name="email" type="email" />
-        <Field
-          autoComplete="current-password"
-          label="Password"
-          name="password"
-          type="password"
-        />
-        <SubmitButton>Sign in</SubmitButton>
-      </form>
+  const isSignIn = mode === "sign-in";
 
-      <form action={signUpAction} className="space-y-5">
-        <input name="next" type="hidden" value={nextPath} />
-        <div>
-          <h2 className="font-heading text-3xl font-semibold text-foreground">
-            Create account
-          </h2>
-          <p className="mt-2 font-sans text-base leading-7 text-muted">
-            Pick a username before making decks.
-          </p>
-        </div>
-        <Message state={signUpState} />
+  return (
+    <form action={isSignIn ? signInAction : signUpAction} className="space-y-5">
+      <input name="next" type="hidden" value={nextPath} />
+      <div
+        aria-label="Authentication mode"
+        className="flex rounded-lg bg-muted-background p-1"
+        role="group"
+      >
+        <ModeButton active={isSignIn} onClick={() => setMode("sign-in")}>
+          Sign in
+        </ModeButton>
+        <ModeButton active={!isSignIn} onClick={() => setMode("sign-up")}>
+          Sign up
+        </ModeButton>
+      </div>
+
+      <Message state={isSignIn ? signInState : signUpState} />
+
+      {!isSignIn ? (
         <Field autoComplete="username" label="Username" name="username" />
-        <Field autoComplete="email" label="Email" name="email" type="email" />
+      ) : null}
+
+      <Field autoComplete="email" label="Email" name="email" type="email" />
+      <Field
+        autoComplete={isSignIn ? "current-password" : "new-password"}
+        label="Password"
+        name="password"
+        type="password"
+      />
+
+      {!isSignIn ? (
         <Field
           autoComplete="new-password"
-          label="Password"
-          name="password"
+          label="Confirm password"
+          name="confirmPassword"
           type="password"
         />
-        <SubmitButton>Create account</SubmitButton>
-      </form>
-    </div>
+      ) : null}
+
+      <SubmitButton>{isSignIn ? "Sign in" : "Create account"}</SubmitButton>
+    </form>
   );
 }
