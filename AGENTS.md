@@ -8,3 +8,4 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This is an app for learning Chinese, mainly through flashcards.
 This app is called "Jingdex" (精dex)
 Do not start dev servers. I will do that manually.
+Look at globals.css when picking colors to ensure that everything matches the theme nicely.
