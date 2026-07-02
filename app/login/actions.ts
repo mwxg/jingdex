@@ -19,6 +19,36 @@ function getRequiredString(formData: FormData, name: string) {
   return value.trim();
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string" &&
+    error.message.trim() &&
+    error.message.trim() !== "{}"
+  ) {
+    return error.message;
+  }
+
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    typeof error.code === "string"
+  ) {
+    if (error.code === "user_already_exists") {
+      return "An account with that email already exists.";
+    }
+
+    if (error.code === "email_exists") {
+      return "An account with that email already exists.";
+    }
+  }
+
+  return fallback;
+}
+
 export async function signIn(
   _state: AuthFormState,
   formData: FormData,
@@ -37,7 +67,9 @@ export async function signIn(
   });
 
   if (error) {
-    return { message: error.message };
+    return {
+      message: getErrorMessage(error, "Could not sign in with those details."),
+    };
   }
 
   revalidatePath("/", "layout");
@@ -74,7 +106,12 @@ export async function signUp(
     .maybeSingle();
 
   if (profileError) {
-    return { message: profileError.message };
+    return {
+      message: getErrorMessage(
+        profileError,
+        "Could not check whether that username is available.",
+      ),
+    };
   }
 
   if (existingProfile) {
@@ -92,7 +129,12 @@ export async function signUp(
   });
 
   if (error) {
-    return { message: error.message };
+    return {
+      message: getErrorMessage(
+        error,
+        "Could not create that account. Check the email, password, and username, then try again.",
+      ),
+    };
   }
 
   if (!data.session) {
@@ -122,7 +164,12 @@ export async function completeProfile(
   const userId = data?.claims?.sub;
 
   if (authError || !userId) {
-    return { message: "Sign in again before setting your username." };
+    return {
+      message: getErrorMessage(
+        authError,
+        "Sign in again before setting your username.",
+      ),
+    };
   }
 
   const { error } = await supabase.from("profiles").upsert({
@@ -132,7 +179,9 @@ export async function completeProfile(
   });
 
   if (error) {
-    return { message: error.message };
+    return {
+      message: getErrorMessage(error, "Could not save that username."),
+    };
   }
 
   revalidatePath("/", "layout");
