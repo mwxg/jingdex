@@ -70,7 +70,7 @@ export async function signUp(
   const { data: existingProfile, error: profileError } = await supabase
     .from("profiles")
     .select("id")
-    .eq("username", username)
+    .ilike("username", username)
     .maybeSingle();
 
   if (profileError) {

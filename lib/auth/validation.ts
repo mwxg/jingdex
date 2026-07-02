@@ -4,10 +4,15 @@ export type AuthFormState = {
 };
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_]{2,31}$/;
+const BLOCKED_USERNAMES = new Set(["jingdex"]);
 
 export function validateUsername(username: string) {
   if (!USERNAME_PATTERN.test(username)) {
     return "Username must be 3-32 characters, start with a letter or number, and use only letters, numbers, or _.";
+  }
+
+  if (BLOCKED_USERNAMES.has(username.toLowerCase())) {
+    return "That username is not available.";
   }
 
   return null;
