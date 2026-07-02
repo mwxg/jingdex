@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { Figtree, Zilla_Slab } from "next/font/google";
+import {
+  Figtree,
+  Noto_Sans_SC,
+  Noto_Sans_TC,
+  Zilla_Slab,
+} from "next/font/google";
 import { Navbar } from "./components/navbar";
 import "./globals.css";
 
@@ -16,6 +21,16 @@ const zillaSlab = Zilla_Slab({
   variable: "--font-zilla-slab",
 });
 
+const notoSansSc = Noto_Sans_SC({
+  weight: ["400", "700"],
+  variable: "--font-noto-sans-sc",
+});
+
+const notoSansTc = Noto_Sans_TC({
+  weight: ["400", "700"],
+  variable: "--font-noto-sans-tc",
+});
+
 export const metadata: Metadata = {
   title: "Jingdex",
   description: "Learn Chinese with Jingdex.",
@@ -30,7 +45,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${figtree.variable} ${zillaSlab.variable}`}>
+    <html
+      lang="en"
+      className={`${figtree.variable} ${zillaSlab.variable} ${notoSansSc.variable} ${notoSansTc.variable}`}
+    >
       <body className="flex min-h-dvh flex-col">
         <Navbar />
         {children}

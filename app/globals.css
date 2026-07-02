@@ -14,6 +14,8 @@
   --confirm: #238b45;
   --font-family-body: var(--font-figtree), Arial, Helvetica, sans-serif;
   --font-family-heading: var(--font-zilla-slab), Georgia, serif;
+  --font-family-chinese: var(--font-noto-sans-sc), var(--font-noto-sans-tc),
+    "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
 }
 
 @theme inline {
@@ -30,6 +32,7 @@
   --color-confirm: var(--confirm);
   --font-sans: var(--font-family-body);
   --font-heading: var(--font-family-heading);
+  --font-chinese: var(--font-family-chinese);
 }
 
 html,

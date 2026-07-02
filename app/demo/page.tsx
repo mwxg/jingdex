@@ -87,7 +87,7 @@ export default function Demo() {
                 Hanzi
               </span>
               <input
-                className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
+                className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-chinese text-base font-normal text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
                 placeholder="精"
                 type="text"
               />
@@ -141,7 +141,7 @@ export default function Demo() {
                   className="grid gap-3 px-5 py-4 sm:grid-cols-[8rem_1fr_auto] sm:items-center"
                 >
                   <div>
-                    <p className="font-heading text-3xl font-semibold text-foreground">
+                    <p className="font-chinese text-3xl font-bold text-foreground">
                       {item.hanzi}
                     </p>
                     <p className="font-sans text-sm text-muted">
@@ -166,7 +166,7 @@ export default function Demo() {
               <p className="font-sans text-sm font-bold uppercase text-accent">
                 Vocabulary
               </p>
-              <h3 className="mt-3 font-heading text-6xl font-semibold text-foreground">
+              <h3 className="mt-3 font-chinese text-6xl font-bold text-foreground">
                 练习
               </h3>
               <p className="mt-4 max-w-xl font-sans text-lg leading-8 text-muted">
