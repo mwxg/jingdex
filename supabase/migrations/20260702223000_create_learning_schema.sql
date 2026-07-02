@@ -77,7 +77,7 @@ $$;
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
-  username text not null unique,
+  username text not null,
   display_name text,
   role public.app_user_role not null default 'member',
   created_at timestamptz not null default now(),
@@ -202,12 +202,6 @@ alter table public.saved_decks add column if not exists saved_at timestamptz not
 do $$
 begin
   if not exists (
-    select 1 from pg_constraint where conname = 'profiles_username_key'
-  ) then
-    alter table public.profiles add constraint profiles_username_key unique (username);
-  end if;
-
-  if not exists (
     select 1 from pg_constraint where conname = 'profiles_username_length'
   ) then
     alter table public.profiles
@@ -306,11 +300,19 @@ begin
 end;
 $$;
 
+alter table public.profiles drop constraint if exists profiles_username_key;
 alter table public.profiles drop constraint if exists profiles_username_format;
+drop index if exists public.profiles_username_key;
 
 alter table public.profiles
   add constraint profiles_username_format
-  check (username ~ '^[a-zA-Z0-9][a-zA-Z0-9_]*$');
+  check (
+    username ~ '^[a-zA-Z0-9][a-zA-Z0-9_]*$'
+    and lower(username) <> 'jingdex'
+  );
+
+create unique index if not exists profiles_username_lower_unique_idx
+on public.profiles (lower(username));
 
 create or replace function public.is_moderator()
 returns boolean
