@@ -1,13 +1,27 @@
 const studyItems = [
-  { hanzi: "学习", pinyin: "xuexi", meaning: "to study", status: "New" },
-  { hanzi: "复习", pinyin: "fuxi", meaning: "to review", status: "Due" },
-  { hanzi: "记得", pinyin: "jide", meaning: "to remember", status: "Done" },
+  { hanzi: "学习", pinyin: "xuéxí", meaning: "to study", status: "New" },
+  { hanzi: "复习", pinyin: "fùxí", meaning: "to review", status: "Due" },
+  { hanzi: "记得", pinyin: "jìde", meaning: "to remember", status: "Done" },
 ];
 
 const deckStats = [
   { label: "New cards", value: "18" },
   { label: "Due today", value: "42" },
   { label: "Streak", value: "7" },
+];
+
+const pinyinInputs = [
+  { input: "xue2xi2", display: "xuéxí" },
+  { input: "xuéxí", display: "xuéxí" },
+  { input: "fu4xi2", display: "fùxí" },
+  { input: "fùxí", display: "fùxí" },
+  { input: "ji4de", display: "jìde" },
+  { input: "jìde", display: "jìde" },
+  { input: "ma5", display: "ma" },
+  { input: "nv3", display: "nǚ" },
+  { input: "nǚ", display: "nǚ" },
+  { input: "lü4", display: "lǜ" },
+  { input: "lǜ", display: "lǜ" },
 ];
 
 function Section({
@@ -98,7 +112,7 @@ export default function Demo() {
               </span>
               <input
                 className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
-                placeholder="jing"
+                placeholder="jing1 or jīng"
                 type="text"
               />
             </label>
@@ -129,6 +143,40 @@ export default function Demo() {
                 </p>
               </article>
             ))}
+          </div>
+        </Section>
+
+        <Section title="Pinyin inputs">
+          <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">
+            <div className="rounded-lg border border-muted-background bg-surface p-5">
+              <h3 className="font-heading text-2xl font-semibold text-foreground">
+                Display rule
+              </h3>
+              <p className="mt-3 font-sans text-base leading-7 text-muted">
+                Show tone marks in the interface. Accept tone numbers and
+                marked pinyin while editing cards.
+              </p>
+            </div>
+
+            <div className="overflow-hidden rounded-lg border border-muted-background bg-surface">
+              <div className="grid grid-cols-2 border-b border-muted-background bg-muted-background px-5 py-3 font-sans text-sm font-bold text-muted">
+                <span>Accepted input</span>
+                <span>Display</span>
+              </div>
+              <ul className="divide-y divide-muted-background">
+                {pinyinInputs.map((item) => (
+                  <li
+                    key={`${item.input}-${item.display}`}
+                    className="grid grid-cols-2 px-5 py-4 font-sans text-base"
+                  >
+                    <code className="text-foreground">{item.input}</code>
+                    <span className="font-bold text-primary">
+                      {item.display}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </Section>
 
