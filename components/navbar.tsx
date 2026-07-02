@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { signOut } from "@/app/login/actions";
 import { createClient } from "@/lib/supabase/server";
 
 const navLinks = [
@@ -49,19 +48,12 @@ export async function Navbar() {
             </Link>
           ))}
           {profile ? (
-            <>
-              <span className="hidden px-3 text-foreground sm:inline">
-                {profile.username}
-              </span>
-              <form action={signOut}>
-                <button
-                  type="submit"
-                  className="h-10 rounded-lg px-3 transition-colors hover:bg-muted-background hover:text-primary"
-                >
-                  Sign out
-                </button>
-              </form>
-            </>
+            <Link
+              href="/settings"
+              className="ml-2 flex h-10 max-w-32 items-center truncate rounded-lg border border-muted-background bg-background px-3 text-foreground transition-colors hover:border-primary hover:text-primary sm:max-w-48"
+            >
+              {profile.username}
+            </Link>
           ) : null}
         </div>
       </nav>
