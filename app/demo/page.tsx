@@ -1,3 +1,5 @@
+import { PopupDemo } from "./popup-demo";
+
 const studyItems = [
   { hanzi: "学习", pinyin: "xuéxí", meaning: "to study", status: "New" },
   { hanzi: "复习", pinyin: "fùxí", meaning: "to review", status: "Due" },
@@ -178,6 +180,10 @@ export default function Demo() {
               </ul>
             </div>
           </div>
+        </Section>
+
+        <Section title="Pop-up message">
+          <PopupDemo />
         </Section>
 
         <Section title="Lists">

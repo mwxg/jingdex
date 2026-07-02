@@ -5,7 +5,7 @@ import {
   Noto_Sans_TC,
   Zilla_Slab,
 } from "next/font/google";
-import { Navbar } from "./components/navbar";
+import { Navbar } from "../components/navbar";
 import "./globals.css";
 
 const figtree = Figtree({
