@@ -71,7 +71,7 @@ function Field({
   type?: string;
 }>) {
   return (
-    <label className="space-y-2">
+    <label className="block space-y-2">
       <span className="block font-sans text-sm font-bold text-foreground">
         {label}
       </span>
@@ -102,7 +102,7 @@ export function AuthForm({
 
   if (isLoggedIn && !hasProfile) {
     return (
-      <form action={profileAction} className="space-y-5">
+      <form action={profileAction} className="space-y-6">
         <input name="next" type="hidden" value={nextPath} />
         <Message state={profileState} />
         <Field autoComplete="username" label="Username" name="username" />
@@ -114,7 +114,7 @@ export function AuthForm({
   const isSignIn = mode === "sign-in";
 
   return (
-    <form action={isSignIn ? signInAction : signUpAction} className="space-y-5">
+    <form action={isSignIn ? signInAction : signUpAction} className="space-y-6">
       <input name="next" type="hidden" value={nextPath} />
       <div
         aria-label="Authentication mode"
