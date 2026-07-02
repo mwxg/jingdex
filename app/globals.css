@@ -12,6 +12,11 @@
   --muted-background: #ecefeb;
   --danger: #dc3f3f;
   --confirm: #238b45;
+
+  --moderator: #0067bc;
+  --admin: #b600bc;
+  --developer: #770000;
+
   --font-family-body: var(--font-figtree), Arial, Helvetica, sans-serif;
   --font-family-heading: var(--font-zilla-slab), Georgia, serif;
   --font-family-chinese: var(--font-noto-sans-sc), var(--font-noto-sans-tc),
@@ -30,6 +35,11 @@
   --color-muted-background: var(--muted-background);
   --color-danger: var(--danger);
   --color-confirm: var(--confirm);
+
+  --color-moderator: var(--moderator);
+  --color-admin: var(--admin);
+  --color-developer: var(--developer);
+
   --font-sans: var(--font-family-body);
   --font-heading: var(--font-family-heading);
   --font-chinese: var(--font-family-chinese);
