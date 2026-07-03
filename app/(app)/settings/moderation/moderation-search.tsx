@@ -184,7 +184,7 @@ export function ModerationSearch({
 
       {results.length > 0 ? (
         <div className="mt-6 overflow-x-auto rounded-lg border border-muted-background">
-          <div className="min-w-[62rem]">
+          <div className="min-w-248">
             <div className="grid grid-cols-[minmax(10rem,1fr)_minmax(14rem,1.35fr)_13rem_7rem_4.5rem] items-center gap-4 border-b border-muted-background bg-muted-background px-4 py-3 font-sans text-sm font-bold text-muted">
               <span>Username</span>
               <span>Email</span>
