@@ -33,10 +33,12 @@ function TextInput({
   label,
   name,
   placeholder,
+  required = true,
 }: Readonly<{
   label: string;
   name: string;
   placeholder: string;
+  required?: boolean;
 }>) {
   return (
     <label className="space-y-2">
@@ -47,7 +49,32 @@ function TextInput({
         className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
         name={name}
         placeholder={placeholder}
+        required={required}
         type="text"
+      />
+    </label>
+  );
+}
+
+function TextAreaInput({
+  label,
+  name,
+  placeholder,
+}: Readonly<{
+  label: string;
+  name: string;
+  placeholder: string;
+}>) {
+  return (
+    <label className="space-y-2">
+      <span className="block font-sans text-sm font-bold text-foreground">
+        {label}
+      </span>
+      <textarea
+        className="min-h-28 w-full resize-y rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
+        name={name}
+        placeholder={placeholder}
+        required
       />
     </label>
   );
@@ -88,6 +115,12 @@ export function TermManagement() {
             <TextInput label="Pinyin" name="pinyin" placeholder="xué xí" />
             <TextInput label="Zhuyin" name="zhuyin" placeholder="ㄒㄩㄝˊ ㄒㄧˊ" />
           </div>
+
+          <TextAreaInput
+            label="Definition"
+            name="definition"
+            placeholder="to study; to learn"
+          />
 
           <button
             className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90"

@@ -13,7 +13,7 @@ import { pinyinToZhuyin } from "pinyin-zhuyin";
 
 const USERS_PER_PAGE = 20;
 const MAX_BULK_TERMS = 500;
-const TERM_DEFINITION_PLACEHOLDER = "Definition pending.";
+const BULK_TERM_DEFINITION_PLACEHOLDER = "null";
 const toSimplified = OpenCC.Converter({ from: "tw", to: "cn" });
 const toTraditionalTw = OpenCC.Converter({ from: "cn", to: "tw" });
 
@@ -355,10 +355,18 @@ export async function addSingleTerm(
   const traditional = getNormalizedString(formData, "traditional");
   const pinyinInput = getNormalizedString(formData, "pinyin");
   const zhuyin = getNormalizedString(formData, "zhuyin");
+  const englishDefinition = getNormalizedString(formData, "definition");
 
-  if (!simplifiedInput || !traditional || !pinyinInput || !zhuyin) {
+  if (
+    !simplifiedInput ||
+    !traditional ||
+    !pinyinInput ||
+    !zhuyin ||
+    !englishDefinition
+  ) {
     return {
-      message: "Add simplified, traditional, pinyin, and zhuyin before saving.",
+      message:
+        "Add simplified, traditional, pinyin, zhuyin, and a definition before saving.",
     };
   }
 
@@ -410,7 +418,7 @@ export async function addSingleTerm(
     pinyin: pinyinInput,
     zhuyin,
     canonical_simplified: canonicalSimplified,
-    english_definition: TERM_DEFINITION_PLACEHOLDER,
+    english_definition: englishDefinition,
     added_by: "Jingdex",
     added_by_user_id: userId,
     is_verified: true,
@@ -499,7 +507,7 @@ export async function addBulkTerms(
         pinyin: term.pinyin,
         zhuyin: term.zhuyin,
         canonical_simplified: term.canonicalSimplified,
-        english_definition: TERM_DEFINITION_PLACEHOLDER,
+        english_definition: BULK_TERM_DEFINITION_PLACEHOLDER,
         added_by: "Jingdex",
         added_by_user_id: userId,
         is_verified: true,
