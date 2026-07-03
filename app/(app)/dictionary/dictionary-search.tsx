@@ -34,10 +34,7 @@ function getDefinitionPreview(term: DictionaryTerm) {
   return `${definition.slice(0, DEFINITION_PREVIEW_LIMIT).trim()}...`;
 }
 
-function SearchMessage({
-  hasQuery,
-  state,
-}: Readonly<{ hasQuery: boolean; state: DictionarySearchState }>) {
+function SearchMessage({ state }: Readonly<{ state: DictionarySearchState }>) {
   if (state.message) {
     return (
       <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-sans text-sm font-bold text-danger">
@@ -51,14 +48,6 @@ function SearchMessage({
       <p className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 font-sans text-sm font-bold text-foreground">
         Searching the first matching candidate set. Try a more specific search
         if the term is missing.
-      </p>
-    );
-  }
-
-  if (hasQuery && state.results.length === 0) {
-    return (
-      <p className="rounded-lg border border-muted-background bg-background px-4 py-3 font-sans text-sm text-muted">
-        No terms found.
       </p>
     );
   }
@@ -247,7 +236,7 @@ export function DictionarySearch() {
   return (
     <section className="rounded-lg border border-muted-background bg-surface p-6">
       <form className="space-y-5" onSubmit={submitSearch}>
-        <SearchMessage hasQuery={hasQuery} state={state} />
+        <SearchMessage state={state} />
 
         <div className="grid gap-3 lg:grid-cols-[1fr_16rem_auto] lg:items-end">
           <label className="space-y-2">
@@ -287,6 +276,12 @@ export function DictionarySearch() {
             {isPending ? "Searching" : "Search"}
           </button>
         </div>
+
+        {hasQuery && state.results.length === 0 && !state.message ? (
+          <p className="rounded-lg border border-muted-background bg-background px-4 py-3 font-sans text-sm text-muted">
+            No terms found.
+          </p>
+        ) : null}
       </form>
 
       {hasQuery && state.results.length > 0 ? (
