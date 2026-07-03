@@ -138,7 +138,7 @@ function TermDetailsModal({
           ) : null}
           <div className="sm:col-span-2">
             <dt className="text-sm font-bold text-muted">Definition</dt>
-            <dd className="mt-1 leading-7 text-foreground">
+            <dd className="mt-1 whitespace-pre-line leading-7 text-foreground">
               {term.english_definition || "No definition added."}
             </dd>
           </div>
