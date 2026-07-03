@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { type PartOfSpeech } from "@/lib/terms/parts-of-speech";
 import OpenCC from "opencc-js";
 import { convert } from "pinyin-pro";
 
@@ -20,7 +21,7 @@ export type DictionaryTerm = {
   zhuyin: string;
   english_definition: string | null;
   short_definition: string | null;
-  part_of_speech: string | null;
+  parts_of_speech: PartOfSpeech[] | null;
   notes: string | null;
   added_by: string;
   added_by_display: string;
@@ -149,7 +150,7 @@ async function getDictionaryCandidates() {
     const { data, error } = await supabase
       .from("terms")
       .select(
-        "id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,part_of_speech,notes,added_by",
+        "id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by",
       )
       .order("pinyin", { ascending: true })
       .range(offset, offset + TERM_SEARCH_CHUNK_SIZE - 1);

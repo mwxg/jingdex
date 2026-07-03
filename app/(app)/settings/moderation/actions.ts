@@ -7,6 +7,10 @@ import {
   type AppRole,
 } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
+import {
+  normalizePartsOfSpeech,
+  type PartOfSpeech,
+} from "@/lib/terms/parts-of-speech";
 import OpenCC from "opencc-js";
 import { convert, pinyin } from "pinyin-pro";
 import { pinyinToZhuyin } from "pinyin-zhuyin";
@@ -55,7 +59,7 @@ export type TermSearchResult = {
   zhuyin: string;
   english_definition: string | null;
   short_definition: string | null;
-  part_of_speech: string | null;
+  parts_of_speech: PartOfSpeech[] | null;
   notes: string | null;
   added_by: string;
   added_by_display: string;
@@ -197,7 +201,7 @@ async function getTermSearchCandidates(
     const { data, error } = await supabase
       .from("terms")
       .select(
-        "id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,part_of_speech,notes,added_by,is_verified,created_at",
+        "id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by,is_verified,created_at",
       )
       .order("simplified", { ascending: true })
       .range(offset, offset + TERM_SEARCH_CHUNK_SIZE - 1);
@@ -247,6 +251,7 @@ type ModerationTermInsert = {
   zhuyin: string;
   canonical_simplified: string;
   english_definition: string;
+  parts_of_speech: PartOfSpeech[] | null;
   added_by: string;
   is_verified: boolean;
 };
@@ -607,7 +612,7 @@ export async function updateTerm(formData: FormData): Promise<TermEditState> {
   const zhuyin = getNormalizedString(formData, "zhuyin");
   const englishDefinition = getNormalizedString(formData, "englishDefinition");
   const shortDefinition = getNormalizedString(formData, "shortDefinition");
-  const partOfSpeech = getNormalizedString(formData, "partOfSpeech");
+  const partsOfSpeech = normalizePartsOfSpeech(formData.getAll("partsOfSpeech"));
   const notes = getNormalizedString(formData, "notes");
   const isVerified = formData.get("isVerified") === "on";
 
@@ -645,7 +650,7 @@ export async function updateTerm(formData: FormData): Promise<TermEditState> {
       canonical_simplified: canonicalSimplified,
       english_definition: englishDefinition,
       short_definition: shortDefinition || null,
-      part_of_speech: partOfSpeech || null,
+      parts_of_speech: partsOfSpeech.length > 0 ? partsOfSpeech : null,
       notes: notes || null,
       is_verified: isVerified,
     })
@@ -775,6 +780,7 @@ export async function addSingleTerm(
       zhuyin,
       canonical_simplified: canonicalSimplified,
       english_definition: englishDefinition,
+      parts_of_speech: null,
       added_by: addedBy ?? "Jingdex",
       is_verified: true,
     },
@@ -873,6 +879,7 @@ export async function addBulkTerms(
       zhuyin: term.zhuyin,
       canonical_simplified: term.canonicalSimplified,
       english_definition: BULK_TERM_DEFINITION_PLACEHOLDER,
+      parts_of_speech: null,
       added_by: addedBy ?? "Jingdex",
       is_verified: true,
     })),

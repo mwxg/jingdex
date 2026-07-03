@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { getPartOfSpeechLabel } from "@/lib/terms/parts-of-speech";
 import {
   FormEvent,
   useCallback,
@@ -32,6 +33,10 @@ function getDefinitionPreview(term: DictionaryTerm) {
   }
 
   return `${definition.slice(0, DEFINITION_PREVIEW_LIMIT).trim()}...`;
+}
+
+function getPartsOfSpeechLabel(partsOfSpeech: string[]) {
+  return partsOfSpeech.map(getPartOfSpeechLabel).join(", ");
 }
 
 function SearchMessage({ state }: Readonly<{ state: DictionarySearchState }>) {
@@ -126,10 +131,12 @@ function TermDetailsModal({
             <dt className="text-sm font-bold text-muted">Zhuyin</dt>
             <dd className="mt-1 text-foreground">{term.zhuyin}</dd>
           </div>
-          {term.part_of_speech ? (
+          {term.parts_of_speech && term.parts_of_speech.length > 0 ? (
             <div>
               <dt className="text-sm font-bold text-muted">Part of speech</dt>
-              <dd className="mt-1 text-foreground">{term.part_of_speech}</dd>
+              <dd className="mt-1 text-foreground">
+                {getPartsOfSpeechLabel(term.parts_of_speech)}
+              </dd>
             </div>
           ) : null}
           <div>
