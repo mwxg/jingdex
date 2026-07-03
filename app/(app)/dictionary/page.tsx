@@ -11,6 +11,9 @@ export default function DictionaryPage() {
           <h1 className="font-heading text-5xl font-semibold leading-none sm:text-6xl">
             Search Chinese terms
           </h1>
+          <h3 className="font-heading text-3xl text-muted font-semibold leading-none sm:text-3xl">
+            Explore our expanding, community-driven Chinese dictionary.
+          </h3>
         </header>
 
         <DictionarySearch />
