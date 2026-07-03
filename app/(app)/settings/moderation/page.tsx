@@ -1,8 +1,13 @@
 import { redirect } from "next/navigation";
-import { getAdministrativeRole, roleLabels } from "@/lib/auth/roles";
+import {
+  getAdministrativeRole,
+  hasPermission,
+  roleLabels,
+} from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { getUserSearchPage } from "./actions";
 import { ModerationSearch } from "./moderation-search";
+import { TermManagement } from "./term-management";
 
 export default async function ModerationPage() {
   const supabase = await createClient();
@@ -21,6 +26,7 @@ export default async function ModerationPage() {
 
   const role = getAdministrativeRole(profile?.role);
   const roleTitle = role ? roleLabels[role] : null;
+  const canManageTerms = hasPermission(profile?.role, "manageTerms");
 
   if (!roleTitle) {
     redirect("/settings/account");
@@ -37,6 +43,8 @@ export default async function ModerationPage() {
       </div>
 
       <ModerationSearch initialState={initialSearchState} />
+
+      {canManageTerms ? <TermManagement /> : null}
     </div>
   );
 }

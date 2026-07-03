@@ -7,8 +7,15 @@ import {
   type AppRole,
 } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
+import OpenCC from "opencc-js";
+import { pinyin } from "pinyin-pro";
+import { pinyinToZhuyin } from "pinyin-zhuyin";
 
 const USERS_PER_PAGE = 20;
+const MAX_BULK_TERMS = 500;
+const TERM_DEFINITION_PLACEHOLDER = "Definition pending.";
+const toSimplified = OpenCC.Converter({ from: "tw", to: "cn" });
+const toTraditionalTw = OpenCC.Converter({ from: "cn", to: "tw" });
 
 export type UserSearchResult = {
   id: string;
@@ -28,6 +35,13 @@ export type UserSearchState = {
   totalCount?: number;
   currentUserId?: string;
   currentUserRole?: AppRole;
+};
+
+export type TermAddState = {
+  message?: string;
+  success?: string;
+  insertedCount?: number;
+  skippedCount?: number;
 };
 
 function getRequiredString(formData: FormData, name: string) {
@@ -53,6 +67,39 @@ function getErrorMessage(error: unknown, fallback: string) {
   }
 
   return fallback;
+}
+
+function normalizeTextPart(value: string) {
+  return value.trim().normalize("NFC");
+}
+
+function getNormalizedString(formData: FormData, name: string) {
+  const value = formData.get(name);
+
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return normalizeTextPart(value);
+}
+
+function getCanonicalSimplified(value: string) {
+  return normalizeTextPart(toSimplified(value));
+}
+
+function getGeneratedTermForms(value: string) {
+  const canonicalSimplified = getCanonicalSimplified(value);
+  const generatedPinyin = normalizeTextPart(
+    pinyin(canonicalSimplified, { toneType: "symbol" }),
+  );
+
+  return {
+    canonicalSimplified,
+    simplified: canonicalSimplified,
+    traditional: normalizeTextPart(toTraditionalTw(canonicalSimplified)),
+    pinyin: generatedPinyin,
+    zhuyin: normalizeTextPart(pinyinToZhuyin(generatedPinyin)),
+  };
 }
 
 function getRequestedPage(formData: FormData) {
@@ -96,6 +143,61 @@ async function getAuthorizedSupabaseClient() {
   }
 
   return { supabase, authorized: true, message: null };
+}
+
+async function getAuthorizedTermsSupabaseClient() {
+  const supabase = await createClient();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !authData.user?.id) {
+    return {
+      supabase,
+      userId: null,
+      authorized: false,
+      message: "Sign in again before adding terms.",
+    };
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", authData.user.id)
+    .maybeSingle();
+
+  if (
+    profileError ||
+    !profile ||
+    !hasPermission(profile.role, "manageTerms")
+  ) {
+    return {
+      supabase,
+      userId: authData.user.id,
+      authorized: false,
+      message: "Only admins and developers can add terms.",
+    };
+  }
+
+  return {
+    supabase,
+    userId: authData.user.id,
+    authorized: true,
+    message: null,
+  };
+}
+
+function getUploadTextFile(formData: FormData) {
+  const file = formData.get("termsFile");
+
+  if (
+    !file ||
+    typeof file !== "object" ||
+    !("text" in file) ||
+    typeof file.text !== "function"
+  ) {
+    return null;
+  }
+
+  return file as File;
 }
 
 export async function getUserSearchPage(
@@ -243,4 +345,196 @@ export async function submitUserModeration(
   }
 
   return getUserSearchPage(query, page);
+}
+
+export async function addSingleTerm(
+  _state: TermAddState,
+  formData: FormData,
+): Promise<TermAddState> {
+  const simplifiedInput = getNormalizedString(formData, "simplified");
+  const traditional = getNormalizedString(formData, "traditional");
+  const pinyinInput = getNormalizedString(formData, "pinyin");
+  const zhuyin = getNormalizedString(formData, "zhuyin");
+
+  if (!simplifiedInput || !traditional || !pinyinInput || !zhuyin) {
+    return {
+      message: "Add simplified, traditional, pinyin, and zhuyin before saving.",
+    };
+  }
+
+  const canonicalSimplified = getCanonicalSimplified(simplifiedInput);
+
+  if (!canonicalSimplified) {
+    return { message: "Add a valid simplified term before saving." };
+  }
+
+  const { supabase, userId, authorized, message } =
+    await getAuthorizedTermsSupabaseClient();
+
+  if (!authorized || !userId) {
+    return { message: message ?? "Only admins and developers can add terms." };
+  }
+
+  const { data: existingTerm, error: existingError } = await supabase
+    .from("terms")
+    .select("id")
+    .eq("canonical_simplified", canonicalSimplified)
+    .maybeSingle();
+
+  if (existingError) {
+    if (
+      existingError.message.includes("schema cache") ||
+      existingError.message.includes("canonical_simplified")
+    ) {
+      return {
+        message:
+          "Term duplicate checking is not installed in Supabase yet. Run the latest term canonicalization SQL, then refresh this page.",
+      };
+    }
+
+    return {
+      message: getErrorMessage(existingError, "Could not check that term."),
+    };
+  }
+
+  if (existingTerm) {
+    return {
+      skippedCount: 1,
+      success: `${canonicalSimplified} already exists. No duplicate was created.`,
+    };
+  }
+
+  const { error } = await supabase.from("terms").insert({
+    simplified: canonicalSimplified,
+    traditional,
+    pinyin: pinyinInput,
+    zhuyin,
+    canonical_simplified: canonicalSimplified,
+    english_definition: TERM_DEFINITION_PLACEHOLDER,
+    added_by: "Jingdex",
+    added_by_user_id: userId,
+    is_verified: true,
+  });
+
+  if (error) {
+    if (error.code === "23505") {
+      return {
+        skippedCount: 1,
+        success: `${canonicalSimplified} already exists. No duplicate was created.`,
+      };
+    }
+
+    if (
+      error.message.includes("schema cache") ||
+      error.message.includes("canonical_simplified")
+    ) {
+      return {
+        message:
+          "Term duplicate checking is not installed in Supabase yet. Run the latest term canonicalization SQL, then refresh this page.",
+      };
+    }
+
+    return { message: getErrorMessage(error, "Could not add that term.") };
+  }
+
+  return {
+    insertedCount: 1,
+    success: `${canonicalSimplified} was added.`,
+  };
+}
+
+export async function addBulkTerms(
+  _state: TermAddState,
+  formData: FormData,
+): Promise<TermAddState> {
+  const file = getUploadTextFile(formData);
+
+  if (!file || file.size === 0) {
+    return { message: "Upload a .txt file with one term per line." };
+  }
+
+  if (file.size > 100_000) {
+    return { message: "Upload a smaller text file, up to 100 KB." };
+  }
+
+  const rawText = await file.text();
+  const seenTerms = new Set<string>();
+  const terms = rawText
+    .split(/\r?\n/)
+    .map(normalizeTextPart)
+    .filter(Boolean)
+    .map(getGeneratedTermForms)
+    .filter((term) => {
+      if (!term.canonicalSimplified || seenTerms.has(term.canonicalSimplified)) {
+        return false;
+      }
+
+      seenTerms.add(term.canonicalSimplified);
+      return true;
+    });
+
+  if (terms.length === 0) {
+    return { message: "No valid terms were found in that file." };
+  }
+
+  if (terms.length > MAX_BULK_TERMS) {
+    return {
+      message: `Upload ${MAX_BULK_TERMS} terms or fewer at a time.`,
+    };
+  }
+
+  const { supabase, userId, authorized, message } =
+    await getAuthorizedTermsSupabaseClient();
+
+  if (!authorized || !userId) {
+    return { message: message ?? "Only admins and developers can add terms." };
+  }
+
+  const { data, error } = await supabase
+    .from("terms")
+    .upsert(
+      terms.map((term) => ({
+        simplified: term.simplified,
+        traditional: term.traditional,
+        pinyin: term.pinyin,
+        zhuyin: term.zhuyin,
+        canonical_simplified: term.canonicalSimplified,
+        english_definition: TERM_DEFINITION_PLACEHOLDER,
+        added_by: "Jingdex",
+        added_by_user_id: userId,
+        is_verified: true,
+      })),
+      {
+        onConflict: "canonical_simplified",
+        ignoreDuplicates: true,
+      },
+    )
+    .select("id");
+
+  if (error) {
+    if (
+      error.message.includes("schema cache") ||
+      error.message.includes("canonical_simplified")
+    ) {
+      return {
+        message:
+          "Term duplicate checking is not installed in Supabase yet. Run the latest term canonicalization SQL, then refresh this page.",
+      };
+    }
+
+    return { message: getErrorMessage(error, "Could not import that file.") };
+  }
+
+  const insertedCount = data?.length ?? 0;
+  const skippedCount = terms.length - insertedCount;
+
+  return {
+    insertedCount,
+    skippedCount,
+    success: `Imported ${insertedCount} ${insertedCount === 1 ? "term" : "terms"}${
+      skippedCount > 0
+        ? ` and skipped ${skippedCount} existing ${skippedCount === 1 ? "term" : "terms"}`
+        : ""
+    }.`,
+  };
 }
