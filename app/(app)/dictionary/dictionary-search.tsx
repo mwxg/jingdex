@@ -26,7 +26,10 @@ const initialState: DictionarySearchState = {
 };
 
 function getDefinitionPreview(term: DictionaryTerm) {
-  const definition = term.short_definition || term.english_definition || "";
+  const definition =
+    term.short_definition ||
+    term.english_definition?.split(/\r?\n/, 1)[0] ||
+    "";
 
   if (definition.length <= DEFINITION_PREVIEW_LIMIT) {
     return definition;
