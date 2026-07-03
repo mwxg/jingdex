@@ -89,11 +89,11 @@ create table if not exists public.terms (
   simplified text not null,
   traditional text,
   pinyin text not null,
+  zhuyin text not null,
   english_definition text not null,
   short_definition text,
   part_of_speech text,
   notes text,
-  source text,
   added_by text not null default 'Jingdex',
   added_by_user_id uuid references public.profiles(id) on delete set null,
   is_verified boolean not null default false,
@@ -156,11 +156,12 @@ alter table public.profiles add column if not exists updated_at timestamptz not 
 alter table public.terms add column if not exists simplified text;
 alter table public.terms add column if not exists traditional text;
 alter table public.terms add column if not exists pinyin text;
+alter table public.terms add column if not exists zhuyin text not null default '';
 alter table public.terms add column if not exists english_definition text;
 alter table public.terms add column if not exists short_definition text;
 alter table public.terms add column if not exists part_of_speech text;
 alter table public.terms add column if not exists notes text;
-alter table public.terms add column if not exists source text;
+alter table public.terms drop column if exists source;
 alter table public.terms add column if not exists added_by text not null default 'Jingdex';
 alter table public.terms add column if not exists added_by_user_id uuid references public.profiles(id) on delete set null;
 alter table public.terms add column if not exists is_verified boolean not null default false;
@@ -231,6 +232,15 @@ begin
     alter table public.terms
       add constraint terms_pinyin_not_blank
       check (pinyin is null or btrim(pinyin) <> '');
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint where conname = 'terms_zhuyin_not_blank'
+  ) then
+    alter table public.terms
+      add constraint terms_zhuyin_not_blank
+      check (zhuyin is null or btrim(zhuyin) <> '')
+      not valid;
   end if;
 
   if not exists (
