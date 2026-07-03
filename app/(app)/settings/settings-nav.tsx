@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { AdministrativeRole } from "@/lib/auth/roles";
 
 const roleTabClasses = {
   moderator: {
@@ -18,10 +19,8 @@ const roleTabClasses = {
   },
 } as const;
 
-type Role = keyof typeof roleTabClasses;
-
 type SettingsNavProps = Readonly<{
-  role?: Role;
+  role?: AdministrativeRole;
   roleLabel?: string;
 }>;
 

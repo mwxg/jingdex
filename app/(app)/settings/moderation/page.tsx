@@ -1,13 +1,8 @@
 import { redirect } from "next/navigation";
+import { getAdministrativeRole, roleLabels } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { getUserSearchPage } from "./actions";
 import { ModerationSearch } from "./moderation-search";
-
-const roleTitles = {
-  moderator: "Moderator",
-  admin: "Admin",
-  developer: "Developer",
-} as const;
 
 export default async function ModerationPage() {
   const supabase = await createClient();
@@ -24,8 +19,8 @@ export default async function ModerationPage() {
     .eq("id", user.id)
     .maybeSingle();
 
-  const role = profile?.role as keyof typeof roleTitles | undefined;
-  const roleTitle = role ? roleTitles[role] : null;
+  const role = getAdministrativeRole(profile?.role);
+  const roleTitle = role ? roleLabels[role] : null;
 
   if (!roleTitle) {
     redirect("/settings/account");

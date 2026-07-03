@@ -1,11 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { getAdministrativeRole, roleLabels } from "@/lib/auth/roles";
 import { SettingsNav } from "./settings-nav";
-
-const roleLabels = {
-  moderator: "Moderator",
-  admin: "Admin",
-  developer: "Developer",
-} as const;
 
 export default async function SettingsLayout({
   children,
@@ -22,14 +17,14 @@ export default async function SettingsLayout({
         .eq("id", userId)
         .maybeSingle()
     : { data: null };
-  const role = profile?.role as keyof typeof roleLabels | undefined;
+  const role = getAdministrativeRole(profile?.role);
   const roleLabel = role ? roleLabels[role] : null;
 
   return (
     <main className="flex-1 bg-background text-foreground">
-      <div className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-6xl gap-8 px-6 py-8 md:grid-cols-[15rem_1fr]">
-        <aside className="border-b border-muted-background pb-4 md:border-b-0 md:border-r md:pb-0 md:pr-6">
-          <SettingsNav role={role} roleLabel={roleLabel ?? undefined} />
+      <div className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[15rem_1fr] lg:px-8">
+        <aside className="border-b border-muted-background pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-6">
+          <SettingsNav role={role ?? undefined} roleLabel={roleLabel ?? undefined} />
         </aside>
 
         <div>{children}</div>

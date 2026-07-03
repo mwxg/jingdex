@@ -1,8 +1,12 @@
 "use server";
 
+import {
+  canEditRole,
+  getAssignableRoles,
+  hasPermission,
+  type AppRole,
+} from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
-
-type Role = "member" | "moderator" | "admin" | "developer";
 
 const USERS_PER_PAGE = 20;
 
@@ -10,17 +14,20 @@ export type UserSearchResult = {
   id: string;
   email: string;
   username: string;
-  role: Role;
+  role: AppRole;
   created_at: string;
   total_count: number;
 };
 
 export type UserSearchState = {
   message?: string;
+  success?: string;
   results?: UserSearchResult[];
   query?: string;
   page?: number;
   totalCount?: number;
+  currentUserId?: string;
+  currentUserRole?: AppRole;
 };
 
 function getRequiredString(formData: FormData, name: string) {
@@ -79,7 +86,7 @@ async function getAuthorizedSupabaseClient() {
   if (
     profileError ||
     !profile ||
-    !["moderator", "admin", "developer"].includes(profile.role)
+    !hasPermission(profile.role, "searchUsers")
   ) {
     return {
       supabase,
@@ -108,6 +115,16 @@ export async function getUserSearchPage(
     };
   }
 
+  const { data: authData } = await supabase.auth.getUser();
+  const currentUserId = authData.user?.id;
+  const { data: currentProfile } = currentUserId
+    ? await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", currentUserId)
+        .maybeSingle()
+    : { data: null };
+
   const { data, error } = await supabase.rpc("search_users_for_moderation", {
     search_query: query,
     page_size: USERS_PER_PAGE,
@@ -126,6 +143,8 @@ export async function getUserSearchPage(
         page: safePage,
         totalCount: 0,
         results: [],
+        currentUserId,
+        currentUserRole: currentProfile?.role as AppRole | undefined,
       };
     }
 
@@ -135,6 +154,8 @@ export async function getUserSearchPage(
       page: safePage,
       totalCount: 0,
       results: [],
+      currentUserId,
+      currentUserRole: currentProfile?.role as AppRole | undefined,
     };
   }
 
@@ -145,15 +166,81 @@ export async function getUserSearchPage(
     query,
     page: safePage,
     totalCount: results[0]?.total_count ?? 0,
+    currentUserId,
+    currentUserRole: currentProfile?.role as AppRole | undefined,
   };
 }
 
-export async function searchUsers(
+async function updateUserRole(formData: FormData) {
+  const targetUserId = getRequiredString(formData, "targetUserId");
+  const role = getRequiredString(formData, "role") as AppRole;
+
+  const { supabase, authorized, message } = await getAuthorizedSupabaseClient();
+  const { data: authData } = await supabase.auth.getUser();
+  const actorUserId = authData.user?.id;
+  const { data: actorProfile } = actorUserId
+    ? await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", actorUserId)
+        .maybeSingle()
+    : { data: null };
+
+  if (!targetUserId || !getAssignableRoles(actorProfile?.role).includes(role)) {
+    return "Choose a valid role.";
+  }
+
+  if (!authorized) {
+    return message ?? "You do not have access to edit roles.";
+  }
+
+  const { data: targetProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", targetUserId)
+    .maybeSingle();
+
+  if (!targetProfile || !canEditRole(actorProfile?.role, targetProfile.role)) {
+    return "You do not have access to edit that role.";
+  }
+
+  const { error } = await supabase.rpc("update_user_role_for_moderation", {
+    target_user_id: targetUserId,
+    target_role: role,
+  });
+
+  if (error) {
+    if (
+      error.message.includes("schema cache") ||
+      error.message.includes("update_user_role_for_moderation")
+    ) {
+      return "Role editing is not installed in Supabase yet. Run the latest role-management SQL, then refresh this page.";
+    }
+
+    return getErrorMessage(error, "Could not update that user's role.");
+  }
+
+  return null;
+}
+
+export async function submitUserModeration(
   _state: UserSearchState,
   formData: FormData,
 ): Promise<UserSearchState> {
   const query = getRequiredString(formData, "query");
   const page = getRequestedPage(formData);
+  const intent = getRequiredString(formData, "intent");
+
+  if (intent === "updateRole") {
+    const message = await updateUserRole(formData);
+    const nextState = await getUserSearchPage(query, page);
+
+    if (message) {
+      return { ...nextState, message };
+    }
+
+    return { ...nextState, success: "Role updated." };
+  }
 
   return getUserSearchPage(query, page);
 }
