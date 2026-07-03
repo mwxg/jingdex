@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { getGeneratedTermForms } from "@/lib/terms/generated-forms";
+import { useActionState, useEffect, useState } from "react";
 import {
   addBulkTerms,
   addSingleTerm,
@@ -32,13 +33,17 @@ function TermMessage({ state }: Readonly<{ state: TermAddState }>) {
 function TextInput({
   label,
   name,
+  onChange,
   placeholder,
   required = true,
+  value,
 }: Readonly<{
   label: string;
   name: string;
+  onChange?: (value: string) => void;
   placeholder: string;
   required?: boolean;
+  value?: string;
 }>) {
   return (
     <label className="space-y-2">
@@ -48,9 +53,13 @@ function TextInput({
       <input
         className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
         name={name}
+        onChange={
+          onChange ? (event) => onChange(event.target.value) : undefined
+        }
         placeholder={placeholder}
         required={name === "traditional" ? false : required}
         type="text"
+        value={value}
       />
     </label>
   );
@@ -86,6 +95,55 @@ export function TermManagement() {
     initialState,
   );
   const [bulkState, bulkAction] = useActionState(addBulkTerms, initialState);
+  const [simplified, setSimplified] = useState("");
+  const [traditional, setTraditional] = useState("");
+  const [pinyin, setPinyin] = useState("");
+  const [zhuyin, setZhuyin] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  function updateSimplified(value: string) {
+    setSimplified(value);
+
+    if (!value.trim()) {
+      setIsGenerating(false);
+      setTraditional("");
+      setPinyin("");
+      setZhuyin("");
+      return;
+    }
+
+    setIsGenerating(true);
+  }
+
+  useEffect(() => {
+    const trimmedSimplified = simplified.trim();
+
+    if (!trimmedSimplified) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      try {
+        const generatedForms = getGeneratedTermForms(trimmedSimplified);
+        const generatedTraditional =
+          generatedForms.traditional === generatedForms.simplified
+            ? ""
+            : generatedForms.traditional;
+
+        setTraditional(generatedTraditional);
+        setPinyin(generatedForms.pinyin);
+        setZhuyin(generatedForms.zhuyin);
+      } catch {
+        setTraditional("");
+        setPinyin("");
+        setZhuyin("");
+      } finally {
+        setIsGenerating(false);
+      }
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [simplified]);
 
   return (
     <section className="rounded-lg border border-muted-background bg-surface p-6">
@@ -106,15 +164,44 @@ export function TermManagement() {
           <TermMessage state={singleState} />
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextInput label="Simplified" name="simplified" placeholder="学习" />
+            <TextInput
+              label="Simplified"
+              name="simplified"
+              onChange={updateSimplified}
+              placeholder="Simplified Chinese"
+              value={simplified}
+            />
             <TextInput
               label="Traditional"
               name="traditional"
-              placeholder="學習"
+              onChange={setTraditional}
+              placeholder="Generated from simplified"
+              value={traditional}
             />
-            <TextInput label="Pinyin" name="pinyin" placeholder="xué xí" />
-            <TextInput label="Zhuyin" name="zhuyin" placeholder="ㄒㄩㄝˊ ㄒㄧˊ" />
+            <TextInput
+              label="Pinyin"
+              name="pinyin"
+              onChange={setPinyin}
+              placeholder="Generated from simplified"
+              value={pinyin}
+            />
+            <TextInput
+              label="Zhuyin"
+              name="zhuyin"
+              onChange={setZhuyin}
+              placeholder="Generated from simplified"
+              value={zhuyin}
+            />
           </div>
+
+          {isGenerating ? (
+            <p
+              aria-live="polite"
+              className="font-sans text-sm font-bold text-primary"
+            >
+              Generating traditional, pinyin, and zhuyin...
+            </p>
+          ) : null}
 
           <TextAreaInput
             label="Definition"

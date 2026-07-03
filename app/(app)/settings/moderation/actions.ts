@@ -8,12 +8,15 @@ import {
 } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import {
+  getCanonicalSimplified,
+  getGeneratedTermForms,
+} from "@/lib/terms/generated-forms";
+import {
   normalizePartsOfSpeech,
   type PartOfSpeech,
 } from "@/lib/terms/parts-of-speech";
 import OpenCC from "opencc-js";
-import { convert, pinyin } from "pinyin-pro";
-import { pinyinToZhuyin } from "pinyin-zhuyin";
+import { convert } from "pinyin-pro";
 
 const USERS_PER_PAGE = 20;
 const TERMS_PER_PAGE = 20;
@@ -120,10 +123,6 @@ function getNormalizedString(formData: FormData, name: string) {
   return normalizeTextPart(value);
 }
 
-function getCanonicalSimplified(value: string) {
-  return normalizeTextPart(toSimplified(value));
-}
-
 function normalizeLoose(value: string) {
   return normalizeTextPart(value).toLowerCase().replace(/\s+/g, "");
 }
@@ -226,21 +225,6 @@ async function getTermSearchCandidates(
     candidates: addAttributionLabels(candidates),
     error: null,
     limited: true,
-  };
-}
-
-function getGeneratedTermForms(value: string) {
-  const canonicalSimplified = getCanonicalSimplified(value);
-  const generatedPinyin = normalizeTextPart(
-    pinyin(canonicalSimplified, { toneType: "symbol" }),
-  );
-
-  return {
-    canonicalSimplified,
-    simplified: canonicalSimplified,
-    traditional: normalizeTextPart(toTraditionalTw(canonicalSimplified)),
-    pinyin: generatedPinyin,
-    zhuyin: normalizeTextPart(pinyinToZhuyin(generatedPinyin)),
   };
 }
 
