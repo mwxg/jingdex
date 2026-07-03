@@ -49,7 +49,7 @@ export async function Navbar() {
           ))}
           {profile ? (
             <Link
-              href="/settings"
+              href="/settings/account"
               className="ml-2 flex h-10 max-w-32 items-center truncate rounded-lg border border-muted-background bg-background px-3 text-foreground transition-colors hover:border-primary hover:text-primary sm:max-w-48"
             >
               {profile.username}
