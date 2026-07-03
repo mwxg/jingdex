@@ -21,5 +21,6 @@ Always ensure that components and ui elements are accessible from different scre
 Special role permissions are defined in lib/auth/roles.ts.
 
 This app uses pinyin-pro and pinyin-zhuyin.
+This app also uses opencc-js to convert between simplified and traditional. For traditional, target tw unless told otherwise.
 
 If there is anything I need to do on my end to complete a task, such as run an sql query in supabase, let me know.
