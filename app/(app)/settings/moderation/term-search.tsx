@@ -40,13 +40,13 @@ function TermSearchMessage({
     );
   }
 
-  if (!hasQuery) {
-    return (
-      <p className="rounded-lg border border-muted-background bg-background px-4 py-3 font-sans text-sm text-muted">
-        Search by hanzi, pinyin, tone numbers, or zhuyin.
-      </p>
-    );
-  }
+  // if (!hasQuery) {
+  //   return (
+  //     <p className="rounded-lg border border-muted-background bg-background px-4 py-3 font-sans text-sm text-muted">
+  //       Search by hanzi, pinyin, tone numbers, or zhuyin.
+  //     </p>
+  //   );
+  // }
 
   return null;
 }
