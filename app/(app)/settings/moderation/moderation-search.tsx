@@ -52,6 +52,17 @@ function SearchMessage({ state }: Readonly<{ state: UserSearchState }>) {
   );
 }
 
+function SearchingStatus({ isSearching }: Readonly<{ isSearching: boolean }>) {
+  return (
+    <p
+      aria-live="polite"
+      className="min-h-5 font-sans text-sm font-bold text-primary"
+    >
+      {isSearching ? "Searching..." : null}
+    </p>
+  );
+}
+
 function RoleEditModal({
   action,
   allowedRoles,
@@ -149,6 +160,7 @@ export function ModerationSearch({
   const currentUserRole = state.currentUserRole;
   const allowedRoles = getAssignableRoles(currentUserRole);
   const hasQuery = query.length > 0;
+  const isSearching = isPending && inputValue.trim().length > 0;
 
   const searchUsers = useCallback((nextQuery: string) => {
     const currentRequestId = requestId.current + 1;
@@ -210,6 +222,8 @@ export function ModerationSearch({
             />
           </label>
         </div>
+
+        <SearchingStatus isSearching={isSearching} />
       </form>
 
       {hasQuery && results.length > 0 ? (

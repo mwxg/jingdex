@@ -48,6 +48,17 @@ function TermSearchMessage({ state }: Readonly<{ state: TermSearchState }>) {
   return null;
 }
 
+function SearchingStatus({ isSearching }: Readonly<{ isSearching: boolean }>) {
+  return (
+    <p
+      aria-live="polite"
+      className="min-h-5 font-sans text-sm font-bold text-primary"
+    >
+      {isSearching ? "Searching..." : null}
+    </p>
+  );
+}
+
 function EditMessage({ state }: Readonly<{ state: TermEditState }>) {
   if (!state.message && !state.success) {
     return null;
@@ -330,6 +341,7 @@ export function TermSearch({
   const resultGridColumns = canEditTerms
     ? "grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_minmax(10rem,1fr)_minmax(16rem,1.6fr)_6rem_4.5rem]"
     : "grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_minmax(10rem,1fr)_minmax(16rem,1.6fr)_6rem]";
+  const isSearching = isPending && inputValue.trim().length > 0;
 
   function searchTerms(nextQuery: string, nextPage = 1) {
     const currentRequestId = requestId.current + 1;
@@ -413,6 +425,8 @@ export function TermSearch({
             />
           </label>
         </div>
+
+        <SearchingStatus isSearching={isSearching} />
       </form>
 
       {hasQuery && results.length > 0 ? (

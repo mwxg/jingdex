@@ -55,6 +55,17 @@ function SearchMessage({ state }: Readonly<{ state: DictionarySearchState }>) {
   return null;
 }
 
+function SearchingStatus({ isSearching }: Readonly<{ isSearching: boolean }>) {
+  return (
+    <p
+      aria-live="polite"
+      className="min-h-5 font-sans text-sm font-bold text-primary"
+    >
+      {isSearching ? "Searching..." : null}
+    </p>
+  );
+}
+
 function TermDetailsModal({
   onClose,
   term,
@@ -190,9 +201,10 @@ export function DictionarySearch() {
   const [inputValue, setInputValue] = useState("");
   const [sortValue, setSortValue] = useState<DictionarySort>("pinyin-asc");
   const [selectedTerm, setSelectedTerm] = useState<DictionaryTerm | null>(null);
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const requestId = useRef(0);
   const hasQuery = state.query.length > 0;
+  const isSearching = isPending && inputValue.trim().length > 0;
 
   const runSearch = useCallback(
     (nextQuery: string, nextSort = sortValue) => {
@@ -267,8 +279,9 @@ export function DictionarySearch() {
               <option value="pinyin-asc">Alphabetical pinyin</option>
             </select>
           </label>
-
         </div>
+
+        <SearchingStatus isSearching={isSearching} />
 
         {hasQuery && state.results.length === 0 && !state.message ? (
           <p className="rounded-lg border border-muted-background bg-background px-4 py-3 font-sans text-sm text-muted">
