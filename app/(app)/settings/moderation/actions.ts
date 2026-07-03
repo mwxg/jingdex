@@ -8,10 +8,13 @@ import {
 } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import OpenCC from "opencc-js";
-import { pinyin } from "pinyin-pro";
+import { convert, pinyin } from "pinyin-pro";
 import { pinyinToZhuyin } from "pinyin-zhuyin";
 
 const USERS_PER_PAGE = 20;
+const TERMS_PER_PAGE = 20;
+const TERM_SEARCH_CHUNK_SIZE = 1000;
+const TERM_SEARCH_MAX_ROWS = 10000;
 const MAX_BULK_TERMS = 500;
 const BULK_TERM_DEFINITION_PLACEHOLDER = "null";
 const toSimplified = OpenCC.Converter({ from: "tw", to: "cn" });
@@ -42,6 +45,34 @@ export type TermAddState = {
   success?: string;
   insertedCount?: number;
   skippedCount?: number;
+};
+
+export type TermSearchResult = {
+  id: string;
+  simplified: string;
+  traditional: string | null;
+  pinyin: string;
+  zhuyin: string;
+  english_definition: string | null;
+  short_definition: string | null;
+  part_of_speech: string | null;
+  notes: string | null;
+  is_verified: boolean;
+  created_at: string;
+};
+
+export type TermSearchState = {
+  message?: string;
+  results?: TermSearchResult[];
+  query?: string;
+  page?: number;
+  totalCount?: number;
+  limited?: boolean;
+};
+
+export type TermEditState = {
+  message?: string;
+  success?: string;
 };
 
 function getRequiredString(formData: FormData, name: string) {
@@ -85,6 +116,103 @@ function getNormalizedString(formData: FormData, name: string) {
 
 function getCanonicalSimplified(value: string) {
   return normalizeTextPart(toSimplified(value));
+}
+
+function normalizeLoose(value: string) {
+  return normalizeTextPart(value).toLowerCase().replace(/\s+/g, "");
+}
+
+function normalizePinyinLetters(value: string) {
+  return convert(normalizeTextPart(value), { format: "toneNone" })
+    .toLowerCase()
+    .replace(/u:/g, "v")
+    .replace(/ü/g, "v")
+    .replace(/[0-5]/g, "")
+    .replace(/[^a-zv]/g, "");
+}
+
+function normalizePinyinNumbers(value: string) {
+  const normalized = normalizeTextPart(value);
+  const numbered = /[0-5]/.test(normalized)
+    ? normalized
+    : convert(normalized, { format: "symbolToNum" });
+
+  return numbered
+    .toLowerCase()
+    .replace(/u:/g, "v")
+    .replace(/ü/g, "v")
+    .replace(/[^a-z0-5v]/g, "");
+}
+
+function normalizeZhuyinSearch(value: string) {
+  return normalizeLoose(value).replace(/[ˊˇˋ˙]/g, "");
+}
+
+function termMatchesSearch(term: TermSearchResult, query: string) {
+  const rawQuery = normalizeTextPart(query);
+  const looseQuery = normalizeLoose(rawQuery);
+  const simplifiedQuery = normalizeLoose(toSimplified(rawQuery));
+  const traditionalQuery = normalizeLoose(toTraditionalTw(rawQuery));
+  const pinyinLetterQuery = normalizePinyinLetters(rawQuery);
+  const pinyinNumberQuery = normalizePinyinNumbers(rawQuery);
+  const zhuyinQuery = normalizeZhuyinSearch(rawQuery);
+  const hanziValues = [
+    term.simplified,
+    term.traditional,
+    toSimplified(term.simplified),
+    term.traditional ? toSimplified(term.traditional) : "",
+  ].map((value) => normalizeLoose(value ?? ""));
+  const storedPinyinLetters = normalizePinyinLetters(term.pinyin);
+  const storedPinyinNumbers = normalizePinyinNumbers(term.pinyin);
+  const storedZhuyin = normalizeZhuyinSearch(term.zhuyin);
+
+  return (
+    hanziValues.some(
+      (value) =>
+        value.includes(looseQuery) ||
+        value.includes(simplifiedQuery) ||
+        value.includes(traditionalQuery),
+    ) ||
+    (pinyinLetterQuery.length > 0 &&
+      storedPinyinLetters.includes(pinyinLetterQuery)) ||
+    (pinyinNumberQuery.length > 0 &&
+      /[0-5]/.test(pinyinNumberQuery) &&
+      storedPinyinNumbers.includes(pinyinNumberQuery)) ||
+    (zhuyinQuery.length > 0 && storedZhuyin.includes(zhuyinQuery))
+  );
+}
+
+async function getTermSearchCandidates(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+) {
+  const candidates: TermSearchResult[] = [];
+
+  for (
+    let offset = 0;
+    offset < TERM_SEARCH_MAX_ROWS;
+    offset += TERM_SEARCH_CHUNK_SIZE
+  ) {
+    const { data, error } = await supabase
+      .from("terms")
+      .select(
+        "id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,part_of_speech,notes,is_verified,created_at",
+      )
+      .order("simplified", { ascending: true })
+      .range(offset, offset + TERM_SEARCH_CHUNK_SIZE - 1);
+
+    if (error) {
+      return { candidates, error, limited: false };
+    }
+
+    const chunk = (data ?? []) as TermSearchResult[];
+    candidates.push(...chunk);
+
+    if (chunk.length < TERM_SEARCH_CHUNK_SIZE) {
+      return { candidates, error: null, limited: false };
+    }
+  }
+
+  return { candidates, error: null, limited: true };
 }
 
 function getGeneratedTermForms(value: string) {
@@ -273,6 +401,60 @@ export async function getUserSearchPage(
   };
 }
 
+export async function getTermSearchPage(
+  query = "",
+  page = 1,
+): Promise<TermSearchState> {
+  const safePage = Math.max(1, page);
+  const normalizedQuery = normalizeTextPart(query);
+
+  if (!normalizedQuery) {
+    return {
+      query: "",
+      page: safePage,
+      totalCount: 0,
+      results: [],
+    };
+  }
+
+  const { supabase, authorized, message } = await getAuthorizedSupabaseClient();
+
+  if (!authorized) {
+    return {
+      message: message ?? "You do not have access to term search.",
+      query: normalizedQuery,
+      page: safePage,
+      totalCount: 0,
+      results: [],
+    };
+  }
+
+  const { candidates, error, limited } = await getTermSearchCandidates(supabase);
+
+  if (error) {
+    return {
+      message: getErrorMessage(error, "Could not search terms."),
+      query: normalizedQuery,
+      page: safePage,
+      totalCount: 0,
+      results: [],
+    };
+  }
+
+  const matches = candidates.filter((term) =>
+    termMatchesSearch(term, normalizedQuery),
+  );
+  const offset = (safePage - 1) * TERMS_PER_PAGE;
+
+  return {
+    results: matches.slice(offset, offset + TERMS_PER_PAGE),
+    query: normalizedQuery,
+    page: safePage,
+    totalCount: matches.length,
+    limited,
+  };
+}
+
 async function updateUserRole(formData: FormData) {
   const targetUserId = getRequiredString(formData, "targetUserId");
   const role = getRequiredString(formData, "role") as AppRole;
@@ -345,6 +527,92 @@ export async function submitUserModeration(
   }
 
   return getUserSearchPage(query, page);
+}
+
+export async function submitTermSearch(
+  _state: TermSearchState,
+  formData: FormData,
+): Promise<TermSearchState> {
+  const query = getRequiredString(formData, "query");
+  const page = getRequestedPage(formData);
+
+  return getTermSearchPage(query, page);
+}
+
+export async function updateTerm(formData: FormData): Promise<TermEditState> {
+  const termId = getRequiredString(formData, "termId");
+  const simplifiedInput = getNormalizedString(formData, "simplified");
+  const traditional = getNormalizedString(formData, "traditional");
+  const pinyinInput = getNormalizedString(formData, "pinyin");
+  const zhuyin = getNormalizedString(formData, "zhuyin");
+  const englishDefinition = getNormalizedString(formData, "englishDefinition");
+  const shortDefinition = getNormalizedString(formData, "shortDefinition");
+  const partOfSpeech = getNormalizedString(formData, "partOfSpeech");
+  const notes = getNormalizedString(formData, "notes");
+  const isVerified = formData.get("isVerified") === "on";
+
+  if (!termId) {
+    return { message: "Choose a valid term to edit." };
+  }
+
+  if (!simplifiedInput || !pinyinInput || !zhuyin || !englishDefinition) {
+    return {
+      message:
+        "Simplified, pinyin, zhuyin, and definition cannot be blank.",
+    };
+  }
+
+  const canonicalSimplified = getCanonicalSimplified(simplifiedInput);
+
+  if (!canonicalSimplified) {
+    return { message: "Simplified cannot be blank." };
+  }
+
+  const { supabase, authorized, message } =
+    await getAuthorizedTermsSupabaseClient();
+
+  if (!authorized) {
+    return { message: message ?? "Only admins and developers can edit terms." };
+  }
+
+  const { error } = await supabase
+    .from("terms")
+    .update({
+      simplified: canonicalSimplified,
+      traditional: traditional || null,
+      pinyin: pinyinInput,
+      zhuyin,
+      canonical_simplified: canonicalSimplified,
+      english_definition: englishDefinition,
+      short_definition: shortDefinition || null,
+      part_of_speech: partOfSpeech || null,
+      notes: notes || null,
+      is_verified: isVerified,
+    })
+    .eq("id", termId);
+
+  if (error) {
+    if (error.code === "23505") {
+      return {
+        message:
+          "Another term already uses that simplified form. Choose a unique term.",
+      };
+    }
+
+    if (
+      error.message.includes("schema cache") ||
+      error.message.includes("canonical_simplified")
+    ) {
+      return {
+        message:
+          "Term editing is not installed in Supabase yet. Run the latest term canonicalization SQL, then refresh this page.",
+      };
+    }
+
+    return { message: getErrorMessage(error, "Could not update that term.") };
+  }
+
+  return { success: `${canonicalSimplified} was updated.` };
 }
 
 export async function addSingleTerm(

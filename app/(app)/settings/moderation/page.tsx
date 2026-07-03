@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserSearchPage } from "./actions";
 import { ModerationSearch } from "./moderation-search";
 import { TermManagement } from "./term-management";
+import { TermSearch } from "./term-search";
 
 export default async function ModerationPage() {
   const supabase = await createClient();
@@ -43,6 +44,8 @@ export default async function ModerationPage() {
       </div>
 
       <ModerationSearch initialState={initialSearchState} />
+
+      <TermSearch canEditTerms={canManageTerms} />
 
       {canManageTerms ? <TermManagement /> : null}
     </div>
