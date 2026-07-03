@@ -701,6 +701,7 @@ export async function addSingleTerm(
   const pinyinInput = getNormalizedString(formData, "pinyin");
   const zhuyin = getNormalizedString(formData, "zhuyin");
   const englishDefinition = getNormalizedString(formData, "definition");
+  const partsOfSpeech = normalizePartsOfSpeech(formData.getAll("partsOfSpeech"));
 
   if (
     !simplifiedInput ||
@@ -764,7 +765,7 @@ export async function addSingleTerm(
       zhuyin,
       canonical_simplified: canonicalSimplified,
       english_definition: englishDefinition,
-      parts_of_speech: null,
+      parts_of_speech: partsOfSpeech.length > 0 ? partsOfSpeech : null,
       added_by: addedBy ?? "Jingdex",
       is_verified: true,
     },

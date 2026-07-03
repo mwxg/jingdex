@@ -7,6 +7,7 @@ import {
   addSingleTerm,
   type TermAddState,
 } from "./actions";
+import { PartOfSpeechSelect } from "./part-of-speech-select";
 
 const initialState: TermAddState = {};
 
@@ -192,6 +193,7 @@ export function TermManagement() {
               placeholder="Generated from simplified"
               value={zhuyin}
             />
+            <PartOfSpeechSelect />
           </div>
 
           {isGenerating ? (
