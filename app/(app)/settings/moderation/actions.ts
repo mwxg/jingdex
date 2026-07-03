@@ -381,12 +381,13 @@ export async function getUserSearchPage(
   page = 1,
 ): Promise<UserSearchState> {
   const safePage = Math.max(1, page);
+  const normalizedQuery = normalizeTextPart(query);
   const { supabase, authorized, message } = await getAuthorizedSupabaseClient();
 
   if (!authorized) {
     return {
       message: message ?? "You do not have access to user search.",
-      query,
+      query: normalizedQuery,
       page: safePage,
       totalCount: 0,
       results: [],
@@ -403,8 +404,19 @@ export async function getUserSearchPage(
         .maybeSingle()
     : { data: null };
 
+  if (!normalizedQuery) {
+    return {
+      results: [],
+      query: "",
+      page: safePage,
+      totalCount: 0,
+      currentUserId,
+      currentUserRole: currentProfile?.role as AppRole | undefined,
+    };
+  }
+
   const { data, error } = await supabase.rpc("search_users_for_moderation", {
-    search_query: query,
+    search_query: normalizedQuery,
     page_size: USERS_PER_PAGE,
     page_offset: (safePage - 1) * USERS_PER_PAGE,
   });
@@ -417,7 +429,7 @@ export async function getUserSearchPage(
       return {
         message:
           "User search is not installed in Supabase yet. Run the latest moderation user search SQL in Supabase, then refresh this page.",
-        query,
+        query: normalizedQuery,
         page: safePage,
         totalCount: 0,
         results: [],
@@ -428,7 +440,7 @@ export async function getUserSearchPage(
 
     return {
       message: getErrorMessage(error, "Could not search users."),
-      query,
+      query: normalizedQuery,
       page: safePage,
       totalCount: 0,
       results: [],
@@ -441,7 +453,7 @@ export async function getUserSearchPage(
 
   return {
     results,
-    query,
+    query: normalizedQuery,
     page: safePage,
     totalCount: results[0]?.total_count ?? 0,
     currentUserId,

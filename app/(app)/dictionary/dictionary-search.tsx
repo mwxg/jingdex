@@ -190,7 +190,7 @@ export function DictionarySearch() {
   const [inputValue, setInputValue] = useState("");
   const [sortValue, setSortValue] = useState<DictionarySort>("pinyin-asc");
   const [selectedTerm, setSelectedTerm] = useState<DictionaryTerm | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const requestId = useRef(0);
   const hasQuery = state.query.length > 0;
 
@@ -238,7 +238,7 @@ export function DictionarySearch() {
       <form className="space-y-5" onSubmit={submitSearch}>
         <SearchMessage state={state} />
 
-        <div className="grid gap-3 lg:grid-cols-[1fr_16rem_auto] lg:items-end">
+        <div className="grid gap-3 lg:grid-cols-[1fr_16rem] lg:items-end">
           <label className="space-y-2">
             <span className="block font-sans text-sm font-bold text-foreground">
               Hanzi, pinyin, tone numbers, or zhuyin
@@ -268,13 +268,6 @@ export function DictionarySearch() {
             </select>
           </label>
 
-          <button
-            className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={isPending}
-            type="submit"
-          >
-            {isPending ? "Searching" : "Search"}
-          </button>
         </div>
 
         {hasQuery && state.results.length === 0 && !state.message ? (

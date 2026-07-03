@@ -19,10 +19,7 @@ const initialState: TermSearchState = {
 };
 const initialEditState: TermEditState = {};
 
-function TermSearchMessage({
-  hasQuery,
-  state,
-}: Readonly<{ hasQuery: boolean; state: TermSearchState }>) {
+function TermSearchMessage({ state }: Readonly<{ state: TermSearchState }>) {
   if (state.message) {
     return (
       <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-sans text-sm font-bold text-danger">
@@ -399,9 +396,9 @@ export function TermSearch({
           </h2>
         </div>
 
-        <TermSearchMessage hasQuery={hasQuery} state={state} />
+        <TermSearchMessage state={state} />
 
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div>
           <label className="flex-1 space-y-2">
             <span className="block font-sans text-sm font-bold text-foreground">
               Hanzi, pinyin, or zhuyin
@@ -410,18 +407,11 @@ export function TermSearch({
               className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
               name="query"
               onChange={(event) => setInputValue(event.target.value)}
-              placeholder="学习, xuexi, xue2xi2, or ㄒㄩㄝˊ"
+              placeholder="Start typing here"
               type="search"
               value={inputValue}
             />
           </label>
-          <button
-            className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 sm:self-end"
-            disabled={isPending}
-            type="submit"
-          >
-            {isPending ? "Searching" : "Search"}
-          </button>
         </div>
       </form>
 

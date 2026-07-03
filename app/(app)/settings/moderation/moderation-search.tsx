@@ -1,18 +1,24 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import {
   canEditRole,
   getAssignableRoles,
   type AppRole,
 } from "@/lib/auth/roles";
 import {
+  getUserSearchPage,
   submitUserModeration,
   type UserSearchResult,
   type UserSearchState,
 } from "./actions";
-
-const USERS_PER_PAGE = 20;
 
 function canEditUser(
   currentUserId: string | undefined,
@@ -128,10 +134,10 @@ export function ModerationSearch({
 }: Readonly<{
   initialState: UserSearchState;
 }>) {
-  const [state, formAction] = useActionState(
-    submitUserModeration,
-    initialState,
-  );
+  const [state, setState] = useState<UserSearchState>(initialState);
+  const [inputValue, setInputValue] = useState(initialState.query ?? "");
+  const [isPending, startTransition] = useTransition();
+  const requestId = useRef(0);
   const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(
     null,
   );
@@ -142,14 +148,45 @@ export function ModerationSearch({
   const currentUserId = state.currentUserId;
   const currentUserRole = state.currentUserRole;
   const allowedRoles = getAssignableRoles(currentUserRole);
-  const firstResult = totalCount > 0 ? (page - 1) * USERS_PER_PAGE + 1 : 0;
-  const lastResult = Math.min(page * USERS_PER_PAGE, totalCount);
-  const hasPreviousPage = page > 1;
-  const hasNextPage = lastResult < totalCount;
+  const hasQuery = query.length > 0;
+
+  const searchUsers = useCallback((nextQuery: string) => {
+    const currentRequestId = requestId.current + 1;
+    requestId.current = currentRequestId;
+
+    startTransition(async () => {
+      const nextState = await getUserSearchPage(nextQuery, 1);
+
+      if (requestId.current === currentRequestId) {
+        setState(nextState);
+      }
+    });
+  }, []);
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    searchUsers(inputValue);
+  }
+
+  function updateSelectedUserRole(formData: FormData) {
+    setSelectedUser(null);
+    startTransition(async () => {
+      const nextState = await submitUserModeration(state, formData);
+      setState(nextState);
+    });
+  }
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      searchUsers(inputValue);
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [inputValue, searchUsers]);
 
   return (
     <section className="rounded-lg border border-muted-background bg-surface p-6">
-      <form action={formAction} className="space-y-5">
+      <form aria-busy={isPending} className="space-y-5" onSubmit={submitSearch}>
         <div className="space-y-2">
           <h2 className="font-heading text-2xl font-semibold text-foreground">
             User search
@@ -158,31 +195,24 @@ export function ModerationSearch({
 
         <SearchMessage state={state} />
 
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div>
           <label className="flex-1 space-y-2">
             <span className="block font-sans text-sm font-bold text-foreground">
               Email or username
             </span>
             <input
               className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
-              defaultValue={query}
               name="query"
+              onChange={(event) => setInputValue(event.target.value)}
               placeholder="gareth or name@example.com"
               type="search"
+              value={inputValue}
             />
           </label>
-          <button
-            name="page"
-            type="submit"
-            value="1"
-            className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 sm:self-end"
-          >
-            Search
-          </button>
         </div>
       </form>
 
-      {results.length > 0 ? (
+      {hasQuery && results.length > 0 ? (
         <div className="mt-6 overflow-x-auto rounded-lg border border-muted-background">
           <div className="min-w-248">
             <div className="grid grid-cols-[minmax(10rem,1fr)_minmax(14rem,1.35fr)_13rem_7rem_4.5rem] items-center gap-4 border-b border-muted-background bg-muted-background px-4 py-3 font-sans text-sm font-bold text-muted">
@@ -226,50 +256,28 @@ export function ModerationSearch({
             </ul>
           </div>
         </div>
-      ) : (
+      ) : null}
+
+      {hasQuery && results.length === 0 && !state.message ? (
         <p className="mt-6 rounded-lg border border-muted-background bg-background px-4 py-3 font-sans text-sm text-muted">
           No users found.
         </p>
-      )}
+      ) : null}
 
-      <div className="mt-4 flex flex-col gap-3 font-sans text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-        <span>
-          Showing {firstResult}-{lastResult} of {totalCount}
-        </span>
-        <div className="flex gap-2">
-          <form action={formAction}>
-            <input name="query" type="hidden" value={query} />
-            <button
-              className="h-10 rounded-lg border border-muted-background px-4 font-bold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!hasPreviousPage}
-              name="page"
-              type="submit"
-              value={page - 1}
-            >
-              Previous
-            </button>
-          </form>
-          <form action={formAction}>
-            <input name="query" type="hidden" value={query} />
-            <button
-              className="h-10 rounded-lg border border-muted-background px-4 font-bold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!hasNextPage}
-              name="page"
-              type="submit"
-              value={page + 1}
-            >
-              Next
-            </button>
-          </form>
+      {hasQuery && results.length > 0 ? (
+        <div className="mt-4 flex flex-col gap-2 font-sans text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            Showing {results.length} of {totalCount} matches
+          </span>
+          {totalCount > results.length ? (
+            <span>Only the first {results.length} users are shown.</span>
+          ) : null}
         </div>
-      </div>
+      ) : null}
 
       {selectedUser ? (
         <RoleEditModal
-          action={(formData) => {
-            setSelectedUser(null);
-            formAction(formData);
-          }}
+          action={updateSelectedUserRole}
           allowedRoles={allowedRoles}
           onClose={() => setSelectedUser(null)}
           page={page}
