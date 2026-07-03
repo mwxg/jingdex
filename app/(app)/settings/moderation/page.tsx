@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUserSearchPage } from "./actions";
 import { ModerationSearch } from "./moderation-search";
 
 const roleTitles = {
@@ -30,6 +31,8 @@ export default async function ModerationPage() {
     redirect("/settings/account");
   }
 
+  const initialSearchState = await getUserSearchPage();
+
   return (
     <div className="space-y-8">
       <div className="space-y-2">
@@ -38,7 +41,7 @@ export default async function ModerationPage() {
         </h1>
       </div>
 
-      <ModerationSearch />
+      <ModerationSearch initialState={initialSearchState} />
     </div>
   );
 }
