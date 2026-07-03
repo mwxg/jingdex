@@ -254,7 +254,7 @@ export function DictionarySearch() {
               className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
               name="query"
               onChange={(event) => setInputValue(event.target.value)}
-              placeholder="学习, xuexi, xue2xi2, or ㄒㄩㄝˊ"
+              placeholder="Try xuexi, xue2xi2, or ㄒㄩㄝˊ"
               type="search"
               value={inputValue}
             />
