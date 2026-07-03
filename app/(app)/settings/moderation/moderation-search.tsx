@@ -53,12 +53,16 @@ function SearchMessage({ state }: Readonly<{ state: UserSearchState }>) {
 }
 
 function SearchingStatus({ isSearching }: Readonly<{ isSearching: boolean }>) {
+  if (!isSearching) {
+    return null;
+  }
+
   return (
     <p
       aria-live="polite"
-      className="min-h-5 font-sans text-sm font-bold text-primary"
+      className="font-sans text-sm font-bold text-primary"
     >
-      {isSearching ? "Searching..." : null}
+      Searching...
     </p>
   );
 }
