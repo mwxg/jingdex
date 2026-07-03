@@ -57,6 +57,8 @@ export type TermSearchResult = {
   short_definition: string | null;
   part_of_speech: string | null;
   notes: string | null;
+  added_by: string;
+  added_by_display: string;
   is_verified: boolean;
   created_at: string;
 };
@@ -195,7 +197,7 @@ async function getTermSearchCandidates(
     const { data, error } = await supabase
       .from("terms")
       .select(
-        "id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,part_of_speech,notes,is_verified,created_at",
+        "id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,part_of_speech,notes,added_by,is_verified,created_at",
       )
       .order("simplified", { ascending: true })
       .range(offset, offset + TERM_SEARCH_CHUNK_SIZE - 1);
@@ -208,11 +210,19 @@ async function getTermSearchCandidates(
     candidates.push(...chunk);
 
     if (chunk.length < TERM_SEARCH_CHUNK_SIZE) {
-      return { candidates, error: null, limited: false };
+      return {
+        candidates: addAttributionLabels(candidates),
+        error: null,
+        limited: false,
+      };
     }
   }
 
-  return { candidates, error: null, limited: true };
+  return {
+    candidates: addAttributionLabels(candidates),
+    error: null,
+    limited: true,
+  };
 }
 
 function getGeneratedTermForms(value: string) {
@@ -227,6 +237,43 @@ function getGeneratedTermForms(value: string) {
     traditional: normalizeTextPart(toTraditionalTw(canonicalSimplified)),
     pinyin: generatedPinyin,
     zhuyin: normalizeTextPart(pinyinToZhuyin(generatedPinyin)),
+  };
+}
+
+type ModerationTermInsert = {
+  simplified: string;
+  traditional: string | null;
+  pinyin: string;
+  zhuyin: string;
+  canonical_simplified: string;
+  english_definition: string;
+  added_by: string;
+  is_verified: boolean;
+};
+
+type ModerationTermInsertResult = {
+  inserted_count: number;
+  skipped_count: number;
+};
+
+function addAttributionLabels(terms: TermSearchResult[]) {
+  return terms.map((term) => ({
+    ...term,
+    added_by_display: term.added_by || "Jingdex",
+  }));
+}
+
+async function addTermsForModeration(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  terms: ModerationTermInsert[],
+) {
+  const { data, error } = await supabase
+    .rpc("add_terms_for_moderation", { term_rows: terms })
+    .single();
+
+  return {
+    data: data as ModerationTermInsertResult | null,
+    error,
   };
 }
 
@@ -288,7 +335,7 @@ async function getAuthorizedTermsSupabaseClient() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role,username")
     .eq("id", authData.user.id)
     .maybeSingle();
 
@@ -308,6 +355,7 @@ async function getAuthorizedTermsSupabaseClient() {
   return {
     supabase,
     userId: authData.user.id,
+    addedBy: profile.role === "developer" ? "Jingdex" : profile.username,
     authorized: true,
     message: null,
   };
@@ -615,6 +663,34 @@ export async function updateTerm(formData: FormData): Promise<TermEditState> {
   return { success: `${canonicalSimplified} was updated.` };
 }
 
+export async function deleteTerm(termId: string): Promise<TermEditState> {
+  const normalizedTermId = termId.trim();
+
+  if (!normalizedTermId) {
+    return { message: "Choose a valid term to delete." };
+  }
+
+  const { supabase, authorized, message } =
+    await getAuthorizedTermsSupabaseClient();
+
+  if (!authorized) {
+    return {
+      message: message ?? "Only admins and developers can delete terms.",
+    };
+  }
+
+  const { error } = await supabase
+    .from("terms")
+    .delete()
+    .eq("id", normalizedTermId);
+
+  if (error) {
+    return { message: getErrorMessage(error, "Could not delete that term.") };
+  }
+
+  return { success: "Term deleted." };
+}
+
 export async function addSingleTerm(
   _state: TermAddState,
   formData: FormData,
@@ -627,14 +703,13 @@ export async function addSingleTerm(
 
   if (
     !simplifiedInput ||
-    !traditional ||
     !pinyinInput ||
     !zhuyin ||
     !englishDefinition
   ) {
     return {
       message:
-        "Add simplified, traditional, pinyin, zhuyin, and a definition before saving.",
+        "Add simplified, pinyin, zhuyin, and a definition before saving.",
     };
   }
 
@@ -644,7 +719,7 @@ export async function addSingleTerm(
     return { message: "Add a valid simplified term before saving." };
   }
 
-  const { supabase, userId, authorized, message } =
+  const { supabase, userId, addedBy, authorized, message } =
     await getAuthorizedTermsSupabaseClient();
 
   if (!authorized || !userId) {
@@ -680,17 +755,18 @@ export async function addSingleTerm(
     };
   }
 
-  const { error } = await supabase.from("terms").insert({
-    simplified: canonicalSimplified,
-    traditional,
-    pinyin: pinyinInput,
-    zhuyin,
-    canonical_simplified: canonicalSimplified,
-    english_definition: englishDefinition,
-    added_by: "Jingdex",
-    added_by_user_id: userId,
-    is_verified: true,
-  });
+  const { data, error } = await addTermsForModeration(supabase, [
+    {
+      simplified: canonicalSimplified,
+      traditional: traditional || null,
+      pinyin: pinyinInput,
+      zhuyin,
+      canonical_simplified: canonicalSimplified,
+      english_definition: englishDefinition,
+      added_by: addedBy ?? "Jingdex",
+      is_verified: true,
+    },
+  ]);
 
   if (error) {
     if (error.code === "23505") {
@@ -702,15 +778,23 @@ export async function addSingleTerm(
 
     if (
       error.message.includes("schema cache") ||
-      error.message.includes("canonical_simplified")
+      error.message.includes("canonical_simplified") ||
+      error.message.includes("add_terms_for_moderation")
     ) {
       return {
         message:
-          "Term duplicate checking is not installed in Supabase yet. Run the latest term canonicalization SQL, then refresh this page.",
+          "Term importing is not installed in Supabase yet. Run the latest term moderation insert SQL, then refresh this page.",
       };
     }
 
     return { message: getErrorMessage(error, "Could not add that term.") };
+  }
+
+  if (!data?.inserted_count) {
+    return {
+      skippedCount: 1,
+      success: `${canonicalSimplified} already exists. No duplicate was created.`,
+    };
   }
 
   return {
@@ -735,6 +819,7 @@ export async function addBulkTerms(
 
   const rawText = await file.text();
   const seenTerms = new Set<string>();
+  let duplicateInputCount = 0;
   const terms = rawText
     .split(/\r?\n/)
     .map(normalizeTextPart)
@@ -742,6 +827,7 @@ export async function addBulkTerms(
     .map(getGeneratedTermForms)
     .filter((term) => {
       if (!term.canonicalSimplified || seenTerms.has(term.canonicalSimplified)) {
+        duplicateInputCount += term.canonicalSimplified ? 1 : 0;
         return false;
       }
 
@@ -759,58 +845,54 @@ export async function addBulkTerms(
     };
   }
 
-  const { supabase, userId, authorized, message } =
+  const { supabase, userId, addedBy, authorized, message } =
     await getAuthorizedTermsSupabaseClient();
 
   if (!authorized || !userId) {
     return { message: message ?? "Only admins and developers can add terms." };
   }
 
-  const { data, error } = await supabase
-    .from("terms")
-    .upsert(
-      terms.map((term) => ({
-        simplified: term.simplified,
-        traditional: term.traditional,
-        pinyin: term.pinyin,
-        zhuyin: term.zhuyin,
-        canonical_simplified: term.canonicalSimplified,
-        english_definition: BULK_TERM_DEFINITION_PLACEHOLDER,
-        added_by: "Jingdex",
-        added_by_user_id: userId,
-        is_verified: true,
-      })),
-      {
-        onConflict: "canonical_simplified",
-        ignoreDuplicates: true,
-      },
-    )
-    .select("id");
+  const { data, error } = await addTermsForModeration(
+    supabase,
+    terms.map((term) => ({
+      simplified: term.simplified,
+      traditional: term.traditional,
+      pinyin: term.pinyin,
+      zhuyin: term.zhuyin,
+      canonical_simplified: term.canonicalSimplified,
+      english_definition: BULK_TERM_DEFINITION_PLACEHOLDER,
+      added_by: addedBy ?? "Jingdex",
+      is_verified: true,
+    })),
+  );
 
   if (error) {
     if (
       error.message.includes("schema cache") ||
-      error.message.includes("canonical_simplified")
+      error.message.includes("canonical_simplified") ||
+      error.message.includes("add_terms_for_moderation")
     ) {
       return {
         message:
-          "Term duplicate checking is not installed in Supabase yet. Run the latest term canonicalization SQL, then refresh this page.",
+          "Term importing is not installed in Supabase yet. Run the latest term moderation insert SQL, then refresh this page.",
       };
     }
 
     return { message: getErrorMessage(error, "Could not import that file.") };
   }
 
-  const insertedCount = data?.length ?? 0;
-  const skippedCount = terms.length - insertedCount;
+  const insertedCount = data?.inserted_count ?? 0;
+  const existingDuplicateCount =
+    data?.skipped_count ?? terms.length - insertedCount;
+  const skippedCount = existingDuplicateCount + duplicateInputCount;
 
   return {
     insertedCount,
     skippedCount,
-    success: `Imported ${insertedCount} ${insertedCount === 1 ? "term" : "terms"}${
-      skippedCount > 0
-        ? ` and skipped ${skippedCount} existing ${skippedCount === 1 ? "term" : "terms"}`
-        : ""
-    }.`,
+    success: `Added ${insertedCount} ${
+      insertedCount === 1 ? "word" : "words"
+    }. ${skippedCount} duplicate ${
+      skippedCount === 1 ? "word was" : "words were"
+    } not added.`,
   };
 }

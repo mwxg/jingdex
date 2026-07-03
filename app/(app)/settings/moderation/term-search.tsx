@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState, useTransition } from "react";
 import {
+  deleteTerm,
   getTermSearchPage,
   updateTerm,
   type TermEditState,
@@ -125,14 +126,18 @@ function EditTextArea({
 
 function TermEditModal({
   editState,
+  isDeleting,
   isSaving,
   onClose,
+  onDelete,
   onSubmit,
   term,
 }: Readonly<{
   editState: TermEditState;
+  isDeleting: boolean;
   isSaving: boolean;
   onClose: () => void;
+  onDelete: (term: TermSearchResult) => void;
   onSubmit: (formData: FormData) => void;
   term: TermSearchResult;
 }>) {
@@ -153,6 +158,12 @@ function TermEditModal({
           </h2>
           <p className="font-chinese text-2xl font-bold text-foreground">
             {term.simplified}
+          </p>
+          <p className="font-sans text-sm text-muted">
+            Added by{" "}
+            <span className="font-bold text-foreground">
+              {term.added_by_display}
+            </span>
           </p>
         </div>
 
@@ -216,21 +227,32 @@ function TermEditModal({
             Verified
           </label>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
-              className="h-10 rounded-lg border border-muted-background px-4 font-sans text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
-              onClick={onClose}
+              className="h-10 rounded-lg border border-danger/40 px-4 font-sans text-sm font-bold text-danger transition-colors hover:border-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isDeleting || isSaving}
+              onClick={() => onDelete(term)}
               type="button"
             >
-              Cancel
+              {isDeleting ? "Deleting" : "Delete"}
             </button>
-            <button
-              className="h-10 rounded-lg bg-primary px-4 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isSaving}
-              type="submit"
-            >
-              {isSaving ? "Saving" : "Save"}
-            </button>
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 rounded-lg border border-muted-background px-4 font-sans text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isDeleting || isSaving}
+                onClick={onClose}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="h-10 rounded-lg bg-primary px-4 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isDeleting || isSaving}
+                type="submit"
+              >
+                {isSaving ? "Saving" : "Save"}
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -293,6 +315,7 @@ export function TermSearch({
   const [editState, setEditState] = useState<TermEditState>(initialEditState);
   const [inputValue, setInputValue] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [isDeleting, startDeleting] = useTransition();
   const [isSaving, startSaving] = useTransition();
   const [selectedTerm, setSelectedTerm] = useState<TermSearchResult | null>(
     null,
@@ -332,6 +355,24 @@ export function TermSearch({
   function editTerm(formData: FormData) {
     startSaving(async () => {
       const nextEditState = await updateTerm(formData);
+      setEditState(nextEditState);
+
+      if (!nextEditState.message) {
+        setSelectedTerm(null);
+        searchTerms(query || inputValue, page);
+      }
+    });
+  }
+
+  function deleteSelectedTerm(term: TermSearchResult) {
+    const confirmed = window.confirm(`Delete ${term.simplified}?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    startDeleting(async () => {
+      const nextEditState = await deleteTerm(term.id);
       setEditState(nextEditState);
 
       if (!nextEditState.message) {
@@ -450,8 +491,10 @@ export function TermSearch({
       {selectedTerm ? (
         <TermEditModal
           editState={editState}
+          isDeleting={isDeleting}
           isSaving={isSaving}
           onClose={() => setSelectedTerm(null)}
+          onDelete={deleteSelectedTerm}
           onSubmit={editTerm}
           term={selectedTerm}
         />

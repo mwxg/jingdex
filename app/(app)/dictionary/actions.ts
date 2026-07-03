@@ -22,6 +22,8 @@ export type DictionaryTerm = {
   short_definition: string | null;
   part_of_speech: string | null;
   notes: string | null;
+  added_by: string;
+  added_by_display: string;
 };
 
 export type DictionarySearchState = {
@@ -128,6 +130,13 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+function addAttributionLabels(terms: DictionaryTerm[]) {
+  return terms.map((term) => ({
+    ...term,
+    added_by_display: term.added_by || "Jingdex",
+  }));
+}
+
 async function getDictionaryCandidates() {
   const supabase = await createClient();
   const candidates: DictionaryTerm[] = [];
@@ -140,7 +149,7 @@ async function getDictionaryCandidates() {
     const { data, error } = await supabase
       .from("terms")
       .select(
-        "id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,part_of_speech,notes",
+        "id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,part_of_speech,notes,added_by",
       )
       .order("pinyin", { ascending: true })
       .range(offset, offset + TERM_SEARCH_CHUNK_SIZE - 1);
@@ -153,11 +162,19 @@ async function getDictionaryCandidates() {
     candidates.push(...chunk);
 
     if (chunk.length < TERM_SEARCH_CHUNK_SIZE) {
-      return { candidates, error: null, limited: false };
+      return {
+        candidates: addAttributionLabels(candidates),
+        error: null,
+        limited: false,
+      };
     }
   }
 
-  return { candidates, error: null, limited: true };
+  return {
+    candidates: addAttributionLabels(candidates),
+    error: null,
+    limited: true,
+  };
 }
 
 export async function searchDictionary(

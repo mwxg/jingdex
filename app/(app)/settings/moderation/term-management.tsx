@@ -49,7 +49,7 @@ function TextInput({
         className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
         name={name}
         placeholder={placeholder}
-        required={required}
+        required={name === "traditional" ? false : required}
         type="text"
       />
     </label>

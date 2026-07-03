@@ -128,6 +128,10 @@ function TermDetailsModal({
               <dd className="mt-1 text-foreground">{term.part_of_speech}</dd>
             </div>
           ) : null}
+          <div>
+            <dt className="text-sm font-bold text-muted">Added by</dt>
+            <dd className="mt-1 text-foreground">{term.added_by_display}</dd>
+          </div>
           {term.short_definition ? (
             <div>
               <dt className="text-sm font-bold text-muted">
