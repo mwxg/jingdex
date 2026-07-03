@@ -22,12 +22,15 @@ export default async function SettingsLayout({
 
   return (
     <main className="flex-1 bg-background text-foreground">
-      <div className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[15rem_1fr] lg:px-8">
+      <div className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-[88rem] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)] lg:px-8">
         <aside className="border-b border-muted-background pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-6">
-          <SettingsNav role={role ?? undefined} roleLabel={roleLabel ?? undefined} />
+          <SettingsNav
+            role={role ?? undefined}
+            roleLabel={roleLabel ?? undefined}
+          />
         </aside>
 
-        <div>{children}</div>
+        <div className="min-w-0">{children}</div>
       </div>
     </main>
   );
