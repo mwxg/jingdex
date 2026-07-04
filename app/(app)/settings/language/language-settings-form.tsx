@@ -139,12 +139,12 @@ export function LanguageSettingsForm({
             options={[
               {
                 label: "Simplified",
-                preview: "学习",
+                preview: "简体",
                 value: "simplified",
               },
               {
                 label: "Traditional",
-                preview: "學習",
+                preview: "繁體",
                 value: "traditional",
               },
             ]}
@@ -158,12 +158,12 @@ export function LanguageSettingsForm({
             options={[
               {
                 label: "Pinyin",
-                preview: "xuexi",
+                preview: "pīn yīn",
                 value: "pinyin",
               },
               {
                 label: "Zhuyin",
-                preview: "ㄒㄩㄝˊ ㄒㄧˊ",
+                preview: "ㄓㄨˋ ㄧㄣ",
                 value: "zhuyin",
               },
             ]}
