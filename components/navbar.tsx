@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { AccountMenu } from "./account-menu";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -39,24 +40,19 @@ export async function Navbar() {
           />
         </Link>
 
-        <div className="flex max-w-full items-center gap-1 overflow-x-auto font-sans text-sm font-bold text-muted">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="flex h-10 shrink-0 items-center px-3 transition-colors hover:text-primary"
-            >
-              {link.label}
-            </Link>
-          ))}
-          {profile ? (
-            <Link
-              href="/settings/account"
-              className="ml-2 flex h-10 max-w-32 items-center truncate rounded-lg border border-muted-background bg-background px-3 text-foreground transition-colors hover:border-primary hover:text-primary sm:max-w-48"
-            >
-              {profile.username}
-            </Link>
-          ) : null}
+        <div className="flex min-w-0 max-w-full items-center gap-1 font-sans text-sm font-bold text-muted">
+          <div className="flex min-w-0 items-center gap-1 overflow-x-auto">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex h-10 shrink-0 items-center px-3 transition-colors hover:text-primary"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+          {profile ? <AccountMenu username={profile.username} /> : null}
         </div>
       </nav>
     </header>
