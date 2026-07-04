@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/dictionary", label: "Dictionary" },
+  { href: "/community", label: "Community" },
   { href: "/demo", label: "Demo" },
 ];
 
@@ -22,7 +23,7 @@ export async function Navbar() {
 
   return (
     <header className="border-b border-muted-background bg-surface">
-      <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+      <nav className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-3 sm:flex-nowrap sm:py-0">
         <Link
           href="/"
           className="flex items-center"
@@ -38,12 +39,12 @@ export async function Navbar() {
           />
         </Link>
 
-        <div className="flex h-full items-center gap-1 font-sans text-sm font-bold text-muted">
+        <div className="flex max-w-full items-center gap-1 overflow-x-auto font-sans text-sm font-bold text-muted">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="flex h-full items-center px-3 transition-colors hover:text-primary"
+              className="flex h-10 shrink-0 items-center px-3 transition-colors hover:text-primary"
             >
               {link.label}
             </Link>
