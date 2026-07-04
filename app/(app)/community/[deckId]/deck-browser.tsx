@@ -79,9 +79,9 @@ export function DeckBrowser({
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="rounded-lg bg-muted-background px-5 py-8">
-          <p className="font-sans text-sm font-bold text-muted">
+          {/* <p className="font-sans text-sm font-bold text-muted">
             {preferredPronunciationLabel}
-          </p>
+          </p> */}
           <h2 className="mt-3 font-chinese text-7xl font-bold leading-none text-foreground sm:text-8xl">
             {forms.primary}
           </h2>
