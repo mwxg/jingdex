@@ -30,11 +30,11 @@ function CommunityDeckCard({
               <p className="font-chinese text-6xl font-bold leading-none text-foreground sm:text-7xl">
                 {forms.primary}
               </p>
-              {forms.secondary ? (
+              {/* {forms.secondary ? (
                 <p className="mt-3 font-chinese text-xl text-muted">
                   {forms.secondary}
                 </p>
-              ) : null}
+              ) : null} */}
             </div>
           ) : (
             <p className="font-sans text-sm font-bold text-muted">
