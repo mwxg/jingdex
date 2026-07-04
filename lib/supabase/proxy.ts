@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasPermission } from "@/lib/auth/roles";
 
-const PUBLIC_PATHS = new Set(["/login"]);
+const PUBLIC_PATHS = new Set(["/login", "/auth/callback"]);
+const LOGGED_IN_REDIRECT_PATHS = new Set(["/login"]);
 const MODERATOR_PATHS = new Set(["/demo"]);
 
 function matchesPath(pathname: string, paths: ReadonlySet<string>) {
@@ -80,7 +81,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (profile && isPublicPath) {
+  if (profile && LOGGED_IN_REDIRECT_PATHS.has(request.nextUrl.pathname)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/";
     redirectUrl.search = "";

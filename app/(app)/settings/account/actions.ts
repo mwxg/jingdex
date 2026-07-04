@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { validateUsername, type AuthFormState } from "@/lib/auth/validation";
 import { createClient } from "@/lib/supabase/server";
@@ -41,6 +42,18 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+async function getSiteOrigin() {
+  const headerStore = await headers();
+  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
+  const proto = headerStore.get("x-forwarded-proto") ?? "https";
+
+  if (!host) {
+    return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  }
+
+  return `${proto}://${host}`;
+}
+
 async function getCurrentUser() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
@@ -73,7 +86,10 @@ export async function sendPasswordChangeEmail(
     return { message: "Enter the email address for this account." };
   }
 
-  const { error } = await supabase.auth.resetPasswordForEmail(user.email);
+  const origin = await getSiteOrigin();
+  const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+  });
 
   if (error) {
     return {
