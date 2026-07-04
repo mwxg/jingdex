@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+
+const siteName = process.env.SITE_NAME;
+
 import {
   Figtree,
   Noto_Sans_SC,
@@ -31,7 +34,7 @@ const notoSansTc = Noto_Sans_TC({
 });
 
 export const metadata: Metadata = {
-  title: "Jingdex",
+  title: `${siteName}`,
   description: "Learn Chinese with Jingdex.",
   icons: {
     icon: "/logos/logo_square.svg",
