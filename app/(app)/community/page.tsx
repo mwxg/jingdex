@@ -59,9 +59,9 @@ function CommunityDeckCard({
             <h2 className="line-clamp-2 font-heading text-2xl font-semibold leading-tight text-foreground">
               {deck.title}
             </h2>
-            <p className="mt-1 font-sans text-sm font-bold text-primary">
+            {/* <p className="mt-1 font-sans text-sm font-bold text-primary">
               {getPronunciationLabel(deck.first_term, preferences)}
-            </p>
+            </p> */}
           </div>
           <p className="line-clamp-3 min-h-18 font-sans text-sm leading-6 text-muted">
             {deck.description || "No description added."}
