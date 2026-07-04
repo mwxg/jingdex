@@ -1,6 +1,20 @@
 import { DictionarySearch } from "./dictionary-search";
+import { normalizeLanguagePreferences } from "@/lib/preferences/language";
+import { createClient } from "@/lib/supabase/server";
 
-export default function DictionaryPage() {
+export default async function DictionaryPage() {
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getClaims();
+  const userId = authData?.claims?.sub ?? null;
+  const { data: profile } = userId
+    ? await supabase
+        .from("profiles")
+        .select("preferred_character_set,preferred_pronunciation")
+        .eq("id", userId)
+        .maybeSingle()
+    : { data: null };
+  const preferences = normalizeLanguagePreferences(profile);
+
   return (
     <main className="flex-1 bg-background px-6 py-10 text-foreground">
       <div className="mx-auto max-w-6xl space-y-8">
@@ -16,7 +30,7 @@ export default function DictionaryPage() {
           </h3>
         </header>
 
-        <DictionarySearch />
+        <DictionarySearch preferences={preferences} />
       </div>
     </main>
   );

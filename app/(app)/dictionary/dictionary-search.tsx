@@ -1,6 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import {
+  getChineseDisplayForms,
+  type LanguagePreferences,
+} from "@/lib/preferences/language";
 import { getPartOfSpeechLabel } from "@/lib/terms/parts-of-speech";
 import {
   FormEvent,
@@ -80,11 +84,15 @@ function SearchingStatus({ isSearching }: Readonly<{ isSearching: boolean }>) {
 
 function TermDetailsModal({
   onClose,
+  preferences,
   term,
 }: Readonly<{
   onClose: () => void;
+  preferences: LanguagePreferences;
   term: DictionaryTerm;
 }>) {
+  const forms = getChineseDisplayForms(term, preferences.characterSet);
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/25 px-6 py-6">
       <div
@@ -116,11 +124,11 @@ function TermDetailsModal({
             className="mt-2 font-chinese text-5xl font-bold text-foreground"
             id="dictionary-term-title"
           >
-            {term.simplified}
+            {forms.primary}
           </h2>
-          {term.traditional && term.traditional !== term.simplified ? (
+          {forms.secondary ? (
             <p className="mt-1 font-chinese text-2xl text-muted">
-              {term.traditional}
+              {forms.secondary}
             </p>
           ) : null}
         </div>
@@ -174,11 +182,15 @@ function TermDetailsModal({
 
 function TermRow({
   onSelect,
+  preferences,
   term,
 }: Readonly<{
   onSelect: (term: DictionaryTerm) => void;
+  preferences: LanguagePreferences;
   term: DictionaryTerm;
 }>) {
+  const forms = getChineseDisplayForms(term, preferences.characterSet);
+
   return (
     <li>
       <button
@@ -188,11 +200,11 @@ function TermRow({
       >
         <span className="min-w-0">
           <span className="font-chinese text-3xl font-bold text-foreground">
-            {term.simplified}
+            {forms.primary}
           </span>
-          {term.traditional && term.traditional !== term.simplified ? (
+          {forms.secondary ? (
             <span className="ml-3 font-chinese text-lg text-muted">
-              {term.traditional}
+              {forms.secondary}
             </span>
           ) : null}
         </span>
@@ -210,7 +222,11 @@ function TermRow({
   );
 }
 
-export function DictionarySearch() {
+export function DictionarySearch({
+  preferences,
+}: Readonly<{
+  preferences: LanguagePreferences;
+}>) {
   const [state, setState] = useState<DictionarySearchState>(initialState);
   const [inputValue, setInputValue] = useState("");
   const [sortValue, setSortValue] = useState<DictionarySort>("pinyin-asc");
@@ -327,6 +343,7 @@ export function DictionarySearch() {
                 <TermRow
                   key={term.id}
                   onSelect={setSelectedTerm}
+                  preferences={preferences}
                   term={term}
                 />
               ))}
@@ -338,6 +355,7 @@ export function DictionarySearch() {
       {selectedTerm ? (
         <TermDetailsModal
           onClose={() => setSelectedTerm(null)}
+          preferences={preferences}
           term={selectedTerm}
         />
       ) : null}

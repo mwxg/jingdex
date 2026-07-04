@@ -27,6 +27,7 @@ type SettingsNavProps = Readonly<{
 export function SettingsNav({ role, roleLabel }: SettingsNavProps) {
   const pathname = usePathname();
   const isAccountActive = pathname === "/settings/account";
+  const isLanguageActive = pathname === "/settings/language";
   const isRoleActive = pathname?.startsWith("/settings/moderation") ?? false;
 
   return (
@@ -41,6 +42,17 @@ export function SettingsNav({ role, roleLabel }: SettingsNavProps) {
         }`}
       >
         Account settings
+      </Link>
+      <Link
+        href="/settings/language"
+        aria-current={isLanguageActive ? "page" : undefined}
+        className={`block rounded-lg px-4 py-3 transition-colors ${
+          isLanguageActive
+            ? "bg-primary text-text-light hover:bg-primary/90"
+            : "text-muted hover:bg-muted-background hover:text-primary"
+        }`}
+      >
+        Language settings
       </Link>
       {role && roleLabel ? (
         <Link

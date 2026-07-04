@@ -7,6 +7,10 @@ import {
   useState,
   useTransition,
 } from "react";
+import {
+  getChineseDisplayForms,
+  type LanguagePreferences,
+} from "@/lib/preferences/language";
 import { PartOfSpeechSelect } from "./part-of-speech-select";
 import {
   deleteTerm,
@@ -150,6 +154,7 @@ function TermEditModal({
   onClose,
   onDelete,
   onSubmit,
+  preferences,
   term,
 }: Readonly<{
   editState: TermEditState;
@@ -158,8 +163,11 @@ function TermEditModal({
   onClose: () => void;
   onDelete: (term: TermSearchResult) => void;
   onSubmit: (formData: FormData) => void;
+  preferences: LanguagePreferences;
   term: TermSearchResult;
 }>) {
+  const forms = getChineseDisplayForms(term, preferences.characterSet);
+
   return (
     <div
       aria-labelledby="term-edit-title"
@@ -176,7 +184,7 @@ function TermEditModal({
             Edit term
           </h2>
           <p className="font-chinese text-2xl font-bold text-foreground">
-            {term.simplified}
+            {forms.primary}
           </p>
           <p className="font-sans text-sm text-muted">
             Added by{" "}
@@ -279,24 +287,28 @@ function TermRow({
   canEditTerms,
   gridColumns,
   onEdit,
+  preferences,
   term,
 }: Readonly<{
   canEditTerms: boolean;
   gridColumns: string;
   onEdit: (term: TermSearchResult) => void;
+  preferences: LanguagePreferences;
   term: TermSearchResult;
 }>) {
+  const forms = getChineseDisplayForms(term, preferences.characterSet);
+
   return (
     <li
       className={`${gridColumns} grid items-center gap-4 px-4 py-4 font-sans text-sm`}
     >
       <div className="min-w-0">
         <p className="truncate font-chinese text-2xl font-bold text-foreground">
-          {term.simplified}
+          {forms.primary}
         </p>
-        {term.traditional && term.traditional !== term.simplified ? (
+        {forms.secondary ? (
           <p className="truncate font-chinese text-sm text-muted">
-            {term.traditional}
+            {forms.secondary}
           </p>
         ) : null}
       </div>
@@ -325,7 +337,11 @@ function TermRow({
 
 export function TermSearch({
   canEditTerms,
-}: Readonly<{ canEditTerms: boolean }>) {
+  preferences,
+}: Readonly<{
+  canEditTerms: boolean;
+  preferences: LanguagePreferences;
+}>) {
   const [state, setState] = useState<TermSearchState>(initialState);
   const [editState, setEditState] = useState<TermEditState>(initialEditState);
   const [inputValue, setInputValue] = useState("");
@@ -381,7 +397,8 @@ export function TermSearch({
   }
 
   function deleteSelectedTerm(term: TermSearchResult) {
-    const confirmed = window.confirm(`Delete ${term.simplified}?`);
+    const forms = getChineseDisplayForms(term, preferences.characterSet);
+    const confirmed = window.confirm(`Delete ${forms.primary}?`);
 
     if (!confirmed) {
       return;
@@ -459,6 +476,7 @@ export function TermSearch({
                     setEditState(initialEditState);
                     setSelectedTerm(nextTerm);
                   }}
+                  preferences={preferences}
                   term={term}
                 />
               ))}
@@ -507,6 +525,7 @@ export function TermSearch({
           onClose={() => setSelectedTerm(null)}
           onDelete={deleteSelectedTerm}
           onSubmit={editTerm}
+          preferences={preferences}
           term={selectedTerm}
         />
       ) : null}
