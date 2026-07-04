@@ -28,4 +28,5 @@ The user has a setting for whether they prefer simplified/traditional and zhuyin
 Only edit necessary files for the task.
 
 
+
 If there is anything I need to do on my end to complete a task, such as run an sql query in supabase, let me know.
