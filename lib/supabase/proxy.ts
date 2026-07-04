@@ -1,7 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { hasPermission } from "@/lib/auth/roles";
 
 const PUBLIC_PATHS = new Set(["/login"]);
+const MODERATOR_PATHS = new Set(["/demo"]);
+
+function matchesPath(pathname: string, paths: ReadonlySet<string>) {
+  return [...paths].some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
+}
 
 function redirectWithNext(request: NextRequest, pathname: string) {
   const redirectUrl = request.nextUrl.clone();
@@ -42,6 +50,7 @@ export async function updateSession(request: NextRequest) {
   const userId = data?.claims?.sub ?? null;
   const isLoggedIn = !error && Boolean(userId);
   const isPublicPath = PUBLIC_PATHS.has(request.nextUrl.pathname);
+  const requiresModerator = matchesPath(request.nextUrl.pathname, MODERATOR_PATHS);
 
   if (!isLoggedIn && !isPublicPath) {
     return redirectWithNext(request, "/login");
@@ -53,12 +62,19 @@ export async function updateSession(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id,role")
     .eq("id", userId)
     .maybeSingle();
 
   if (!profile && !isPublicPath) {
     return redirectWithNext(request, "/login");
+  }
+
+  if (requiresModerator && !hasPermission(profile.role, "accessModerationPage")) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/settings/account";
+    redirectUrl.search = "";
+    return NextResponse.redirect(redirectUrl);
   }
 
   if (profile && isPublicPath) {
