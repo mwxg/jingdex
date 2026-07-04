@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { FormEvent, useState, useTransition } from "react";
 import type {
   CharacterSetPreference,
   LanguagePreferences,
@@ -94,11 +94,31 @@ export function LanguageSettingsForm({
 }: Readonly<{
   preferences: LanguagePreferences;
 }>) {
-  const [state, action] = useActionState(updateLanguageSettings, {});
+  const [state, setState] = useState<LanguageSettingsState>({});
+  const [isPending, startTransition] = useTransition();
   const [characterSet, setCharacterSet] =
     useState<CharacterSetPreference>(preferences.characterSet);
   const [pronunciation, setPronunciation] =
     useState<PronunciationPreference>(preferences.pronunciation);
+
+  function submitSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(async () => {
+      const nextState = await updateLanguageSettings(state, formData);
+
+      if (nextState.characterSet) {
+        setCharacterSet(nextState.characterSet);
+      }
+
+      if (nextState.pronunciation) {
+        setPronunciation(nextState.pronunciation);
+      }
+
+      setState(nextState);
+    });
+  }
 
   return (
     <div className="space-y-8">
@@ -109,7 +129,7 @@ export function LanguageSettingsForm({
       </div>
 
       <section className="rounded-lg border border-muted-background bg-surface p-6">
-        <form action={action} className="space-y-6">
+        <form className="space-y-6" onSubmit={submitSettings}>
           <Message state={state} />
 
           <OptionSwitch<CharacterSetPreference>
@@ -151,10 +171,11 @@ export function LanguageSettingsForm({
           />
 
           <button
-            className="h-11 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90"
+            className="h-11 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isPending}
             type="submit"
           >
-            Save language settings
+            {isPending ? "Saving" : "Save language settings"}
           </button>
         </form>
       </section>

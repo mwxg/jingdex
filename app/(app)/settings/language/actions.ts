@@ -4,11 +4,15 @@ import { revalidatePath } from "next/cache";
 import {
   isCharacterSetPreference,
   isPronunciationPreference,
+  type CharacterSetPreference,
+  type PronunciationPreference,
 } from "@/lib/preferences/language";
 import { createClient } from "@/lib/supabase/server";
 
 export type LanguageSettingsState = {
+  characterSet?: CharacterSetPreference;
   message?: string;
+  pronunciation?: PronunciationPreference;
   success?: string;
 };
 
@@ -75,16 +79,24 @@ export async function updateLanguageSettings(
       error.message.includes("preferred_pronunciation")
     ) {
       return {
+        characterSet,
         message:
           "Language settings are not installed in Supabase yet. Run the latest language preferences SQL, then refresh this page.",
+        pronunciation,
       };
     }
 
     return {
+      characterSet,
       message: getErrorMessage(error, "Could not update language settings."),
+      pronunciation,
     };
   }
 
   revalidatePath("/", "layout");
-  return { success: "Language settings saved." };
+  return {
+    characterSet,
+    pronunciation,
+    success: "Language settings saved.",
+  };
 }
