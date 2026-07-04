@@ -3,6 +3,7 @@
 import Image from "next/image";
 import {
   FormEvent,
+  KeyboardEvent,
   useActionState,
   useEffect,
   useRef,
@@ -193,7 +194,11 @@ function MiniTermSearch({
     });
   }
 
-  function submitSearch(event: FormEvent<HTMLFormElement>) {
+  function submitSearch(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Enter") {
+      return;
+    }
+
     event.preventDefault();
     searchTerms(inputValue);
   }
@@ -208,20 +213,19 @@ function MiniTermSearch({
 
   return (
     <div className="space-y-3">
-      <form onSubmit={submitSearch}>
-        <label className="space-y-2">
-          <span className="block font-sans text-sm font-bold text-foreground">
-            Add terms
-          </span>
-          <input
-            className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
-            onChange={(event) => setInputValue(event.target.value)}
-            placeholder="Search hanzi, pinyin, or zhuyin"
-            type="search"
-            value={inputValue}
-          />
-        </label>
-      </form>
+      <label className="space-y-2">
+        <span className="block font-sans text-sm font-bold text-foreground">
+          Add terms
+        </span>
+        <input
+          className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
+          onChange={(event) => setInputValue(event.target.value)}
+          onKeyDown={submitSearch}
+          placeholder="Search hanzi, pinyin, or zhuyin"
+          type="search"
+          value={inputValue}
+        />
+      </label>
 
       {isSearching ? (
         <p

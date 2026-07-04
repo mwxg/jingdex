@@ -7,17 +7,6 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { getCommunityDecks, type CommunityDeckSummary } from "./data";
 
-function getPronunciationLabel(
-  term: CommunityDeckSummary["first_term"],
-  preferences: LanguagePreferences,
-) {
-  if (!term) {
-    return "No terms yet";
-  }
-
-  return preferences.pronunciation === "zhuyin" ? term.zhuyin : term.pinyin;
-}
-
 function CommunityDeckCard({
   deck,
   preferences,
