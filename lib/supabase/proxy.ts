@@ -70,7 +70,10 @@ export async function updateSession(request: NextRequest) {
     return redirectWithNext(request, "/login");
   }
 
-  if (requiresModerator && !hasPermission(profile.role, "accessModerationPage")) {
+  if (
+    requiresModerator &&
+    !hasPermission(profile?.role, "accessModerationPage")
+  ) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/settings/account";
     redirectUrl.search = "";
