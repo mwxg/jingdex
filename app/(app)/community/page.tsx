@@ -30,7 +30,7 @@ function CommunityDeckCard({
     : null;
 
   return (
-    <li className="w-[18rem] shrink-0 sm:w-[22rem]">
+    <li className="w-[18rem] shrink-0 sm:w-88">
       <Link
         className="block h-full rounded-lg border border-muted-background bg-surface p-5 transition-colors hover:border-primary focus:border-primary focus:outline-none"
         href={`/community/${deck.id}`}
