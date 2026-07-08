@@ -56,3 +56,15 @@ body {
   color: var(--foreground);
   font-family: var(--font-family-body);
 }
+
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  caret-color: var(--foreground);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 35%, transparent);
+  color: var(--foreground);
+}
