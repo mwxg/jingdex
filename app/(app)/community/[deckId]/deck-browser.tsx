@@ -24,6 +24,7 @@ export function DeckBrowser({
   preferences: LanguagePreferences;
 }>) {
   const [termIndex, setTermIndex] = useState(0);
+  const [cardNumberInput, setCardNumberInput] = useState("1");
   const term = deck.terms[termIndex] ?? null;
 
   if (!term) {
@@ -46,30 +47,70 @@ export function DeckBrowser({
     preferences.pronunciation === "zhuyin" ? "Zhuyin" : "Pinyin";
   const secondaryPronunciationLabel =
     preferences.pronunciation === "zhuyin" ? "Pinyin" : "Zhuyin";
+  const termCount = deck.terms.length;
+
+  function selectTerm(nextIndex: number) {
+    setTermIndex(nextIndex);
+    setCardNumberInput(String(nextIndex + 1));
+  }
+
+  function submitCardNumber() {
+    const trimmedInput = cardNumberInput.trim();
+
+    if (!/^\d+$/.test(trimmedInput)) {
+      setCardNumberInput(String(termIndex + 1));
+      return;
+    }
+
+    const nextCardNumber = Number(trimmedInput);
+
+    if (nextCardNumber < 1 || nextCardNumber > termCount) {
+      setCardNumberInput(String(termIndex + 1));
+      return;
+    }
+
+    selectTerm(nextCardNumber - 1);
+  }
 
   return (
     <section className="rounded-lg border border-muted-background bg-surface p-6">
       <div className="flex flex-col gap-4 border-b border-muted-background pb-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="font-sans text-sm font-bold uppercase text-primary">
-          Term {termIndex + 1} of {deck.terms.length}
-        </p>
+        <form
+          aria-label="Select card number"
+          className="flex items-center gap-1 font-sans text-sm font-bold text-primary"
+          onSubmit={(event) => {
+            event.preventDefault();
+            submitCardNumber();
+          }}
+        >
+          <label className="sr-only" htmlFor="community-card-number">
+            Card number
+          </label>
+          <input
+            className="h-9 w-14 rounded-lg border border-muted-background bg-surface px-2 text-center font-sans text-sm font-bold text-primary outline-none transition-colors focus:border-primary"
+            id="community-card-number"
+            inputMode="numeric"
+            onBlur={submitCardNumber}
+            onChange={(event) => setCardNumberInput(event.target.value)}
+            type="text"
+            value={cardNumberInput}
+          />
+          <span>/</span>
+          <span>{termCount}</span>
+        </form>
         <div className="flex gap-3">
           <button
             className="h-11 rounded-lg border border-muted-background px-4 font-sans text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
             disabled={termIndex === 0}
-            onClick={() => setTermIndex((current) => Math.max(0, current - 1))}
+            onClick={() => selectTerm(Math.max(0, termIndex - 1))}
             type="button"
           >
             Previous
           </button>
           <button
             className="h-11 rounded-lg bg-primary px-4 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={termIndex === deck.terms.length - 1}
-            onClick={() =>
-              setTermIndex((current) =>
-                Math.min(deck.terms.length - 1, current + 1),
-              )
-            }
+            disabled={termIndex === termCount - 1}
+            onClick={() => selectTerm(Math.min(termCount - 1, termIndex + 1))}
             type="button"
           >
             Next
