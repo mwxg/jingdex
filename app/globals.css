@@ -60,9 +60,9 @@ body {
 input,
 textarea,
 select,
-[contenteditable="true"] {
+/* [contenteditable="true"] {
   caret-color: var(--foreground);
-}
+} */
 
 ::selection {
   background: color-mix(in srgb, var(--primary) 35%, transparent);
