@@ -193,6 +193,56 @@ export async function changeUsername(
   return { success: "Username changed." };
 }
 
+export async function deleteOwnAccount(
+  _state: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const confirmation = getRequiredString(formData, "confirmation");
+  const password = getRequiredString(formData, "password");
+
+  if (confirmation !== "DELETE") {
+    return { message: "Type DELETE exactly to confirm account deletion." };
+  }
+
+  if (!password) {
+    return { message: "Enter your password to delete your account." };
+  }
+
+  const { supabase, user, error: userError } = await getCurrentUser();
+
+  if (userError || !user?.id || !user.email) {
+    return {
+      message: getErrorMessage(
+        userError,
+        "Sign in again before deleting your account.",
+      ),
+    };
+  }
+
+  const { error: passwordError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password,
+  });
+
+  if (passwordError) {
+    return {
+      message: getErrorMessage(passwordError, "Password could not be verified."),
+    };
+  }
+
+  const { error } = await supabase.rpc("delete_own_account");
+
+  if (error) {
+    return {
+      message: getErrorMessage(error, "Could not delete your account."),
+    };
+  }
+
+  await supabase.auth.signOut();
+  revalidatePath("/", "layout");
+  redirect("/login");
+}
+
 export async function signOutFromSettings() {
   const supabase = await createClient();
   await supabase.auth.signOut();

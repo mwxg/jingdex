@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import type { AuthFormState } from "@/lib/auth/validation";
 import {
   changeUsername,
+  deleteOwnAccount,
   sendPasswordChangeEmail,
   signOutFromSettings,
 } from "./actions";
@@ -84,6 +85,7 @@ export function AccountSettingsForm({
     {},
   );
   const [usernameState, usernameAction] = useActionState(changeUsername, {});
+  const [deleteState, deleteAction] = useActionState(deleteOwnAccount, {});
 
   return (
     <div className="flex min-h-full flex-col gap-8">
@@ -147,6 +149,41 @@ export function AccountSettingsForm({
               </div>
             </div>
             <SubmitButton>Change username</SubmitButton>
+          </form>
+        </section>
+
+        <section className="rounded-lg border border-danger/40 bg-surface p-6">
+          <form action={deleteAction} className="space-y-5">
+            <div className="space-y-2">
+              <h2 className="font-heading text-2xl font-semibold text-danger">
+                Delete account
+              </h2>
+              <p className="max-w-2xl font-sans text-sm leading-6 text-muted">
+                Permanently delete your account and learning data. Community
+                contributions may remain, but they will no longer be linked to
+                your profile. This action cannot be undone.
+              </p>
+            </div>
+            <Message state={deleteState} />
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field
+                autoComplete="off"
+                label="Type DELETE to confirm"
+                name="confirmation"
+              />
+              <Field
+                autoComplete="current-password"
+                label="Password"
+                name="password"
+                type="password"
+              />
+            </div>
+            <button
+              type="submit"
+              className="h-11 w-fit rounded-lg bg-danger px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-danger/90"
+            >
+              Permanently delete account
+            </button>
           </form>
         </section>
       </div>
