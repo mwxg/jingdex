@@ -1,69 +1,10 @@
 import Link from "next/link";
 import {
-  getChineseDisplayForms,
   normalizeLanguagePreferences,
-  type LanguagePreferences,
 } from "@/lib/preferences/language";
 import { createClient } from "@/lib/supabase/server";
-import { getCommunityDecks, type CommunityDeckSummary } from "./data";
-
-function CommunityDeckCard({
-  deck,
-  preferences,
-}: Readonly<{
-  deck: CommunityDeckSummary;
-  preferences: LanguagePreferences;
-}>) {
-  const forms = deck.first_term
-    ? getChineseDisplayForms(deck.first_term, preferences.characterSet)
-    : null;
-
-  return (
-    <li className="hidden min-w-0 first:block sm:nth-[2]:block lg:nth-[3]:block">
-      <Link
-        className="block h-full rounded-lg border border-muted-background bg-surface p-5 transition-colors hover:border-primary focus:border-primary focus:outline-none"
-        href={`/community/${deck.id}`}
-      >
-        <div className="flex min-h-40 items-center justify-center rounded-lg bg-muted-background px-4 py-6">
-          {forms ? (
-            <div className="text-center">
-              <p className="font-chinese text-6xl font-bold leading-none text-foreground sm:text-7xl">
-                {forms.primary}
-              </p>
-              {/* {forms.secondary ? (
-                <p className="mt-3 font-chinese text-xl text-muted">
-                  {forms.secondary}
-                </p>
-              ) : null} */}
-            </div>
-          ) : (
-            <p className="font-sans text-sm font-bold text-muted">
-              Empty deck
-            </p>
-          )}
-        </div>
-
-        <div className="mt-5 space-y-3">
-          <div>
-            <h2 className="line-clamp-2 font-heading text-2xl font-semibold leading-tight text-foreground">
-              {deck.title}
-            </h2>
-            {/* <p className="mt-1 font-sans text-sm font-bold text-primary">
-              {getPronunciationLabel(deck.first_term, preferences)}
-            </p> */}
-          </div>
-          <p className="line-clamp-3 min-h-18 font-sans text-sm leading-6 text-muted">
-            {deck.description || "No description added."}
-          </p>
-          <div className="flex items-center justify-between gap-3 border-t border-muted-background pt-3 font-sans text-sm text-muted">
-            <span>{deck.term_count} terms</span>
-            <span className="truncate">By {deck.created_by || "Jingdex"}</span>
-          </div>
-        </div>
-      </Link>
-    </li>
-  );
-}
+import { getCommunityDecks } from "./data";
+import { CommunityDeckCard } from "./deck-card";
 
 export default async function CommunityPage() {
   const supabase = await createClient();
@@ -107,17 +48,24 @@ export default async function CommunityPage() {
             aria-labelledby="community-decks-title"
             className="rounded-lg border border-muted-background bg-surface p-4 sm:p-6"
           >
-            <div className="mb-4">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2
                 className="font-heading text-2xl font-semibold text-foreground"
                 id="community-decks-title"
               >
                 Featured decks
               </h2>
+              <Link
+                className="font-sans text-sm font-bold text-primary transition-colors hover:text-foreground focus:outline-none focus-visible:underline"
+                href="/community/jingdex"
+              >
+                View all decks by Jingdex
+              </Link>
             </div>
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {deckState.decks.map((deck) => (
                 <CommunityDeckCard
+                  className="hidden first:block sm:nth-[2]:block lg:nth-[3]:block"
                   deck={deck}
                   key={deck.id}
                   preferences={preferences}

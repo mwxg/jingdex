@@ -73,7 +73,7 @@ function getJoinedTerm(row: DeckTermRow) {
   return row.terms;
 }
 
-export async function getCommunityDecks() {
+async function getJingdexDeckSummaries(query = "", randomLimit?: number) {
   const supabase = await createClient();
   const { data: registryRows, error: registryError } = await supabase
     .from("jingdex_decks")
@@ -111,9 +111,17 @@ export async function getCommunityDecks() {
     };
   }
 
-  const decks = [...((deckRows ?? []) as DeckRow[])]
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 3);
+  const normalizedQuery = query.trim().normalize("NFC").toLocaleLowerCase();
+  let decks = ((deckRows ?? []) as DeckRow[]).filter((deck) =>
+    normalizedQuery
+      ? deck.title.toLocaleLowerCase().includes(normalizedQuery) ||
+        (deck.description ?? "").toLocaleLowerCase().includes(normalizedQuery)
+      : true,
+  );
+
+  decks = randomLimit
+    ? [...decks].sort(() => Math.random() - 0.5).slice(0, randomLimit)
+    : [...decks].sort((a, b) => a.title.localeCompare(b.title));
 
   if (decks.length === 0) {
     return { decks: [], message: null };
@@ -161,6 +169,14 @@ export async function getCommunityDecks() {
     }),
     message: null,
   };
+}
+
+export async function getCommunityDecks() {
+  return getJingdexDeckSummaries("", 3);
+}
+
+export async function getAllJingdexDecks(query = "") {
+  return getJingdexDeckSummaries(query);
 }
 
 export async function getCommunityDeck(deckId: string) {
