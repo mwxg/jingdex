@@ -17,6 +17,7 @@ export type AppPermission =
   | "accessModerationPage"
   | "searchUsers"
   | "manageCommunityDecks"
+  | "reviewTermSubmissions"
   | "manageTerms"
   | "manageModeratorRole"
   | "manageAdminRole";
@@ -28,6 +29,7 @@ export const rolePermissions: Readonly<Record<AppRole, readonly AppPermission[]>
     "accessModerationPage",
     "searchUsers",
     "manageCommunityDecks",
+    "reviewTermSubmissions",
     "manageTerms",
     "manageModeratorRole",
   ],
@@ -35,6 +37,7 @@ export const rolePermissions: Readonly<Record<AppRole, readonly AppPermission[]>
     "accessModerationPage",
     "searchUsers",
     "manageCommunityDecks",
+    "reviewTermSubmissions",
     "manageTerms",
     "manageModeratorRole",
     "manageAdminRole",
