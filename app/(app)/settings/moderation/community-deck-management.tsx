@@ -224,7 +224,7 @@ function MiniTermSearch({
           className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
           onChange={(event) => setInputValue(event.target.value)}
           onKeyDown={submitSearch}
-          placeholder="Search hanzi, pinyin, or zhuyin"
+          placeholder="Search hanzi, pinyin, zhuyin, or definition"
           type="search"
           value={inputValue}
         />

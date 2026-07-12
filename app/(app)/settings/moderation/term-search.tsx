@@ -437,7 +437,7 @@ export function TermSearch({
         <div>
           <label className="flex-1 space-y-2">
             <span className="block font-sans text-sm font-bold text-foreground">
-              Hanzi, pinyin, or zhuyin
+              Hanzi, pinyin, zhuyin, or definition
             </span>
             <input
               className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"

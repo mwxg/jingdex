@@ -198,6 +198,11 @@ function termMatchesSearch(term: TermSearchResult, query: string) {
   const storedPinyinLetters = normalizePinyinLetters(term.pinyin);
   const storedPinyinNumbers = normalizePinyinNumbers(term.pinyin);
   const storedZhuyin = normalizeZhuyinSearch(term.zhuyin);
+  const definitionQuery = rawQuery.toLocaleLowerCase();
+  const definitionValues = [
+    term.short_definition,
+    term.english_definition,
+  ].map((value) => normalizeTextPart(value ?? "").toLocaleLowerCase());
 
   return (
     hanziValues.some(
@@ -211,7 +216,8 @@ function termMatchesSearch(term: TermSearchResult, query: string) {
     (pinyinNumberQuery.length > 0 &&
       /[0-5]/.test(pinyinNumberQuery) &&
       storedPinyinNumbers.includes(pinyinNumberQuery)) ||
-    (zhuyinQuery.length > 0 && storedZhuyin.includes(zhuyinQuery))
+    (zhuyinQuery.length > 0 && storedZhuyin.includes(zhuyinQuery)) ||
+    definitionValues.some((value) => value.includes(definitionQuery))
   );
 }
 
