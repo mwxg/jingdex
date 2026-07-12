@@ -53,7 +53,7 @@ export default async function CommunityPage() {
                 className="font-heading text-2xl font-semibold text-foreground"
                 id="community-decks-title"
               >
-                Featured decks
+                Decks by Jingdex
               </h2>
               <Link
                 className="font-sans text-sm font-bold text-primary transition-colors hover:text-foreground focus:outline-none focus-visible:underline"
