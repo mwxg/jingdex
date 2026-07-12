@@ -142,6 +142,18 @@ function normalizeTextPart(value: string) {
   return value.trim().normalize("NFC");
 }
 
+function getTermIdentity(
+  simplified: string,
+  traditional: string | null,
+  pinyin: string,
+) {
+  return JSON.stringify([
+    normalizeTextPart(simplified),
+    normalizeTextPart(traditional ?? ""),
+    normalizeTextPart(pinyin),
+  ]);
+}
+
 function getNormalizedString(formData: FormData, name: string) {
   const value = formData.get(name);
 
@@ -729,7 +741,7 @@ export async function updateTerm(formData: FormData): Promise<TermEditState> {
     if (error.code === "23505") {
       return {
         message:
-          "Another term already uses that simplified form. Choose a unique term.",
+          "Another term already uses that simplified, traditional, and pinyin combination.",
       };
     }
 
@@ -813,11 +825,18 @@ export async function addSingleTerm(
     return { message: message ?? "Only admins and developers can add terms." };
   }
 
-  const { data: existingTerm, error: existingError } = await supabase
+  let existingTermQuery = supabase
     .from("terms")
     .select("id")
     .eq("canonical_simplified", canonicalSimplified)
-    .maybeSingle();
+    .eq("pinyin", pinyinInput);
+
+  existingTermQuery = traditional
+    ? existingTermQuery.eq("traditional", traditional)
+    : existingTermQuery.is("traditional", null);
+
+  const { data: existingTerm, error: existingError } =
+    await existingTermQuery.maybeSingle();
 
   if (existingError) {
     if (
@@ -838,7 +857,7 @@ export async function addSingleTerm(
   if (existingTerm) {
     return {
       skippedCount: 1,
-      success: `${canonicalSimplified} already exists. No duplicate was created.`,
+      success: `${canonicalSimplified} with that traditional form and pinyin already exists. No duplicate was created.`,
     };
   }
 
@@ -860,7 +879,7 @@ export async function addSingleTerm(
     if (error.code === "23505") {
       return {
         skippedCount: 1,
-        success: `${canonicalSimplified} already exists. No duplicate was created.`,
+        success: `${canonicalSimplified} with that traditional form and pinyin already exists. No duplicate was created.`,
       };
     }
 
@@ -881,7 +900,7 @@ export async function addSingleTerm(
   if (!data?.inserted_count) {
     return {
       skippedCount: 1,
-      success: `${canonicalSimplified} already exists. No duplicate was created.`,
+      success: `${canonicalSimplified} with that traditional form and pinyin already exists. No duplicate was created.`,
     };
   }
 
@@ -914,12 +933,18 @@ export async function addBulkTerms(
     .filter(Boolean)
     .map(getGeneratedTermForms)
     .filter((term) => {
-      if (!term.canonicalSimplified || seenTerms.has(term.canonicalSimplified)) {
+      const identity = getTermIdentity(
+        term.canonicalSimplified,
+        term.traditional,
+        term.pinyin,
+      );
+
+      if (!term.canonicalSimplified || seenTerms.has(identity)) {
         duplicateInputCount += term.canonicalSimplified ? 1 : 0;
         return false;
       }
 
-      seenTerms.add(term.canonicalSimplified);
+      seenTerms.add(identity);
       return true;
     });
 
