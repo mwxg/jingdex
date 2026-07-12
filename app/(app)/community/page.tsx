@@ -19,7 +19,7 @@ function CommunityDeckCard({
     : null;
 
   return (
-    <li className="w-[18rem] shrink-0 sm:w-88">
+    <li className="hidden min-w-0 first:block sm:nth-[2]:block lg:nth-[3]:block">
       <Link
         className="block h-full rounded-lg border border-muted-background bg-surface p-5 transition-colors hover:border-primary focus:border-primary focus:outline-none"
         href={`/community/${deck.id}`}
@@ -107,18 +107,15 @@ export default async function CommunityPage() {
             aria-labelledby="community-decks-title"
             className="rounded-lg border border-muted-background bg-surface p-4 sm:p-6"
           >
-            <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div className="mb-4">
               <h2
                 className="font-heading text-2xl font-semibold text-foreground"
                 id="community-decks-title"
               >
-                All decks
+                Featured decks
               </h2>
-              <p className="font-sans text-sm text-muted">
-                Scroll sideways to browse.
-              </p>
             </div>
-            <ul className="flex gap-4 overflow-x-auto pb-3">
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {deckState.decks.map((deck) => (
                 <CommunityDeckCard
                   deck={deck}

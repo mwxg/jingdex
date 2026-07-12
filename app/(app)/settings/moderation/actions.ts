@@ -1049,6 +1049,21 @@ export async function createCommunityDeck(
   }
 
   const deckId = deck.id as string;
+  const { error: registryError } = await supabase
+    .from("jingdex_decks")
+    .insert({ deck_id: deckId });
+
+  if (registryError) {
+    await supabase.from("decks").delete().eq("id", deckId);
+
+    return {
+      message: getErrorMessage(
+        registryError,
+        "Could not add that deck to the Jingdex deck list.",
+      ),
+    };
+  }
+
   const { error: deckTermsError } = await supabase.from("deck_terms").insert(
     orderedTermIds.map((termId, index) => ({
       deck_id: deckId,

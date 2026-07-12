@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "backfill:jingdex-decks": "node --env-file=.env.local scripts/backfill-jingdex-decks.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

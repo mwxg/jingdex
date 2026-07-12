@@ -75,13 +75,34 @@ function getJoinedTerm(row: DeckTermRow) {
 
 export async function getCommunityDecks() {
   const supabase = await createClient();
+  const { data: registryRows, error: registryError } = await supabase
+    .from("jingdex_decks")
+    .select("deck_id");
+
+  if (registryError) {
+    return {
+      decks: [],
+      message: getErrorMessage(
+        registryError,
+        "Could not load the Jingdex deck list.",
+      ),
+    };
+  }
+
+  const registeredDeckIds = (registryRows ?? []).map(
+    ({ deck_id }) => deck_id as string,
+  );
+
+  if (registeredDeckIds.length === 0) {
+    return { decks: [], message: null };
+  }
+
   const { data: deckRows, error: decksError } = await supabase
     .from("decks")
     .select("id,title,description,created_by,created_at")
     .eq("visibility", "community")
     .eq("publication_status", "approved")
-    .order("created_at", { ascending: false })
-    .limit(24);
+    .in("id", registeredDeckIds);
 
   if (decksError) {
     return {
@@ -90,7 +111,9 @@ export async function getCommunityDecks() {
     };
   }
 
-  const decks = (deckRows ?? []) as DeckRow[];
+  const decks = [...((deckRows ?? []) as DeckRow[])]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 3);
 
   if (decks.length === 0) {
     return { decks: [], message: null };
