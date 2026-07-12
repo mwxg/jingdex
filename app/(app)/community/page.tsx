@@ -33,7 +33,7 @@ export default async function CommunityPage() {
             Community decks
           </h1>
           <h3 className="font-heading text-3xl font-semibold leading-none text-muted">
-            Browse shared Chinese vocabulary sets from Jingdex.
+            Browse Chinese vocabulary decks created by our community.
           </h3>
         </header>
 
