@@ -19,9 +19,11 @@ import {
   deleteCommunityDeck,
   getCommunityDeckSearchPage,
   getTermSearchPage,
+  updateCommunityDeck,
   type CommunityDeckAddState,
   type CommunityDeckSearchResult,
   type CommunityDeckSearchState,
+  type CommunityDeckEditState,
   type TermSearchResult,
   type TermSearchState,
 } from "./actions";
@@ -37,6 +39,7 @@ const initialDeckSearchState: CommunityDeckSearchState = {
   results: [],
   query: "",
 };
+const initialDeckEditState: CommunityDeckEditState = {};
 
 function DeckMessage({
   state,
@@ -306,12 +309,10 @@ function DeckDeleteMessage({
 
 function CommunityDeckRow({
   deck,
-  isDeleting,
-  onDelete,
+  onEdit,
 }: Readonly<{
   deck: CommunityDeckSearchResult;
-  isDeleting: boolean;
-  onDelete: (deck: CommunityDeckSearchResult) => void;
+  onEdit: (deck: CommunityDeckSearchResult) => void;
 }>) {
   return (
     <li className="grid gap-3 px-4 py-4 font-sans text-sm sm:grid-cols-[minmax(12rem,1fr)_minmax(12rem,1.2fr)_8rem_6rem] sm:items-center">
@@ -328,23 +329,85 @@ function CommunityDeckRow({
         {deck.publication_status}
       </span>
       <button
-        className="h-9 rounded-lg border border-danger/40 px-3 font-sans text-xs font-bold text-danger transition-colors hover:border-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
-        disabled={isDeleting}
-        onClick={() => onDelete(deck)}
+        className="h-9 rounded-lg border border-muted-background px-3 font-sans text-xs font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
+        onClick={() => onEdit(deck)}
         type="button"
       >
-        {isDeleting ? "Deleting" : "Delete"}
+        Edit
       </button>
     </li>
   );
 }
 
-function CommunityDeckDeletion() {
+function CommunityDeckEditModal({
+  deck,
+  editState,
+  isDeleting,
+  isSaving,
+  onClose,
+  onDelete,
+  onSubmit,
+  preferences,
+}: Readonly<{
+  deck: CommunityDeckSearchResult;
+  editState: CommunityDeckEditState;
+  isDeleting: boolean;
+  isSaving: boolean;
+  onClose: () => void;
+  onDelete: (deck: CommunityDeckSearchResult) => void;
+  onSubmit: (formData: FormData) => void;
+  preferences: LanguagePreferences;
+}>) {
+  const [title, setTitle] = useState(deck.title);
+  const [description, setDescription] = useState(deck.description ?? "");
+  const [selectedTerms, setSelectedTerms] = useState(deck.terms);
+  const selectedTermIds = new Set(selectedTerms.map((term) => term.id));
+
+  return (
+    <div aria-labelledby="deck-edit-title" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 px-4 py-6" role="dialog">
+      <div className="max-h-full w-full max-w-3xl overflow-y-auto rounded-lg border border-muted-background bg-surface p-6 shadow-lg">
+        <h2 id="deck-edit-title" className="font-heading text-2xl font-semibold text-foreground">Edit community deck</h2>
+        <p className="mt-1 font-sans text-sm text-muted">Created by <span className="font-bold text-foreground">{deck.created_by || "Jingdex"}</span></p>
+        <form action={onSubmit} className="mt-5 space-y-5">
+          <input name="deckId" type="hidden" value={deck.id} />
+          <DeckMessage state={editState} />
+          <FieldInput label="Title" name="title" onChange={setTitle} placeholder="Deck title" value={title} />
+          <FieldTextArea label="Description" name="description" onChange={setDescription} placeholder="Deck description" value={description} />
+          <label className="space-y-2">
+            <span className="block font-sans text-sm font-bold text-foreground">Publication status</span>
+            <select className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none focus:border-primary" defaultValue={deck.publication_status} name="publicationStatus">
+              <option value="draft">Draft</option><option value="under_review">Under review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="archived">Archived</option>
+            </select>
+          </label>
+          <MiniTermSearch onAdd={(term) => setSelectedTerms((terms) => terms.some((item) => item.id === term.id) ? terms : [...terms, term])} preferences={preferences} selectedTermIds={selectedTermIds} />
+          <div className="space-y-2">
+            <span className="font-sans text-sm font-bold text-foreground">Terms ({selectedTerms.length})</span>
+            <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto rounded-lg border border-muted-background p-3">
+              {selectedTerms.map((term) => <SelectedTermPill key={term.id} onRemove={(termId) => setSelectedTerms((terms) => terms.filter((item) => item.id !== termId))} preferences={preferences} term={term} />)}
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <button className="h-10 rounded-lg border border-danger/40 px-4 font-sans text-sm font-bold text-danger hover:border-danger hover:bg-danger/10 disabled:opacity-50" disabled={isDeleting || isSaving} onClick={() => onDelete(deck)} type="button">{isDeleting ? "Deleting" : "Delete"}</button>
+            <div className="flex justify-end gap-2">
+              <button className="h-10 rounded-lg border border-muted-background px-4 font-sans text-sm font-bold text-foreground hover:border-primary hover:text-primary" disabled={isDeleting || isSaving} onClick={onClose} type="button">Cancel</button>
+              <button className="h-10 rounded-lg bg-primary px-4 font-sans text-sm font-bold text-text-light disabled:opacity-50" disabled={isDeleting || isSaving} type="submit">{isSaving ? "Saving" : "Save"}</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function CommunityDeckEditing({ preferences }: Readonly<{ preferences: LanguagePreferences }>) {
   const [state, setState] =
     useState<CommunityDeckSearchState>(initialDeckSearchState);
   const [inputValue, setInputValue] = useState("");
   const [isPending, startTransition] = useTransition();
-  const [deletingDeckId, setDeletingDeckId] = useState<string | null>(null);
+  const [selectedDeck, setSelectedDeck] = useState<CommunityDeckSearchResult | null>(null);
+  const [editState, setEditState] = useState<CommunityDeckEditState>(initialDeckEditState);
+  const [isDeleting, startDeleting] = useTransition();
+  const [isSaving, startSaving] = useTransition();
   const requestId = useRef(0);
   const results = state.results ?? [];
   const query = state.query ?? "";
@@ -378,17 +441,27 @@ function CommunityDeckDeletion() {
       return;
     }
 
-    setDeletingDeckId(deck.id);
-    startTransition(async () => {
+    startDeleting(async () => {
       const deleteState = await deleteCommunityDeck(deck.id);
       const nextSearchState = await getCommunityDeckSearchPage(query);
-
-      setDeletingDeckId(null);
+      if (!deleteState.message) setSelectedDeck(null);
       setState({
         ...nextSearchState,
         message: deleteState.message,
         success: deleteState.success,
       });
+    });
+  }
+
+  function editDeck(formData: FormData) {
+    startSaving(async () => {
+      const nextEditState = await updateCommunityDeck(formData);
+      setEditState(nextEditState);
+      if (!nextEditState.message) {
+        setSelectedDeck(null);
+        const nextSearchState = await getCommunityDeckSearchPage(query || inputValue);
+        setState({ ...nextSearchState, success: nextEditState.success });
+      }
     });
   }
 
@@ -405,7 +478,7 @@ function CommunityDeckDeletion() {
       <form className="space-y-5" onSubmit={submitSearch}>
         <div className="space-y-2">
           <h2 className="font-heading text-2xl font-semibold text-foreground">
-            Community deck deletion
+            Community deck management
           </h2>
         </div>
 
@@ -441,15 +514,14 @@ function CommunityDeckDeletion() {
               <span>Deck</span>
               <span>Description</span>
               <span>Status</span>
-              <span>Delete</span>
+              <span>Edit</span>
             </div>
             <ul className="divide-y divide-muted-background">
               {results.map((deck) => (
                 <CommunityDeckRow
                   deck={deck}
-                  isDeleting={deletingDeckId === deck.id}
                   key={deck.id}
-                  onDelete={removeDeck}
+                  onEdit={(nextDeck) => { setEditState(initialDeckEditState); setSelectedDeck(nextDeck); }}
                 />
               ))}
             </ul>
@@ -462,6 +534,7 @@ function CommunityDeckDeletion() {
           No community decks found.
         </p>
       ) : null}
+      {selectedDeck ? <CommunityDeckEditModal deck={selectedDeck} editState={editState} isDeleting={isDeleting} isSaving={isSaving} onClose={() => setSelectedDeck(null)} onDelete={removeDeck} onSubmit={editDeck} preferences={preferences} /> : null}
     </section>
   );
 }
@@ -579,7 +652,7 @@ export function CommunityDeckManagement({
         </form>
       </section>
 
-      <CommunityDeckDeletion />
+      <CommunityDeckEditing preferences={preferences} />
     </>
   );
 }

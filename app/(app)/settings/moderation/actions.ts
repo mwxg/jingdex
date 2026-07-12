@@ -97,6 +97,7 @@ export type CommunityDeckSearchResult = {
   created_by: string;
   publication_status: string;
   created_at: string;
+  terms: TermSearchResult[];
 };
 
 export type CommunityDeckSearchState = {
@@ -104,6 +105,11 @@ export type CommunityDeckSearchState = {
   success?: string;
   results?: CommunityDeckSearchResult[];
   query?: string;
+};
+
+export type CommunityDeckEditState = {
+  message?: string;
+  success?: string;
 };
 
 function getRequiredString(formData: FormData, name: string) {
@@ -1111,7 +1117,7 @@ export async function getCommunityDeckSearchPage(
   const { data, error } = await supabase
     .from("decks")
     .select(
-      "id,title,description,created_by,publication_status,created_at",
+      "id,title,description,created_by,publication_status,created_at,deck_terms(position,terms(id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by,is_verified,created_at))",
     )
     .eq("visibility", "community")
     .ilike("title", `%${normalizedQuery}%`)
@@ -1126,10 +1132,110 @@ export async function getCommunityDeckSearchPage(
     };
   }
 
+  const results = (data ?? []).map((deck) => ({
+    ...deck,
+    terms: (deck.deck_terms ?? [])
+      .sort((a, b) => a.position - b.position)
+      .flatMap((deckTerm) => deckTerm.terms ?? [])
+      .map((term) => ({
+        ...term,
+        added_by_display: term.added_by || "Jingdex",
+      })),
+  }));
+
   return {
     query: normalizedQuery,
-    results: (data ?? []) as CommunityDeckSearchResult[],
+    results: results as unknown as CommunityDeckSearchResult[],
   };
+}
+
+export async function updateCommunityDeck(
+  formData: FormData,
+): Promise<CommunityDeckEditState> {
+  const deckId = getRequiredString(formData, "deckId");
+  const title = getNormalizedString(formData, "title");
+  const description = getNormalizedString(formData, "description");
+  const publicationStatus = getRequiredString(formData, "publicationStatus");
+  const allowedStatuses = new Set([
+    "draft",
+    "under_review",
+    "approved",
+    "rejected",
+    "archived",
+  ]);
+  const termIds = Array.from(
+    new Set(
+      formData
+        .getAll("termIds")
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  );
+
+  if (!deckId || !title || !description) {
+    return { message: "Add a title and description before saving." };
+  }
+  if (!allowedStatuses.has(publicationStatus)) {
+    return { message: "Choose a valid publication status." };
+  }
+  if (termIds.length === 0 || termIds.length > 500) {
+    return { message: "Community decks must contain between 1 and 500 terms." };
+  }
+
+  const { supabase, userId, authorized, message } =
+    await getAuthorizedCommunityDecksSupabaseClient();
+  if (!authorized || !userId) {
+    return { message: message ?? "Only admins and developers can edit community decks." };
+  }
+
+  const [{ data: deck, error: deckError }, { data: terms, error: termsError }] =
+    await Promise.all([
+      supabase
+        .from("decks")
+        .select("id")
+        .eq("id", deckId)
+        .eq("visibility", "community")
+        .maybeSingle(),
+      supabase.from("terms").select("id").in("id", termIds),
+    ]);
+  if (deckError || !deck) {
+    return { message: getErrorMessage(deckError, "That community deck could not be found.") };
+  }
+  if (termsError || (terms ?? []).length !== termIds.length) {
+    return { message: getErrorMessage(termsError, "One or more selected terms could not be found.") };
+  }
+
+  const { error: updateError } = await supabase
+    .from("decks")
+    .update({
+      title,
+      description,
+      publication_status: publicationStatus,
+      reviewed_at: publicationStatus === "approved" ? new Date().toISOString() : null,
+      reviewed_by_user_id: publicationStatus === "approved" ? userId : null,
+    })
+    .eq("id", deckId)
+    .eq("visibility", "community");
+  if (updateError) {
+    return { message: getErrorMessage(updateError, "Could not update that community deck.") };
+  }
+
+  const { error: deleteTermsError } = await supabase
+    .from("deck_terms")
+    .delete()
+    .eq("deck_id", deckId);
+  if (deleteTermsError) {
+    return { message: getErrorMessage(deleteTermsError, "Could not update the deck terms.") };
+  }
+  const { error: insertTermsError } = await supabase.from("deck_terms").insert(
+    termIds.map((termId, position) => ({ deck_id: deckId, term_id: termId, position })),
+  );
+  if (insertTermsError) {
+    return { message: getErrorMessage(insertTermsError, "Could not update the deck terms.") };
+  }
+
+  return { success: `${title} was updated.` };
 }
 
 export async function deleteCommunityDeck(
