@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { hasPermission } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { AccountMenu } from "./account-menu";
 
@@ -17,7 +18,7 @@ export async function Navbar() {
   const { data: profile } = userId
     ? await supabase
         .from("profiles")
-        .select("username")
+        .select("username,role")
         .eq("id", userId)
         .maybeSingle()
     : { data: null };
@@ -42,15 +43,21 @@ export async function Navbar() {
 
         <div className="flex min-w-0 max-w-full items-center gap-1 font-sans text-sm font-bold text-muted">
           <div className="flex min-w-0 items-center gap-1 overflow-x-auto">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex h-10 shrink-0 items-center px-3 transition-colors hover:text-primary"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks
+              .filter(
+                (link) =>
+                  link.href !== "/demo" ||
+                  hasPermission(profile?.role, "accessModerationPage"),
+              )
+              .map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex h-10 shrink-0 items-center px-3 transition-colors hover:text-primary"
+                >
+                  {link.label}
+                </Link>
+              ))}
           </div>
           {profile ? <AccountMenu username={profile.username} /> : null}
         </div>
