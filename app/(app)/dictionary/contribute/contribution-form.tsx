@@ -45,7 +45,7 @@ export function ContributionForm() {
       <ActionMessage state={state} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Simplified" name="simplified" value={simplified} onChange={setSimplified} />
-        <Field label="Traditional" name="traditional" required={false} value={traditional} onChange={setTraditional} />
+        <Field label="Traditional (optional)" name="traditional" required={false} value={traditional} onChange={setTraditional} />
         <Field label="Pinyin" name="pinyin" value={pinyin} onChange={setPinyin} />
         <Field label="Zhuyin" name="zhuyin" value={zhuyin} onChange={setZhuyin} />
         <PartOfSpeechSelect />
