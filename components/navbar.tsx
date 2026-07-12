@@ -5,7 +5,7 @@ import { AccountMenu } from "./account-menu";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/dictionary", label: "Dictionary" },
+  { href: "/dictionary/search", label: "Dictionary" },
   { href: "/community", label: "Community" },
   { href: "/demo", label: "Demo" },
 ];

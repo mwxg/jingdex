@@ -1,0 +1,77 @@
+"use client";
+
+import { useActionState, useEffect, useState } from "react";
+import { getGeneratedTermForms } from "@/lib/terms/generated-forms";
+import { PartOfSpeechSelect } from "@/app/(app)/settings/moderation/part-of-speech-select";
+import { submitContribution, type ContributionActionState } from "./actions";
+
+const initialState: ContributionActionState = {};
+
+export function ActionMessage({ state }: Readonly<{ state: ContributionActionState }>) {
+  if (!state.message && !state.success) return null;
+  return (
+    <p aria-live="polite" className={`rounded-lg border px-4 py-3 font-sans text-sm font-bold ${
+      state.message
+        ? "border-danger/30 bg-danger/10 text-danger"
+        : "border-confirm/30 bg-confirm/10 text-confirm"
+    }`}>
+      {state.message ?? state.success}
+    </p>
+  );
+}
+
+const inputClass = "h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary";
+
+export function ContributionForm() {
+  const [state, action, pending] = useActionState(submitContribution, initialState);
+  const [simplified, setSimplified] = useState("");
+  const [traditional, setTraditional] = useState("");
+  const [pinyin, setPinyin] = useState("");
+  const [zhuyin, setZhuyin] = useState("");
+
+  useEffect(() => {
+    if (!simplified.trim()) return;
+    const timeout = window.setTimeout(() => {
+      const forms = getGeneratedTermForms(simplified);
+      setTraditional(forms.traditional === forms.simplified ? "" : forms.traditional);
+      setPinyin(forms.pinyin);
+      setZhuyin(forms.zhuyin);
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [simplified]);
+
+  return (
+    <form action={action} className="space-y-5">
+      <ActionMessage state={state} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Simplified" name="simplified" value={simplified} onChange={setSimplified} />
+        <Field label="Traditional" name="traditional" required={false} value={traditional} onChange={setTraditional} />
+        <Field label="Pinyin" name="pinyin" value={pinyin} onChange={setPinyin} />
+        <Field label="Zhuyin" name="zhuyin" value={zhuyin} onChange={setZhuyin} />
+        <PartOfSpeechSelect />
+      </div>
+      <label className="block space-y-2">
+        <span className="font-sans text-sm font-bold">Definition</span>
+        <textarea className="min-h-28 w-full resize-y rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans outline-none focus:border-primary" name="definition" required />
+      </label>
+      <label className="block space-y-2">
+        <span className="font-sans text-sm font-bold">Contributor notes <span className="font-normal text-muted">(optional)</span></span>
+        <textarea className="min-h-24 w-full resize-y rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans outline-none focus:border-primary" name="notes" />
+      </label>
+      <button className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light hover:bg-primary/90 disabled:opacity-60" disabled={pending} type="submit">
+        {pending ? "Submitting..." : "Submit for review"}
+      </button>
+    </form>
+  );
+}
+
+function Field({ label, name, onChange, required = true, value }: Readonly<{
+  label: string; name: string; onChange: (value: string) => void; required?: boolean; value: string;
+}>) {
+  return (
+    <label className="space-y-2">
+      <span className="block font-sans text-sm font-bold">{label}</span>
+      <input className={inputClass} name={name} onChange={(event) => onChange(event.target.value)} required={required} type="text" value={value} />
+    </label>
+  );
+}
