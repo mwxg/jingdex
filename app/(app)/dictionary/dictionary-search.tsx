@@ -20,6 +20,11 @@ import {
   type DictionarySort,
   type DictionaryTerm,
 } from "./actions";
+import { TermSearchModeButton } from "@/components/term-search-mode-button";
+import {
+  containsChineseSearchCharacters,
+  type TermSearchMode,
+} from "@/lib/terms/search-mode";
 
 const DEFINITION_PREVIEW_LIMIT = 150;
 const initialState: DictionarySearchState = {
@@ -230,6 +235,7 @@ export function DictionarySearch({
   const [state, setState] = useState<DictionarySearchState>(initialState);
   const [inputValue, setInputValue] = useState("");
   const [sortValue, setSortValue] = useState<DictionarySort>("pinyin-asc");
+  const [searchMode, setSearchMode] = useState<TermSearchMode>("all");
   const [selectedTerm, setSelectedTerm] = useState<DictionaryTerm | null>(null);
   const [isPending, startTransition] = useTransition();
   const requestId = useRef(0);
@@ -237,7 +243,7 @@ export function DictionarySearch({
   const isSearching = isPending && inputValue.trim().length > 0;
 
   const runSearch = useCallback(
-    (nextQuery: string, nextSort = sortValue) => {
+    (nextQuery: string, nextSort = sortValue, nextMode = searchMode) => {
       const currentRequestId = requestId.current + 1;
       requestId.current = currentRequestId;
 
@@ -252,14 +258,14 @@ export function DictionarySearch({
       }
 
       startTransition(async () => {
-        const nextState = await searchDictionary(nextQuery, nextSort);
+        const nextState = await searchDictionary(nextQuery, nextSort, nextMode);
 
         if (requestId.current === currentRequestId) {
           setState(nextState);
         }
       });
     },
-    [sortValue],
+    [searchMode, sortValue],
   );
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
@@ -273,7 +279,7 @@ export function DictionarySearch({
     }, 250);
 
     return () => window.clearTimeout(timeoutId);
-  }, [inputValue, runSearch, sortValue]);
+  }, [inputValue, runSearch, searchMode, sortValue]);
 
   return (
     <section className="rounded-lg border border-muted-background bg-surface p-6">
@@ -281,19 +287,32 @@ export function DictionarySearch({
         <SearchMessage state={state} />
 
         <div className="grid gap-3 lg:grid-cols-[1fr_16rem] lg:items-end">
-          <label className="space-y-2">
-            <span className="block font-sans text-sm font-bold text-foreground">
+          <div className="space-y-2">
+            <label
+              className="block font-sans text-sm font-bold text-foreground"
+              htmlFor="dictionary-query"
+            >
               Hanzi, pinyin, tone numbers, zhuyin, or definition
-            </span>
-            <input
-              className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
-              name="query"
-              onChange={(event) => setInputValue(event.target.value)}
-              placeholder="Try xuexi, xue2xi2, or ㄒㄩㄝˊ ㄒㄧˊ"
-              type="search"
-              value={inputValue}
-            />
-          </label>
+            </label>
+            <div className="flex gap-2">
+              <input
+                className="h-12 min-w-0 flex-1 rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
+                id="dictionary-query"
+                name="query"
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setInputValue(nextValue);
+                  if (containsChineseSearchCharacters(nextValue)) {
+                    setSearchMode("chinese");
+                  }
+                }}
+                placeholder="Try xuexi, xue2xi2, or ㄒㄩㄝˊ ㄒㄧˊ"
+                type="search"
+                value={inputValue}
+              />
+              <TermSearchModeButton mode={searchMode} onChange={setSearchMode} />
+            </div>
+          </div>
 
           <label className="space-y-2">
             <span className="block font-sans text-sm font-bold text-foreground">

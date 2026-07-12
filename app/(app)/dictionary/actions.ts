@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { type PartOfSpeech } from "@/lib/terms/parts-of-speech";
 import OpenCC from "opencc-js";
 import { convert } from "pinyin-pro";
+import { type TermSearchMode } from "@/lib/terms/search-mode";
 
 const DICTIONARY_MAX_RESULTS = 100;
 const TERM_SEARCH_CHUNK_SIZE = 1000;
@@ -70,7 +71,11 @@ function normalizeZhuyinSearch(value: string) {
   return normalizeLoose(value).replace(/[ˊˇˋ˙]/g, "");
 }
 
-function termMatchesSearch(term: DictionaryTerm, query: string) {
+function termMatchesSearch(
+  term: DictionaryTerm,
+  query: string,
+  mode: TermSearchMode,
+) {
   const rawQuery = normalizeTextPart(query);
   const looseQuery = normalizeLoose(rawQuery);
   const simplifiedQuery = normalizeLoose(toSimplified(rawQuery));
@@ -93,7 +98,7 @@ function termMatchesSearch(term: DictionaryTerm, query: string) {
     term.english_definition,
   ].map((value) => normalizeTextPart(value ?? "").toLocaleLowerCase());
 
-  return (
+  const matchesChinese =
     hanziValues.some(
       (value) =>
         value.includes(looseQuery) ||
@@ -105,9 +110,14 @@ function termMatchesSearch(term: DictionaryTerm, query: string) {
     (pinyinNumberQuery.length > 0 &&
       /[0-5]/.test(pinyinNumberQuery) &&
       storedPinyinNumbers.includes(pinyinNumberQuery)) ||
-    (zhuyinQuery.length > 0 && storedZhuyin.includes(zhuyinQuery)) ||
-    definitionValues.some((value) => value.includes(definitionQuery))
+    (zhuyinQuery.length > 0 && storedZhuyin.includes(zhuyinQuery));
+  const matchesEnglish = definitionValues.some((value) =>
+    value.includes(definitionQuery),
   );
+
+  if (mode === "chinese") return matchesChinese;
+  if (mode === "english") return matchesEnglish;
+  return matchesChinese || matchesEnglish;
 }
 
 function compareByPinyin(left: DictionaryTerm, right: DictionaryTerm) {
@@ -187,6 +197,7 @@ async function getDictionaryCandidates() {
 export async function searchDictionary(
   query = "",
   sort: DictionarySort = "pinyin-asc",
+  mode: TermSearchMode = "all",
 ): Promise<DictionarySearchState> {
   const normalizedQuery = normalizeTextPart(query);
 
@@ -212,7 +223,7 @@ export async function searchDictionary(
   }
 
   const matches = candidates
-    .filter((term) => termMatchesSearch(term, normalizedQuery))
+    .filter((term) => termMatchesSearch(term, normalizedQuery, mode))
     .sort(compareByPinyin);
 
   return {

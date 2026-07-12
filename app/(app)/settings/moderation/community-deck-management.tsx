@@ -5,7 +5,9 @@ import {
   FormEvent,
   KeyboardEvent,
   useActionState,
+  useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   useTransition,
@@ -27,6 +29,11 @@ import {
   type TermSearchResult,
   type TermSearchState,
 } from "./actions";
+import { TermSearchModeButton } from "@/components/term-search-mode-button";
+import {
+  containsChineseSearchCharacters,
+  type TermSearchMode,
+} from "@/lib/terms/search-mode";
 
 const initialDeckState: CommunityDeckAddState = {};
 const initialSearchState: TermSearchState = {
@@ -177,25 +184,30 @@ function MiniTermSearch({
 }>) {
   const [state, setState] = useState<TermSearchState>(initialSearchState);
   const [inputValue, setInputValue] = useState("");
+  const [searchMode, setSearchMode] = useState<TermSearchMode>("all");
   const [isPending, startTransition] = useTransition();
+  const inputId = useId();
   const requestId = useRef(0);
   const results = state.results ?? [];
   const query = state.query ?? "";
   const hasQuery = query.length > 0;
   const isSearching = isPending && inputValue.trim().length > 0;
 
-  function searchTerms(nextQuery: string) {
-    const currentRequestId = requestId.current + 1;
-    requestId.current = currentRequestId;
+  const searchTerms = useCallback(
+    (nextQuery: string) => {
+      const currentRequestId = requestId.current + 1;
+      requestId.current = currentRequestId;
 
-    startTransition(async () => {
-      const nextState = await getTermSearchPage(nextQuery, 1);
+      startTransition(async () => {
+        const nextState = await getTermSearchPage(nextQuery, 1, searchMode);
 
-      if (requestId.current === currentRequestId) {
-        setState(nextState);
-      }
-    });
-  }
+        if (requestId.current === currentRequestId) {
+          setState(nextState);
+        }
+      });
+    },
+    [searchMode],
+  );
 
   function submitSearch(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key !== "Enter") {
@@ -212,23 +224,36 @@ function MiniTermSearch({
     }, 250);
 
     return () => window.clearTimeout(timeoutId);
-  }, [inputValue]);
+  }, [inputValue, searchTerms]);
 
   return (
     <div className="space-y-3">
-      <label className="space-y-2">
-        <span className="block font-sans text-sm font-bold text-foreground">
+      <div className="space-y-2">
+        <label
+          className="block font-sans text-sm font-bold text-foreground"
+          htmlFor={inputId}
+        >
           Add terms
-        </span>
-        <input
-          className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
-          onChange={(event) => setInputValue(event.target.value)}
-          onKeyDown={submitSearch}
-          placeholder="Search hanzi, pinyin, zhuyin, or definition"
-          type="search"
-          value={inputValue}
-        />
-      </label>
+        </label>
+        <div className="flex gap-2">
+          <input
+            className="h-12 min-w-0 flex-1 rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
+            id={inputId}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              setInputValue(nextValue);
+              if (containsChineseSearchCharacters(nextValue)) {
+                setSearchMode("chinese");
+              }
+            }}
+            onKeyDown={submitSearch}
+            placeholder="Search hanzi, pinyin, zhuyin, or definition"
+            type="search"
+            value={inputValue}
+          />
+          <TermSearchModeButton mode={searchMode} onChange={setSearchMode} />
+        </div>
+      </div>
 
       {isSearching ? (
         <p
@@ -509,7 +534,7 @@ function CommunityDeckEditing({ preferences }: Readonly<{ preferences: LanguageP
 
       {hasQuery && results.length > 0 ? (
         <div className="mt-6 overflow-x-auto rounded-lg border border-muted-background">
-          <div className="min-w-192">
+          <div className="min-w-3xl">
             <div className="grid grid-cols-[minmax(12rem,1fr)_minmax(12rem,1.2fr)_8rem_6rem] items-center gap-3 border-b border-muted-background bg-muted-background px-4 py-3 font-sans text-sm font-bold text-muted">
               <span>Deck</span>
               <span>Description</span>

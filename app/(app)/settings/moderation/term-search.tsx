@@ -2,6 +2,7 @@
 
 import {
   FormEvent,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -20,6 +21,11 @@ import {
   type TermSearchResult,
   type TermSearchState,
 } from "./actions";
+import { TermSearchModeButton } from "@/components/term-search-mode-button";
+import {
+  containsChineseSearchCharacters,
+  type TermSearchMode,
+} from "@/lib/terms/search-mode";
 
 const TERMS_PER_PAGE = 20;
 const initialState: TermSearchState = {
@@ -345,6 +351,7 @@ export function TermSearch({
   const [state, setState] = useState<TermSearchState>(initialState);
   const [editState, setEditState] = useState<TermEditState>(initialEditState);
   const [inputValue, setInputValue] = useState("");
+  const [searchMode, setSearchMode] = useState<TermSearchMode>("all");
   const [isPending, startTransition] = useTransition();
   const [isDeleting, startDeleting] = useTransition();
   const [isSaving, startSaving] = useTransition();
@@ -366,18 +373,21 @@ export function TermSearch({
     : "grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_minmax(10rem,1fr)_minmax(16rem,1.6fr)_6rem]";
   const isSearching = isPending && inputValue.trim().length > 0;
 
-  function searchTerms(nextQuery: string, nextPage = 1) {
-    const currentRequestId = requestId.current + 1;
-    requestId.current = currentRequestId;
+  const searchTerms = useCallback(
+    (nextQuery: string, nextPage = 1, nextMode = searchMode) => {
+      const currentRequestId = requestId.current + 1;
+      requestId.current = currentRequestId;
 
-    startTransition(async () => {
-      const nextState = await getTermSearchPage(nextQuery, nextPage);
+      startTransition(async () => {
+        const nextState = await getTermSearchPage(nextQuery, nextPage, nextMode);
 
-      if (requestId.current === currentRequestId) {
-        setState(nextState);
-      }
-    });
-  }
+        if (requestId.current === currentRequestId) {
+          setState(nextState);
+        }
+      });
+    },
+    [searchMode],
+  );
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -421,7 +431,7 @@ export function TermSearch({
     }, 250);
 
     return () => window.clearTimeout(timeoutId);
-  }, [inputValue]);
+  }, [inputValue, searchTerms]);
 
   return (
     <section className="rounded-lg border border-muted-background bg-surface p-6">
@@ -435,19 +445,32 @@ export function TermSearch({
         <TermSearchMessage state={state} />
 
         <div>
-          <label className="flex-1 space-y-2">
-            <span className="block font-sans text-sm font-bold text-foreground">
+          <div className="flex-1 space-y-2">
+            <label
+              className="block font-sans text-sm font-bold text-foreground"
+              htmlFor="moderation-term-query"
+            >
               Hanzi, pinyin, zhuyin, or definition
-            </span>
-            <input
-              className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
-              name="query"
-              onChange={(event) => setInputValue(event.target.value)}
-              placeholder="Start typing here"
-              type="search"
-              value={inputValue}
-            />
-          </label>
+            </label>
+            <div className="flex gap-2">
+              <input
+                className="h-12 min-w-0 flex-1 rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
+                id="moderation-term-query"
+                name="query"
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setInputValue(nextValue);
+                  if (containsChineseSearchCharacters(nextValue)) {
+                    setSearchMode("chinese");
+                  }
+                }}
+                placeholder="Start typing here"
+                type="search"
+                value={inputValue}
+              />
+              <TermSearchModeButton mode={searchMode} onChange={setSearchMode} />
+            </div>
+          </div>
         </div>
 
         <SearchingStatus isSearching={isSearching} />
