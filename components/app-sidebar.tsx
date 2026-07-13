@@ -49,17 +49,22 @@ export function AppSidebar({ hasAccount, canAccessDemo }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="App sections" className="space-y-6 font-sans text-sm">
+    <nav aria-label="App sections" className="font-sans text-sm">
       {sections.map((section) => {
         if (section.requiresAccount && !hasAccount) return null;
         if (section.requiresDemoAccess && !canAccessDemo) return null;
 
         return (
-          <section aria-labelledby={`sidebar-${section.label.toLowerCase().replace(" ", "-")}`} key={section.label}>
+          <section
+            aria-labelledby={`sidebar-${section.label.toLowerCase().replace(" ", "-")}`}
+            className="border-b border-muted-background py-5 first:pt-0 last:border-b-0 last:pb-0"
+            key={section.label}
+          >
             <h2
-              className="mb-2 px-4 text-xs font-bold uppercase tracking-wider text-muted"
+              className="mb-2 flex items-center gap-2 px-4 text-xs font-bold uppercase tracking-wider text-foreground"
               id={`sidebar-${section.label.toLowerCase().replace(" ", "-")}`}
             >
+              <span aria-hidden="true" className="h-3 w-1 rounded-full bg-accent" />
               {section.label}
             </h2>
             <ul className="space-y-1">
