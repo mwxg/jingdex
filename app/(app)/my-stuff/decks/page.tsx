@@ -5,7 +5,7 @@ export default function MyDecksPage() {
         <p className="font-sans text-sm font-bold uppercase text-primary">My stuff</p>
         <h1 className="font-heading text-5xl font-semibold leading-none sm:text-6xl">My Decks</h1>
         <p className="max-w-3xl font-heading text-2xl font-semibold text-muted sm:text-3xl">
-          Your personal flashcard decks will live here.
+          Create decks for any category you can dream of.
         </p>
       </header>
 
