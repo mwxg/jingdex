@@ -45,18 +45,18 @@ export function ContributionForm() {
       <ActionMessage state={state} />
       <div className="grid gap-4 lg:grid-cols-2">
         <Field label="Simplified" name="simplified" value={simplified} onChange={setSimplified} />
-        <Field label="Traditional (optional)" name="traditional" required={false} value={traditional} onChange={setTraditional} />
+        <Field label="Traditional" name="traditional" required={false} value={traditional} onChange={setTraditional} />
         <Field label="Pinyin" name="pinyin" value={pinyin} onChange={setPinyin} />
         <Field label="Zhuyin" name="zhuyin" value={zhuyin} onChange={setZhuyin} />
         <PartOfSpeechSelect />
       </div>
       <label className="block space-y-2">
         <span className="font-sans text-sm font-bold">Definition</span>
-        <textarea className="min-h-28 w-full resize-y rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans outline-none focus:border-primary" name="definition" required />
+        <textarea placeholder="Separate significantly different meanings by newlines." className="min-h-28 w-full resize-y rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans outline-none focus:border-primary" name="definition" required />
       </label>
       <label className="block space-y-2">
         <span className="font-sans text-sm font-bold">Contributor notes <span className="font-normal text-muted">(optional)</span></span>
-        <textarea className="min-h-24 w-full resize-y rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans outline-none focus:border-primary" name="notes" />
+        <textarea placeholder="Add your own note to the word (extra context, fun facts, etc). Will be visible to everyone once the term is accepted." className="min-h-24 w-full resize-y rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans outline-none focus:border-primary" name="notes" />
       </label>
       <button className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light hover:bg-primary/90 disabled:opacity-60" disabled={pending} type="submit">
         {pending ? "Submitting..." : "Submit for review"}

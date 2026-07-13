@@ -21,7 +21,7 @@ export default async function ContributePage() {
         <section className="rounded-lg border border-muted-background bg-surface p-5 sm:p-6">
           <div className="mb-5 space-y-1">
             <h2 className="font-heading text-2xl font-semibold">Suggest a word</h2>
-            <p className="font-sans text-sm leading-6 text-muted">Pronunciation forms are generated for you, but can be corrected before submission.</p>
+            <p className="font-sans text-sm leading-6 text-muted">Pinyin, zhuyin, and traditional forms are automatically generated from the simplified form. Can be manually edited after if needed.</p>
           </div>
           <ContributionForm />
         </section>

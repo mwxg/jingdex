@@ -93,7 +93,7 @@ function ReorderableTerms({ preferences, selected, setSelected }: {
       <button aria-label={`Move ${label} down`} className="size-7 rounded text-sm font-bold text-muted hover:bg-muted-background disabled:opacity-30" disabled={index === selected.length - 1} onClick={() => move(index, index + 1)} type="button">↓</button>
       <button aria-label={`Remove ${label}`} className="flex size-5 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-danger/10" onClick={() => setSelected((items) => items.filter((item) => item.id !== term.id))} type="button"><Image alt="" className="size-2.5" height={10} src="/icons/cross.svg" width={10} /></button>
     </li>;
-  })}</ol> : <p className="rounded-lg border border-muted-background bg-background px-4 py-3 text-sm text-muted">Add at least one term before saving this deck.</p>;
+  })}</ol> : <p className="rounded-lg border border-muted-background bg-background px-4 py-3 text-sm text-muted">The first term will be shown on the deck's preview. Add at least one term before saving this deck.</p>;
 }
 
 function TermPicker({ preferences, selected, setSelected }: {
@@ -159,7 +159,7 @@ export function DeckManager({ decks, preferences }: { decks: PersonalDeck[]; pre
     return next;
   }, initialState);
   return <div className="space-y-6">
-    <div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-heading text-3xl font-semibold">Personal decks</h2><p className="mt-1 text-sm text-muted">Private to your account and separate from community decks.</p></div><button className="h-11 rounded-lg bg-primary px-5 text-sm font-bold text-text-light hover:bg-primary/90" onClick={() => setShowCreate((value) => !value)} type="button">{showCreate ? "Close" : "Create deck"}</button></div>
+    <div className="flex flex-wrap items-center justify-between gap-4"><button className="h-11 rounded-lg bg-primary px-5 text-sm font-bold text-text-light hover:bg-primary/90" onClick={() => setShowCreate((value) => !value)} type="button">{showCreate ? "Close" : "Create deck"}</button></div>
     {showCreate && <form action={action} className="space-y-4 rounded-lg border border-muted-background bg-surface p-5 sm:p-6">
       <h2 className="font-heading text-2xl font-semibold">Create a private deck</h2>
       <label className="block space-y-2"><span className="text-sm font-bold">Deck title</span><input autoFocus className={field} maxLength={100} name="title" placeholder="Food and restaurants" required /></label>
