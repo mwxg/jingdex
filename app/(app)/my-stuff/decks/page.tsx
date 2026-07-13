@@ -1,4 +1,19 @@
-export default function MyDecksPage() {
+import { createClient } from "@/lib/supabase/server";
+import { normalizeLanguagePreferences } from "@/lib/preferences/language";
+import { DeckManager, type PersonalDeck } from "./deck-manager";
+
+export default async function MyDecksPage() {
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getClaims();
+  const userId = authData?.claims?.sub;
+  const [{ data: decks }, { data: profile }] = await Promise.all([
+    supabase.from("decks").select("id,title,description,updated_at,deck_terms(count)")
+      .eq("created_by_user_id", userId!).eq("visibility", "private")
+      .order("updated_at", { ascending: false }),
+    supabase.from("profiles").select("preferred_character_set,preferred_pronunciation")
+      .eq("id", userId!).maybeSingle(),
+  ]);
+
   return (
     <div className="space-y-8">
       <header className="space-y-3">
@@ -9,9 +24,7 @@ export default function MyDecksPage() {
         </p>
       </header>
 
-      <p className="rounded-lg border border-muted-background bg-surface p-5 font-sans text-muted">
-        You do not have any personal decks yet.
-      </p>
+      <DeckManager decks={(decks ?? []) as PersonalDeck[]} preferences={normalizeLanguagePreferences(profile)} />
     </div>
   );
 }
