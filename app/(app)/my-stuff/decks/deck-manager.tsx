@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useEffect, useId, useRef, useState, useTransition } from "react";
-import { createDeck, deleteDeck, updateDeck, type DeckActionState } from "./actions";
+import { createDeck, deleteDeck, updateDeck, updateDeckTerms, type DeckActionState } from "./actions";
 import { searchDictionary, type DictionaryTerm } from "@/app/(app)/dictionary/actions";
 import { getChineseDisplayForms, type LanguagePreferences } from "@/lib/preferences/language";
 import { type CommunityTerm } from "@/app/(app)/community/data";
@@ -17,6 +17,7 @@ export type PersonalDeck = {
   created_at: string;
   term_count: number;
   first_term: CommunityTerm | null;
+  terms: DictionaryTerm[];
 };
 
 const initialState: DeckActionState = {};
@@ -34,6 +35,7 @@ function Message({ state }: { state: DeckActionState }) {
 
 function DeckEditor({ deck, preferences }: { deck: PersonalDeck; preferences: LanguagePreferences }) {
   const [editing, setEditing] = useState(false);
+  const [editingTerms, setEditingTerms] = useState(false);
   const [updateState, updateAction, updating] = useActionState(updateDeck, initialState);
   const [deleteState, deleteAction, deleting] = useActionState(deleteDeck, initialState);
   const termCount = deck.term_count;
@@ -59,11 +61,39 @@ function DeckEditor({ deck, preferences }: { deck: PersonalDeck; preferences: La
       </Link>
       <div className="mt-5 flex flex-wrap gap-3 border-t border-muted-background pt-4">
         <button className="h-10 rounded-lg border border-muted-background px-4 text-sm font-bold hover:border-primary hover:text-primary" onClick={() => setEditing(true)} type="button">Edit details</button>
+        <button className="h-10 rounded-lg border border-muted-background px-4 text-sm font-bold hover:border-primary hover:text-primary" onClick={() => setEditingTerms(true)} type="button">Edit terms</button>
         <form action={deleteAction} onSubmit={(event) => { if (!window.confirm(`Delete “${deck.title}”? This cannot be undone.`)) event.preventDefault(); }}><input name="id" type="hidden" value={deck.id} /><button className="h-10 rounded-lg border border-danger/30 px-4 text-sm font-bold text-danger hover:bg-danger/10 disabled:opacity-60" disabled={deleting} type="submit">{deleting ? "Deleting…" : "Delete"}</button></form>
       </div>
       <Message state={deleteState} />
     </>}
+    {editingTerms ? <EditTermsModal deck={deck} onClose={() => setEditingTerms(false)} preferences={preferences} /> : null}
   </li>;
+}
+
+function ReorderableTerms({ preferences, selected, setSelected }: {
+  preferences: LanguagePreferences;
+  selected: DictionaryTerm[];
+  setSelected: React.Dispatch<React.SetStateAction<DictionaryTerm[]>>;
+}) {
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  function move(from: number, to: number) {
+    if (to < 0 || to >= selected.length || from === to) return;
+    setSelected((items) => { const next = [...items]; const [item] = next.splice(from, 1); next.splice(to, 0, item); return next; });
+  }
+  return selected.length ? <ol className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-muted-background p-3">{selected.map((term, index) => {
+    const label = getChineseDisplayForms(term, preferences.characterSet).primary;
+    return <li className="flex items-center gap-2 rounded-lg bg-background px-3 py-2" draggable key={term.id}
+      onDragEnd={() => setDraggedIndex(null)} onDragOver={(event) => event.preventDefault()}
+      onDragStart={() => setDraggedIndex(index)} onDrop={() => { if (draggedIndex !== null) move(draggedIndex, index); setDraggedIndex(null); }}>
+      <input name="termIds" type="hidden" value={term.id} />
+      <span aria-hidden="true" className="cursor-grab select-none text-lg font-bold text-muted">⋮⋮</span>
+      <span className="min-w-0 flex-1 truncate font-chinese font-bold">{label}</span>
+      <span className="hidden max-w-48 truncate text-xs text-muted sm:block">{getDefinitionPreview(term)}</span>
+      <button aria-label={`Move ${label} up`} className="size-7 rounded text-sm font-bold text-muted hover:bg-muted-background disabled:opacity-30" disabled={index === 0} onClick={() => move(index, index - 1)} type="button">↑</button>
+      <button aria-label={`Move ${label} down`} className="size-7 rounded text-sm font-bold text-muted hover:bg-muted-background disabled:opacity-30" disabled={index === selected.length - 1} onClick={() => move(index, index + 1)} type="button">↓</button>
+      <button aria-label={`Remove ${label}`} className="flex size-5 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-danger/10" onClick={() => setSelected((items) => items.filter((item) => item.id !== term.id))} type="button"><Image alt="" className="size-2.5" height={10} src="/icons/cross.svg" width={10} /></button>
+    </li>;
+  })}</ol> : <p className="rounded-lg border border-muted-background bg-background px-4 py-3 text-sm text-muted">Add at least one term before saving this deck.</p>;
 }
 
 function TermPicker({ preferences, selected, setSelected }: {
@@ -101,10 +131,22 @@ function TermPicker({ preferences, selected, setSelected }: {
       return <li className="grid gap-2 px-4 py-3 sm:grid-cols-[minmax(5rem,.55fr)_minmax(7rem,.7fr)_minmax(10rem,1.3fr)_auto] sm:items-center" key={term.id}><span className="truncate font-chinese text-xl font-bold">{forms.primary}</span><span className="truncate text-sm text-muted">{pronunciation}</span><span className="line-clamp-2 text-sm text-foreground">{getDefinitionPreview(term)}</span><button className="h-9 rounded-lg border border-muted-background px-3 text-xs font-bold hover:border-primary hover:text-primary disabled:opacity-50" disabled={selectedIds.has(term.id)} onClick={() => setSelected((items) => items.some((item) => item.id === term.id) ? items : [...items, term])} type="button">{selectedIds.has(term.id) ? "Added" : "Add"}</button></li>;
     })}</ul> : null}
     {query.trim() && !searching && !results.length && !message ? <p className="rounded-lg border border-muted-background bg-background px-4 py-3 text-sm text-muted">No terms found.</p> : null}
-    <div className="space-y-2"><p className="text-sm font-bold">Terms ({selected.length})</p>{selected.length ? <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto rounded-lg border border-muted-background p-3">{selected.map((term) => {
-      const label = getChineseDisplayForms(term, preferences.characterSet).primary;
-      return <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-muted-background bg-background px-3 py-2" key={term.id}><input name="termIds" type="hidden" value={term.id} /><span className="truncate font-chinese font-bold">{label}</span><button aria-label={`Remove ${label}`} className="flex size-5 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-danger/10" onClick={() => setSelected((items) => items.filter((item) => item.id !== term.id))} type="button"><Image alt="" className="size-2.5" height={10} src="/icons/cross.svg" width={10} /></button></span>;
-    })}</div> : <p className="rounded-lg border border-muted-background bg-background px-4 py-3 text-sm text-muted">Add at least one term before creating this deck.</p>}</div>
+    <div className="space-y-2"><p className="text-sm font-bold">Terms ({selected.length})</p><ReorderableTerms preferences={preferences} selected={selected} setSelected={setSelected} /></div>
+  </div>;
+}
+
+function EditTermsModal({ deck, onClose, preferences }: { deck: PersonalDeck; onClose: () => void; preferences: LanguagePreferences }) {
+  const [selected, setSelected] = useState<DictionaryTerm[]>(deck.terms);
+  const [state, action, pending] = useActionState(async (previous: DeckActionState, formData: FormData) => {
+    const next = await updateDeckTerms(previous, formData);
+    if (next.success) onClose();
+    return next;
+  }, initialState);
+  return <div aria-labelledby={`edit-terms-${deck.id}`} aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 px-4 py-6" role="dialog">
+    <div className="max-h-full w-full max-w-3xl overflow-y-auto rounded-lg border border-muted-background bg-surface p-5 shadow-lg sm:p-6">
+      <div className="flex items-start justify-between gap-4"><div><h2 className="font-heading text-2xl font-semibold" id={`edit-terms-${deck.id}`}>Edit terms</h2><p className="mt-1 text-sm text-muted">{deck.title}</p></div><button aria-label="Close term editor" className="grid size-10 place-items-center rounded-lg hover:bg-muted-background" onClick={onClose} type="button"><Image alt="" height={16} src="/icons/cross.svg" width={16} /></button></div>
+      <form action={action} className="mt-5 space-y-5"><input name="id" type="hidden" value={deck.id} /><TermPicker preferences={preferences} selected={selected} setSelected={setSelected} /><Message state={state} /><div className="flex justify-end gap-3"><button className="h-10 rounded-lg border border-muted-background px-4 text-sm font-bold hover:border-primary" onClick={onClose} type="button">Cancel</button><button className="h-10 rounded-lg bg-primary px-4 text-sm font-bold text-text-light disabled:opacity-50" disabled={pending || selected.length === 0} type="submit">{pending ? "Saving…" : "Save terms"}</button></div></form>
+    </div>
   </div>;
 }
 

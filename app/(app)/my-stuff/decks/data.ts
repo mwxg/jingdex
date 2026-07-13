@@ -22,6 +22,7 @@ const deckSelection = "id,title,description,created_by,created_at,updated_at,dec
 
 export type PersonalDeckSummary = Omit<CommunityDeckDetails, "terms"> & {
   updated_at: string;
+  terms: CommunityTerm[];
 };
 
 export async function getPersonalDecks() {
@@ -35,7 +36,7 @@ export async function getPersonalDecks() {
 
   return (data ?? []).map((deck) => {
     const terms = termsFromRows((deck.deck_terms ?? []) as DeckTermRow[]);
-    return { ...deck, deck_terms: undefined, first_term: terms[0] ?? null, term_count: terms.length } as PersonalDeckSummary;
+    return { ...deck, deck_terms: undefined, first_term: terms[0] ?? null, term_count: terms.length, terms } as PersonalDeckSummary;
   });
 }
 
