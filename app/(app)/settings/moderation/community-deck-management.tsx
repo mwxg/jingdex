@@ -138,38 +138,61 @@ function getTermPreview(
   return getChineseDisplayForms(term, preferences.characterSet).primary;
 }
 
-function SelectedTermPill({
-  onRemove,
+function ReorderableTerms({
+  onChange,
   preferences,
-  term,
+  terms,
 }: Readonly<{
-  onRemove: (termId: string) => void;
+  onChange: (terms: TermSearchResult[]) => void;
   preferences: LanguagePreferences;
-  term: TermSearchResult;
+  terms: TermSearchResult[];
 }>) {
-  const label = getTermPreview(term, preferences);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  function move(from: number, to: number) {
+    if (to < 0 || to >= terms.length || from === to) return;
+    const next = [...terms];
+    const [term] = next.splice(from, 1);
+    next.splice(to, 0, term);
+    onChange(next);
+  }
 
   return (
-    <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-muted-background bg-background px-3 py-2">
-      <input name="termIds" type="hidden" value={term.id} />
-      <span className="truncate font-chinese text-base font-bold text-foreground">
-        {label}
-      </span>
-      <button
-        aria-label={`Remove ${label}`}
-        className="flex size-5 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-danger/10"
-        onClick={() => onRemove(term.id)}
-        type="button"
-      >
-        <Image
-          alt=""
-          className="size-2.5"
-          height={10}
-          src="/icons/cross.svg"
-          width={10}
-        />
-      </button>
-    </span>
+    <ol className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-muted-background p-3">
+      {terms.map((term, index) => {
+        const label = getTermPreview(term, preferences);
+        const definition = term.short_definition || term.english_definition?.split(/\r?\n/, 1)[0] || "No definition added.";
+        return (
+          <li
+            className="flex items-center gap-2 rounded-lg bg-background px-3 py-2"
+            draggable
+            key={term.id}
+            onDragEnd={() => setDraggedIndex(null)}
+            onDragOver={(event) => event.preventDefault()}
+            onDragStart={() => setDraggedIndex(index)}
+            onDrop={() => {
+              if (draggedIndex !== null) move(draggedIndex, index);
+              setDraggedIndex(null);
+            }}
+          >
+            <input name="termIds" type="hidden" value={term.id} />
+            <span aria-hidden="true" className="cursor-grab select-none text-lg font-bold text-muted">⋮⋮</span>
+            <span className="min-w-0 flex-1 truncate font-chinese text-base font-bold text-foreground">{label}</span>
+            <span className="hidden max-w-48 truncate font-sans text-xs text-muted sm:block">{definition}</span>
+            <button aria-label={`Move ${label} up`} className="size-7 rounded text-sm font-bold text-muted hover:bg-muted-background disabled:opacity-30" disabled={index === 0} onClick={() => move(index, index - 1)} type="button">↑</button>
+            <button aria-label={`Move ${label} down`} className="size-7 rounded text-sm font-bold text-muted hover:bg-muted-background disabled:opacity-30" disabled={index === terms.length - 1} onClick={() => move(index, index + 1)} type="button">↓</button>
+            <button
+              aria-label={`Remove ${label}`}
+              className="flex size-5 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-danger/10"
+              onClick={() => onChange(terms.filter((item) => item.id !== term.id))}
+              type="button"
+            >
+              <Image alt="" className="size-2.5" height={10} src="/icons/cross.svg" width={10} />
+            </button>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -407,9 +430,7 @@ function CommunityDeckEditModal({
           <MiniTermSearch onAdd={(term) => setSelectedTerms((terms) => terms.some((item) => item.id === term.id) ? terms : [...terms, term])} preferences={preferences} selectedTermIds={selectedTermIds} />
           <div className="space-y-2">
             <span className="font-sans text-sm font-bold text-foreground">Terms ({selectedTerms.length})</span>
-            <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto rounded-lg border border-muted-background p-3">
-              {selectedTerms.map((term) => <SelectedTermPill key={term.id} onRemove={(termId) => setSelectedTerms((terms) => terms.filter((item) => item.id !== termId))} preferences={preferences} term={term} />)}
-            </div>
+            <ReorderableTerms onChange={setSelectedTerms} preferences={preferences} terms={selectedTerms} />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button className="h-10 rounded-lg border border-danger/40 px-4 font-sans text-sm font-bold text-danger hover:border-danger hover:bg-danger/10 disabled:opacity-50" disabled={isDeleting || isSaving} onClick={() => onDelete(deck)} type="button">{isDeleting ? "Deleting" : "Delete"}</button>
@@ -596,12 +617,6 @@ export function CommunityDeckManagement({
     );
   }
 
-  function removeTerm(termId: string) {
-    setSelectedTerms((currentTerms) =>
-      currentTerms.filter((term) => term.id !== termId),
-    );
-  }
-
   return (
     <>
       <section className="rounded-lg border border-muted-background bg-surface p-6">
@@ -650,16 +665,7 @@ export function CommunityDeckManagement({
             </div>
 
             {selectedTerms.length > 0 ? (
-              <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto rounded-lg border border-muted-background bg-surface p-3">
-                {selectedTerms.map((term) => (
-                  <SelectedTermPill
-                    key={term.id}
-                    onRemove={removeTerm}
-                    preferences={preferences}
-                    term={term}
-                  />
-                ))}
-              </div>
+              <ReorderableTerms onChange={setSelectedTerms} preferences={preferences} terms={selectedTerms} />
             ) : (
               <p className="rounded-lg border border-muted-background bg-background px-4 py-3 font-sans text-sm text-muted">
                 Search for terms and add them to build the deck.
