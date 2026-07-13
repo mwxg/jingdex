@@ -15,7 +15,6 @@ type SidebarSection = Readonly<{
   links: readonly Readonly<{
     href: string;
     label: string;
-    exact?: boolean;
   }>[];
 }>;
 
@@ -29,10 +28,7 @@ const sections: readonly SidebarSection[] = [
   },
   {
     label: "Community",
-    links: [
-      { href: "/community", label: "Browse decks", exact: true },
-      { href: "/community/jingdex", label: "Decks by Jingdex" },
-    ],
+    links: [{ href: "/community", label: "Browse decks" }],
   },
   {
     label: "My stuff",
@@ -69,11 +65,7 @@ export function AppSidebar({ hasAccount, canAccessDemo }: AppSidebarProps) {
             <ul className="space-y-1">
               {section.links.map((link) => {
                 const active =
-                  link.exact
-                    ? pathname === link.href ||
-                      (pathname.startsWith("/community/") &&
-                        !pathname.startsWith("/community/jingdex"))
-                    : pathname === link.href || pathname.startsWith(`${link.href}/`);
+                  pathname === link.href || pathname.startsWith(`${link.href}/`);
 
                 return (
                   <li key={link.href}>
