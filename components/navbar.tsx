@@ -8,6 +8,7 @@ const navLinks = [
   { href: "/", label: "Home" },
   { href: "/dictionary/search", label: "Dictionary" },
   { href: "/community", label: "Community" },
+  { href: "/my-stuff/decks", label: "My stuff", requiresAccount: true },
   { href: "/demo", label: "Demo" },
 ];
 
@@ -46,8 +47,9 @@ export async function Navbar() {
             {navLinks
               .filter(
                 (link) =>
-                  link.href !== "/demo" ||
-                  hasPermission(profile?.role, "accessModerationPage"),
+                  (!link.requiresAccount || Boolean(profile)) &&
+                  (link.href !== "/demo" ||
+                    hasPermission(profile?.role, "accessModerationPage")),
               )
               .map((link) => (
                 <Link

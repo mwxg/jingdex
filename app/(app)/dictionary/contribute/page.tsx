@@ -8,7 +8,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getPartOfSpeechLabel, type PartOfSpeech } from "@/lib/terms/parts-of-speech";
 import { ContributionForm } from "./contribution-form";
 import { ReviewForm } from "./review-form";
-import { SubmissionsBrowser, type ContributionSubmission } from "./submissions-browser";
 
 type Submission = {
   id: string;
@@ -38,15 +37,6 @@ export default async function ContributePage() {
     : { data: null };
   const preferences = normalizeLanguagePreferences(profile);
   const canReview = hasPermission(profile?.role, "reviewTermSubmissions");
-
-  const { data: ownRows } = userId
-    ? await supabase
-        .from("term_submissions")
-        .select("id,submitted_by_user_id,simplified,traditional,pinyin,zhuyin,english_definition,parts_of_speech,notes,status,reviewer_notes,created_at")
-        .eq("submitted_by_user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(500)
-    : { data: [] };
 
   const { data: pendingRows } = canReview
     ? await supabase
@@ -89,13 +79,6 @@ export default async function ContributePage() {
           <Link className="mt-4 inline-flex h-11 items-center rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light" href="/login?next=/dictionary/contribute">Sign in</Link>
         </section>
       )}
-
-      {userId ? (
-        <SubmissionsBrowser
-          preferences={preferences}
-          submissions={(ownRows ?? []) as ContributionSubmission[]}
-        />
-      ) : null}
 
       {canReview ? (
         <section className="space-y-4 border-t-2 border-admin/30 pt-8">
