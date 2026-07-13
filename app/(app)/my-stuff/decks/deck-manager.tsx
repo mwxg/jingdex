@@ -56,7 +56,7 @@ function DeckEditor({ deck, preferences }: { deck: PersonalDeck; preferences: La
     archived: "Archived",
   }[deck.publication_status];
 
-  return <li className={`rounded-lg border bg-surface p-5 transition-colors ${isPublished ? "border-[color:color-mix(in_srgb,var(--community-deck)_35%,transparent)] hover:border-[var(--community-deck)]" : "border-muted-background hover:border-primary"}`}>
+  return <li className={`rounded-lg border bg-surface p-5 transition-colors ${isPublished ? "border-[color-mix(in_srgb,var(--community-deck)_35%,transparent)] hover:border-comunity-deck" : "border-muted-background hover:border-primary"}`}>
     {editing ? <form action={updateAction} className="space-y-4">
       <input name="id" type="hidden" value={deck.id} />
       <label className="block space-y-2"><span className="text-sm font-bold">Deck title</span><input className={field} defaultValue={deck.title} maxLength={100} name="title" required /></label>
@@ -64,14 +64,14 @@ function DeckEditor({ deck, preferences }: { deck: PersonalDeck; preferences: La
       <Message state={updateState} />
       <div className="flex flex-wrap gap-3"><button className="h-11 rounded-lg bg-primary px-5 text-sm font-bold text-text-light disabled:opacity-60" disabled={updating} type="submit">{updating ? "Saving…" : "Save changes"}</button><button className="h-11 rounded-lg border border-muted-background px-5 text-sm font-bold hover:border-primary" onClick={() => setEditing(false)} type="button">Cancel</button></div>
     </form> : <>
-      <Link className={`block rounded-lg focus:outline-none focus-visible:ring-2 ${isPublished ? "focus-visible:ring-[var(--community-deck)]" : "focus-visible:ring-primary"}`} href={`/my-stuff/decks/${deck.id}`}>
-        <div className={`flex min-h-40 items-center justify-center rounded-lg px-4 py-6 ${isPublished ? "bg-[color:color-mix(in_srgb,var(--community-deck)_9%,var(--surface))]" : "bg-muted-background"}`}>
+      <Link className={`block rounded-lg focus:outline-none focus-visible:ring-2 ${isPublished ? "focus-visible:ring-comunity-deck" : "focus-visible:ring-primary"}`} href={`/my-stuff/decks/${deck.id}`}>
+        <div className={`flex min-h-40 items-center justify-center rounded-lg px-4 py-6 ${isPublished ? "bg-[color-mix(in_srgb,var(--community-deck)_9%,var(--surface))]" : "bg-muted-background"}`}>
           {forms ? <p className="text-center font-chinese text-6xl font-bold leading-none text-foreground sm:text-7xl">{forms.primary}</p> : <p className="text-sm font-bold text-muted">Empty deck</p>}
         </div>
         <div className="mt-5 space-y-3">
           <h2 className="line-clamp-2 font-heading text-2xl font-semibold leading-tight">{deck.title}</h2>
           <p className="line-clamp-3 min-h-18 text-sm leading-6 text-muted">{deck.description || "No description added."}</p>
-          <div className={`flex items-center justify-between gap-3 border-t pt-3 text-sm ${isPublished ? "border-[color:color-mix(in_srgb,var(--community-deck)_20%,transparent)] text-muted" : "border-muted-background text-muted"}`}><span>{termCount} {termCount === 1 ? "term" : "terms"}</span><span className={isPublished ? "font-bold text-[var(--community-deck)]" : undefined}>{statusLabel}</span></div>
+          <div className={`flex items-center justify-between gap-3 border-t pt-3 text-sm ${isPublished ? "border-[color-mix(in_srgb,var(--community-deck)_20%,transparent)] text-muted" : "border-muted-background text-muted"}`}><span>{termCount} {termCount === 1 ? "term" : "terms"}</span><span className={isPublished ? "font-bold text-comunity-deck" : undefined}>{statusLabel}</span></div>
         </div>
       </Link>
       {deck.review_notes ? <p className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"><span className="font-bold">Reviewer notes:</span> {deck.review_notes}</p> : null}

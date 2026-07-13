@@ -42,6 +42,8 @@
   --color-admin: var(--admin);
   --color-developer: var(--developer);
 
+  --color-comunity-deck: var(--community-deck);
+
   --font-sans: var(--font-family-body);
   --font-heading: var(--font-family-heading);
   --font-chinese: var(--font-family-chinese);
