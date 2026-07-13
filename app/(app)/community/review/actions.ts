@@ -28,6 +28,9 @@ export async function reviewDeck(
   if (!deckId || !["accepted", "rejected"].includes(decision)) {
     return { message: "Choose a valid deck and decision." };
   }
+  if (decision === "rejected" && !reviewerNotes) {
+    return { message: "Add reviewer notes before rejecting this deck." };
+  }
 
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getClaims();

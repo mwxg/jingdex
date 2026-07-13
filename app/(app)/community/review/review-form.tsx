@@ -13,11 +13,11 @@ export function ReviewForm({ submissionId }: Readonly<{ submissionId: string }>)
       <input name="submissionId" type="hidden" value={submissionId} />
       <ActionMessage state={state} />
       <label className="block space-y-2">
-        <span className="font-sans text-sm font-bold">Reviewer notes <span className="font-normal text-muted">(optional)</span></span>
-        <textarea className="min-h-20 w-full resize-y rounded-lg border border-muted-background bg-surface px-3 py-2 font-sans outline-none focus:border-primary" name="reviewerNotes" />
+        <span className="font-sans text-sm font-bold">Reviewer notes <span className="font-normal text-muted">(required when rejecting)</span></span>
+        <textarea className="min-h-20 w-full resize-y rounded-lg border border-muted-background bg-surface px-3 py-2 font-sans outline-none focus:border-primary" name="reviewerNotes" required />
       </label>
       <div className="flex flex-wrap gap-2">
-        <button className="h-10 rounded-lg bg-confirm px-4 font-sans text-sm font-bold text-text-light disabled:opacity-60" disabled={pending} name="decision" type="submit" value="accepted">Accept</button>
+        <button className="h-10 rounded-lg bg-confirm px-4 font-sans text-sm font-bold text-text-light disabled:opacity-60" disabled={pending} formNoValidate name="decision" type="submit" value="accepted">Accept</button>
         <button className="h-10 rounded-lg bg-danger px-4 font-sans text-sm font-bold text-text-light disabled:opacity-60" disabled={pending} name="decision" type="submit" value="rejected">Reject</button>
       </div>
     </form>
@@ -32,11 +32,11 @@ export function DeckReviewForm({ deckId }: Readonly<{ deckId: string }>) {
       <input name="deckId" type="hidden" value={deckId} />
       <ActionMessage state={state} />
       <label className="block space-y-2">
-        <span className="font-sans text-sm font-bold">Reviewer notes <span className="font-normal text-muted">(optional)</span></span>
-        <textarea className="min-h-20 w-full resize-y rounded-lg border border-muted-background bg-surface px-3 py-2 font-sans outline-none focus:border-primary" name="reviewerNotes" />
+        <span className="font-sans text-sm font-bold">Reviewer notes <span className="font-normal text-muted">(required when rejecting)</span></span>
+        <textarea className="min-h-20 w-full resize-y rounded-lg border border-muted-background bg-surface px-3 py-2 font-sans outline-none focus:border-primary" name="reviewerNotes" required />
       </label>
       <div className="flex flex-wrap gap-2">
-        <button className="h-10 rounded-lg bg-confirm px-4 font-sans text-sm font-bold text-text-light disabled:opacity-60" disabled={pending} name="decision" type="submit" value="accepted">Accept</button>
+        <button className="h-10 rounded-lg bg-confirm px-4 font-sans text-sm font-bold text-text-light disabled:opacity-60" disabled={pending} formNoValidate name="decision" type="submit" value="accepted">Accept</button>
         <button className="h-10 rounded-lg bg-danger px-4 font-sans text-sm font-bold text-text-light disabled:opacity-60" disabled={pending} name="decision" type="submit" value="rejected">Reject</button>
       </div>
     </form>

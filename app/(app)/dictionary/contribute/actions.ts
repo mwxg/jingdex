@@ -67,6 +67,9 @@ export async function reviewContribution(
   if (!submissionId || !["accepted", "rejected"].includes(decision)) {
     return { message: "Choose a valid submission and decision." };
   }
+  if (decision === "rejected" && !reviewerNotes) {
+    return { message: "Add reviewer notes before rejecting this term." };
+  }
 
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getClaims();

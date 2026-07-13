@@ -408,6 +408,8 @@ function CommunityDeckEditModal({
 }>) {
   const [title, setTitle] = useState(deck.title);
   const [description, setDescription] = useState(deck.description ?? "");
+  const [publicationStatus, setPublicationStatus] = useState(deck.publication_status);
+  const [reviewerNotes, setReviewerNotes] = useState(deck.review_notes ?? "");
   const [selectedTerms, setSelectedTerms] = useState(deck.terms);
   const selectedTermIds = new Set(selectedTerms.map((term) => term.id));
 
@@ -423,9 +425,13 @@ function CommunityDeckEditModal({
           <FieldTextArea label="Description" name="description" onChange={setDescription} placeholder="Deck description" value={description} />
           <label className="space-y-2">
             <span className="block font-sans text-sm font-bold text-foreground">Publication status</span>
-            <select className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none focus:border-primary" defaultValue={deck.publication_status} name="publicationStatus">
+            <select className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none focus:border-primary" name="publicationStatus" onChange={(event) => setPublicationStatus(event.target.value)} value={publicationStatus}>
               <option value="draft">Draft</option><option value="under_review">Under review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="archived">Archived</option>
             </select>
+          </label>
+          <label className="space-y-2">
+            <span className="block font-sans text-sm font-bold text-foreground">Reviewer notes <span className="font-normal text-muted">(required when rejecting)</span></span>
+            <textarea className="min-h-28 w-full resize-y rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary" name="reviewerNotes" onChange={(event) => setReviewerNotes(event.target.value)} placeholder="Explain the review decision" required={publicationStatus === "rejected"} value={reviewerNotes} />
           </label>
           <MiniTermSearch onAdd={(term) => setSelectedTerms((terms) => terms.some((item) => item.id === term.id) ? terms : [...terms, term])} preferences={preferences} selectedTermIds={selectedTermIds} />
           <div className="space-y-2">

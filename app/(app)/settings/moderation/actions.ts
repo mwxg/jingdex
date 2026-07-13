@@ -97,6 +97,7 @@ export type CommunityDeckSearchResult = {
   description: string | null;
   created_by: string;
   publication_status: string;
+  review_notes: string | null;
   created_at: string;
   terms: TermSearchResult[];
 };
@@ -1174,7 +1175,7 @@ export async function getCommunityDeckSearchPage(
   const { data, error } = await supabase
     .from("decks")
     .select(
-      "id,title,description,created_by,publication_status,created_at,deck_terms(position,terms(id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by,is_verified,created_at))",
+      "id,title,description,created_by,publication_status,review_notes,created_at,deck_terms(position,terms(id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by,is_verified,created_at))",
     )
     .eq("visibility", "community")
     .ilike("title", `%${normalizedQuery}%`)
@@ -1213,6 +1214,7 @@ export async function updateCommunityDeck(
   const title = getNormalizedString(formData, "title");
   const description = getNormalizedString(formData, "description");
   const publicationStatus = getRequiredString(formData, "publicationStatus");
+  const reviewerNotes = getNormalizedString(formData, "reviewerNotes");
   const allowedStatuses = new Set([
     "draft",
     "under_review",
@@ -1235,6 +1237,9 @@ export async function updateCommunityDeck(
   }
   if (!allowedStatuses.has(publicationStatus)) {
     return { message: "Choose a valid publication status." };
+  }
+  if (publicationStatus === "rejected" && !reviewerNotes) {
+    return { message: "Add reviewer notes before rejecting this deck." };
   }
   if (termIds.length === 0 || termIds.length > 500) {
     return { message: "Community decks must contain between 1 and 500 terms." };
@@ -1269,8 +1274,9 @@ export async function updateCommunityDeck(
       title,
       description,
       publication_status: publicationStatus,
-      reviewed_at: publicationStatus === "approved" ? new Date().toISOString() : null,
-      reviewed_by_user_id: publicationStatus === "approved" ? userId : null,
+      review_notes: reviewerNotes || null,
+      reviewed_at: ["approved", "rejected"].includes(publicationStatus) ? new Date().toISOString() : null,
+      reviewed_by_user_id: ["approved", "rejected"].includes(publicationStatus) ? userId : null,
     })
     .eq("id", deckId)
     .eq("visibility", "community");
