@@ -1,17 +1,22 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useActionState, useEffect, useId, useRef, useState, useTransition } from "react";
 import { createDeck, deleteDeck, updateDeck, type DeckActionState } from "./actions";
 import { searchDictionary, type DictionaryTerm } from "@/app/(app)/dictionary/actions";
 import { getChineseDisplayForms, type LanguagePreferences } from "@/lib/preferences/language";
+import { type CommunityTerm } from "@/app/(app)/community/data";
 
 export type PersonalDeck = {
   id: string;
   title: string;
   description: string | null;
   updated_at: string;
-  deck_terms: { count: number }[];
+  created_by: string;
+  created_at: string;
+  term_count: number;
+  first_term: CommunityTerm | null;
 };
 
 const initialState: DeckActionState = {};
@@ -27,13 +32,14 @@ function Message({ state }: { state: DeckActionState }) {
   return <p role="status" className={`rounded-lg border px-4 py-3 text-sm font-bold ${state.message ? "border-danger/30 bg-danger/10 text-danger" : "border-confirm/30 bg-confirm/10 text-confirm"}`}>{state.message || state.success}</p>;
 }
 
-function DeckEditor({ deck }: { deck: PersonalDeck }) {
+function DeckEditor({ deck, preferences }: { deck: PersonalDeck; preferences: LanguagePreferences }) {
   const [editing, setEditing] = useState(false);
   const [updateState, updateAction, updating] = useActionState(updateDeck, initialState);
   const [deleteState, deleteAction, deleting] = useActionState(deleteDeck, initialState);
-  const termCount = deck.deck_terms?.[0]?.count ?? 0;
+  const termCount = deck.term_count;
+  const forms = deck.first_term ? getChineseDisplayForms(deck.first_term, preferences.characterSet) : null;
 
-  return <li className="rounded-lg border border-muted-background bg-surface p-5">
+  return <li className="rounded-lg border border-muted-background bg-surface p-5 transition-colors hover:border-primary">
     {editing ? <form action={updateAction} className="space-y-4">
       <input name="id" type="hidden" value={deck.id} />
       <label className="block space-y-2"><span className="text-sm font-bold">Deck title</span><input className={field} defaultValue={deck.title} maxLength={100} name="title" required /></label>
@@ -41,10 +47,16 @@ function DeckEditor({ deck }: { deck: PersonalDeck }) {
       <Message state={updateState} />
       <div className="flex flex-wrap gap-3"><button className="h-11 rounded-lg bg-primary px-5 text-sm font-bold text-text-light disabled:opacity-60" disabled={updating} type="submit">{updating ? "Saving…" : "Save changes"}</button><button className="h-11 rounded-lg border border-muted-background px-5 text-sm font-bold hover:border-primary" onClick={() => setEditing(false)} type="button">Cancel</button></div>
     </form> : <>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0"><h2 className="font-heading text-2xl font-semibold">{deck.title}</h2><p className="mt-2 text-sm leading-6 text-muted">{deck.description || "No description added."}</p></div>
-        <span className="w-fit shrink-0 rounded-full bg-muted-background px-3 py-1 text-xs font-bold text-muted">{termCount} {termCount === 1 ? "term" : "terms"}</span>
-      </div>
+      <Link className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" href={`/my-stuff/decks/${deck.id}`}>
+        <div className="flex min-h-40 items-center justify-center rounded-lg bg-muted-background px-4 py-6">
+          {forms ? <p className="text-center font-chinese text-6xl font-bold leading-none text-foreground sm:text-7xl">{forms.primary}</p> : <p className="text-sm font-bold text-muted">Empty deck</p>}
+        </div>
+        <div className="mt-5 space-y-3">
+          <h2 className="line-clamp-2 font-heading text-2xl font-semibold leading-tight">{deck.title}</h2>
+          <p className="line-clamp-3 min-h-18 text-sm leading-6 text-muted">{deck.description || "No description added."}</p>
+          <div className="flex items-center justify-between gap-3 border-t border-muted-background pt-3 text-sm text-muted"><span>{termCount} {termCount === 1 ? "term" : "terms"}</span><span>Private</span></div>
+        </div>
+      </Link>
       <div className="mt-5 flex flex-wrap gap-3 border-t border-muted-background pt-4">
         <button className="h-10 rounded-lg border border-muted-background px-4 text-sm font-bold hover:border-primary hover:text-primary" onClick={() => setEditing(true)} type="button">Edit details</button>
         <form action={deleteAction} onSubmit={(event) => { if (!window.confirm(`Delete “${deck.title}”? This cannot be undone.`)) event.preventDefault(); }}><input name="id" type="hidden" value={deck.id} /><button className="h-10 rounded-lg border border-danger/30 px-4 text-sm font-bold text-danger hover:bg-danger/10 disabled:opacity-60" disabled={deleting} type="submit">{deleting ? "Deleting…" : "Delete"}</button></form>
@@ -113,6 +125,6 @@ export function DeckManager({ decks, preferences }: { decks: PersonalDeck[]; pre
       <TermPicker preferences={preferences} selected={selectedTerms} setSelected={setSelectedTerms} />
       <Message state={state} /><button className="h-11 rounded-lg bg-confirm px-5 text-sm font-bold text-text-light disabled:opacity-60" disabled={pending || selectedTerms.length === 0} type="submit">{pending ? "Creating…" : "Create deck"}</button>
     </form>}
-    {decks.length ? <ul className="grid gap-4 lg:grid-cols-2">{decks.map((deck) => <DeckEditor deck={deck} key={deck.id} />)}</ul> : <div className="rounded-lg border border-muted-background bg-surface p-6 text-muted"><p className="font-bold text-foreground">No personal decks yet</p><p className="mt-2 text-sm leading-6">Create your first private deck to start organizing vocabulary.</p></div>}
+    {decks.length ? <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{decks.map((deck) => <DeckEditor deck={deck} key={deck.id} preferences={preferences} />)}</ul> : <div className="rounded-lg border border-muted-background bg-surface p-6 text-muted"><p className="font-bold text-foreground">No personal decks yet</p><p className="mt-2 text-sm leading-6">Create your first private deck to start organizing vocabulary.</p></div>}
   </div>;
 }
