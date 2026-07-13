@@ -8,11 +8,12 @@ type AppShellProps = Readonly<{
   children: React.ReactNode;
   hasAccount: boolean;
   canAccessDemo: boolean;
+  canReview: boolean;
 }>;
 
 const sidebarSections = ["/dictionary", "/community", "/my-stuff", "/demo"];
 
-export function AppShell({ children, hasAccount, canAccessDemo }: AppShellProps) {
+export function AppShell({ children, hasAccount, canAccessDemo, canReview }: AppShellProps) {
   const pathname = usePathname();
   const hasSidebar = sidebarSections.some(
     (section) => pathname === section || pathname.startsWith(`${section}/`),
@@ -30,7 +31,7 @@ export function AppShell({ children, hasAccount, canAccessDemo }: AppShellProps)
   return (
     <SidebarPageLayout
       sidebar={
-        <AppSidebar hasAccount={hasAccount} canAccessDemo={canAccessDemo} />
+        <AppSidebar hasAccount={hasAccount} canAccessDemo={canAccessDemo} canReview={canReview} />
       }
     >
       {content}

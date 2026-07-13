@@ -1,11 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { ActionMessage } from "./contribution-form";
-import { reviewContribution, type ContributionActionState } from "./actions";
+import { reviewContribution, type ContributionActionState } from "@/app/(app)/dictionary/contribute/actions";
+import { ActionMessage } from "@/app/(app)/dictionary/contribute/contribution-form";
 
 export function ReviewForm({ submissionId }: Readonly<{ submissionId: string }>) {
   const [state, action, pending] = useActionState<ContributionActionState, FormData>(reviewContribution, {});
+
   return (
     <form action={action} className="mt-4 space-y-3 border-t border-muted-background pt-4">
       <input name="submissionId" type="hidden" value={submissionId} />

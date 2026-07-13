@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 type AppSidebarProps = Readonly<{
   hasAccount: boolean;
   canAccessDemo: boolean;
+  canReview: boolean;
 }>;
 
 type SidebarSection = Readonly<{
@@ -15,6 +16,7 @@ type SidebarSection = Readonly<{
   links: readonly Readonly<{
     href: string;
     label: string;
+    special?: boolean;
   }>[];
 }>;
 
@@ -28,7 +30,10 @@ const sections: readonly SidebarSection[] = [
   },
   {
     label: "Community",
-    links: [{ href: "/community", label: "Browse decks" }],
+    links: [
+      { href: "/community", label: "Browse decks" },
+      { href: "/community/review", label: "Review", special: true },
+    ],
   },
   {
     label: "My stuff",
@@ -45,7 +50,7 @@ const sections: readonly SidebarSection[] = [
   },
 ];
 
-export function AppSidebar({ hasAccount, canAccessDemo }: AppSidebarProps) {
+export function AppSidebar({ hasAccount, canAccessDemo, canReview }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -69,21 +74,34 @@ export function AppSidebar({ hasAccount, canAccessDemo }: AppSidebarProps) {
             </h2>
             <ul className="space-y-1">
               {section.links.map((link) => {
+                if (link.special && !canReview) return null;
                 const active =
-                  pathname === link.href || pathname.startsWith(`${link.href}/`);
+                  pathname === link.href ||
+                  (link.href === "/community"
+                    ? pathname.startsWith("/community/") && !pathname.startsWith("/community/review")
+                    : pathname.startsWith(`${link.href}/`));
 
                 return (
                   <li key={link.href}>
                     <Link
                       aria-current={active ? "page" : undefined}
-                      className={`block rounded-lg px-4 py-3 font-bold transition-colors ${
+                      className={`flex items-center justify-between gap-3 rounded-lg px-4 py-3 font-bold transition-colors ${
                         active
-                          ? "bg-primary text-text-light hover:bg-primary/90"
-                          : "text-muted hover:bg-muted-background hover:text-primary"
+                          ? link.special
+                            ? "bg-admin text-text-light hover:bg-admin/90"
+                            : "bg-primary text-text-light hover:bg-primary/90"
+                          : link.special
+                            ? "border border-admin/30 bg-admin/10 text-admin hover:bg-admin/20"
+                            : "text-muted hover:bg-muted-background hover:text-primary"
                       }`}
                       href={link.href}
                     >
-                      {link.label}
+                      <span>{link.label}</span>
+                      {link.special ? (
+                        <span className={`rounded-full px-2 py-0.5 text-[0.65rem] uppercase tracking-wide ${active ? "bg-text-light/20" : "bg-admin/15"}`}>
+                          Admin
+                        </span>
+                      ) : null}
                     </Link>
                   </li>
                 );

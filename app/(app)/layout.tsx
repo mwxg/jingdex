@@ -20,6 +20,7 @@ export default async function AppLayout({
       <Navbar />
       <AppShell
         canAccessDemo={hasPermission(profile?.role, "accessModerationPage")}
+        canReview={hasPermission(profile?.role, "reviewTermSubmissions")}
         hasAccount={Boolean(userId)}
       >
         {children}

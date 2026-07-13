@@ -86,5 +86,6 @@ export async function reviewContribution(
   if (error) return { message: errorMessage(error, "Could not review that submission.") };
   revalidatePath("/dictionary/contribute");
   revalidatePath("/dictionary/search");
+  revalidatePath("/community/review");
   return { success: `Submission ${decision}.` };
 }
