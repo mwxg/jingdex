@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useEffect, useId, useRef, useState, useTransition } from "react";
-import { createDeck, deleteDeck, updateDeck, updateDeckTerms, type DeckActionState } from "./actions";
+import { createDeck, deleteDeck, submitDeckForReview, updateDeck, updateDeckTerms, type DeckActionState } from "./actions";
 import { searchDictionary, type DictionaryTerm } from "@/app/(app)/dictionary/actions";
 import { getChineseDisplayForms, type LanguagePreferences } from "@/lib/preferences/language";
 import { type CommunityTerm } from "@/app/(app)/community/data";
@@ -18,6 +18,9 @@ export type PersonalDeck = {
   term_count: number;
   first_term: CommunityTerm | null;
   terms: DictionaryTerm[];
+  visibility: "private" | "unlisted" | "moderators" | "community";
+  publication_status: "draft" | "under_review" | "approved" | "rejected" | "archived";
+  review_notes: string | null;
 };
 
 const initialState: DeckActionState = {};
@@ -38,8 +41,19 @@ function DeckEditor({ deck, preferences }: { deck: PersonalDeck; preferences: La
   const [editingTerms, setEditingTerms] = useState(false);
   const [updateState, updateAction, updating] = useActionState(updateDeck, initialState);
   const [deleteState, deleteAction, deleting] = useActionState(deleteDeck, initialState);
+  const [submitState, submitAction, submitting] = useActionState(submitDeckForReview, initialState);
   const termCount = deck.term_count;
   const forms = deck.first_term ? getChineseDisplayForms(deck.first_term, preferences.characterSet) : null;
+  const canEdit = deck.visibility === "private" && deck.publication_status !== "approved";
+  const canSubmit = canEdit && ["draft", "rejected"].includes(deck.publication_status);
+  const hasDescription = Boolean(deck.description?.trim());
+  const statusLabel = {
+    draft: "Private draft",
+    under_review: "Under review",
+    approved: "Published",
+    rejected: "Changes requested",
+    archived: "Archived",
+  }[deck.publication_status];
 
   return <li className="rounded-lg border border-muted-background bg-surface p-5 transition-colors hover:border-primary">
     {editing ? <form action={updateAction} className="space-y-4">
@@ -56,14 +70,18 @@ function DeckEditor({ deck, preferences }: { deck: PersonalDeck; preferences: La
         <div className="mt-5 space-y-3">
           <h2 className="line-clamp-2 font-heading text-2xl font-semibold leading-tight">{deck.title}</h2>
           <p className="line-clamp-3 min-h-18 text-sm leading-6 text-muted">{deck.description || "No description added."}</p>
-          <div className="flex items-center justify-between gap-3 border-t border-muted-background pt-3 text-sm text-muted"><span>{termCount} {termCount === 1 ? "term" : "terms"}</span><span>Private</span></div>
+          <div className="flex items-center justify-between gap-3 border-t border-muted-background pt-3 text-sm text-muted"><span>{termCount} {termCount === 1 ? "term" : "terms"}</span><span>{statusLabel}</span></div>
         </div>
       </Link>
-      <div className="mt-5 flex flex-wrap gap-3 border-t border-muted-background pt-4">
+      {deck.review_notes ? <p className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"><span className="font-bold">Reviewer notes:</span> {deck.review_notes}</p> : null}
+      {canEdit ? <div className="mt-5 flex flex-wrap gap-3 border-t border-muted-background pt-4">
         <button className="h-10 rounded-lg border border-muted-background px-4 text-sm font-bold hover:border-primary hover:text-primary" onClick={() => setEditing(true)} type="button">Edit details</button>
         <button className="h-10 rounded-lg border border-muted-background px-4 text-sm font-bold hover:border-primary hover:text-primary" onClick={() => setEditingTerms(true)} type="button">Edit terms</button>
+        {canSubmit ? <form action={submitAction}><input name="id" type="hidden" value={deck.id} /><button className="h-10 rounded-lg bg-confirm px-4 text-sm font-bold text-text-light disabled:cursor-not-allowed disabled:opacity-60" disabled={submitting || !hasDescription || termCount === 0} title={!hasDescription ? "Add a description before submitting" : undefined} type="submit">{submitting ? "Submitting…" : deck.publication_status === "rejected" ? "Resubmit for review" : "Submit for review"}</button></form> : null}
         <form action={deleteAction} onSubmit={(event) => { if (!window.confirm(`Delete “${deck.title}”? This cannot be undone.`)) event.preventDefault(); }}><input name="id" type="hidden" value={deck.id} /><button className="h-10 rounded-lg border border-danger/30 px-4 text-sm font-bold text-danger hover:bg-danger/10 disabled:opacity-60" disabled={deleting} type="submit">{deleting ? "Deleting…" : "Delete"}</button></form>
-      </div>
+      </div> : null}
+      {canSubmit && !hasDescription ? <p className="mt-3 text-sm font-bold text-muted">Add a description before submitting this deck for review.</p> : null}
+      <Message state={submitState} />
       <Message state={deleteState} />
     </>}
     {editingTerms ? <EditTermsModal deck={deck} onClose={() => setEditingTerms(false)} preferences={preferences} /> : null}
@@ -93,7 +111,7 @@ function ReorderableTerms({ preferences, selected, setSelected }: {
       <button aria-label={`Move ${label} down`} className="size-7 rounded text-sm font-bold text-muted hover:bg-muted-background disabled:opacity-30" disabled={index === selected.length - 1} onClick={() => move(index, index + 1)} type="button">↓</button>
       <button aria-label={`Remove ${label}`} className="flex size-5 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-danger/10" onClick={() => setSelected((items) => items.filter((item) => item.id !== term.id))} type="button"><Image alt="" className="size-2.5" height={10} src="/icons/cross.svg" width={10} /></button>
     </li>;
-  })}</ol> : <p className="rounded-lg border border-muted-background bg-background px-4 py-3 text-sm text-muted">The first term will be shown on the deck's preview. Add at least one term before saving this deck.</p>;
+  })}</ol> : <p className="rounded-lg border border-muted-background bg-background px-4 py-3 text-sm text-muted">The first term will be shown on the deck&apos;s preview. Add at least one term before saving this deck.</p>;
 }
 
 function TermPicker({ preferences, selected, setSelected }: {

@@ -18,10 +18,13 @@ function termsFromRows(rows: DeckTermRow[]) {
     .map((term) => ({ ...term, added_by_display: term.added_by || "Jingdex" }));
 }
 
-const deckSelection = "id,title,description,created_by,created_at,updated_at,deck_terms(position,terms(id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by))";
+const deckSelection = "id,title,description,created_by,created_at,updated_at,visibility,publication_status,review_notes,deck_terms(position,terms(id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by))";
 
 export type PersonalDeckSummary = Omit<CommunityDeckDetails, "terms"> & {
   updated_at: string;
+  visibility: "private" | "unlisted" | "moderators" | "community";
+  publication_status: "draft" | "under_review" | "approved" | "rejected" | "archived";
+  review_notes: string | null;
   terms: CommunityTerm[];
 };
 
@@ -31,7 +34,7 @@ export async function getPersonalDecks() {
   if (authError || !authData.user) return [];
 
   const { data } = await supabase.from("decks").select(deckSelection)
-    .eq("created_by_user_id", authData.user.id).eq("visibility", "private")
+    .eq("created_by_user_id", authData.user.id)
     .order("updated_at", { ascending: false });
 
   return (data ?? []).map((deck) => {
@@ -47,8 +50,8 @@ export async function getPersonalDeck(deckId: string) {
 
   const { data } = await supabase.from("decks").select(deckSelection)
     .eq("id", deckId).eq("created_by_user_id", authData.user.id)
-    .eq("visibility", "private").maybeSingle();
+    .maybeSingle();
   if (!data) return null;
   const terms = termsFromRows((data.deck_terms ?? []) as DeckTermRow[]);
-  return { ...data, deck_terms: undefined, first_term: terms[0] ?? null, term_count: terms.length, terms } as CommunityDeckDetails & { updated_at: string };
+  return { ...data, deck_terms: undefined, first_term: terms[0] ?? null, term_count: terms.length, terms } as PersonalDeckSummary;
 }

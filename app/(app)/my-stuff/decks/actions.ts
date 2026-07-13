@@ -138,6 +138,65 @@ export async function updateDeckTerms(
   return { success: "Deck terms updated." };
 }
 
+export async function submitDeckForReview(
+  _state: DeckActionState,
+  formData: FormData,
+): Promise<DeckActionState> {
+  const id = text(formData, "id");
+  if (!id) return { message: "Choose a deck to submit." };
+
+  const { supabase, user } = await authenticatedClient();
+  if (!user) return { message: "Sign in again before submitting a deck." };
+
+  const { data: deck, error: deckError } = await supabase
+    .from("decks")
+    .select("id,description,publication_status")
+    .eq("id", id)
+    .eq("created_by_user_id", user.id)
+    .eq("visibility", "private")
+    .in("publication_status", ["draft", "rejected"])
+    .maybeSingle();
+
+  if (deckError) {
+    return { message: errorMessage(deckError, "Could not check that deck.") };
+  }
+  if (!deck) return { message: "That deck is not available to submit." };
+  if (!deck.description?.trim()) {
+    return { message: "Add a description before submitting this deck." };
+  }
+
+  const { count, error: termsError } = await supabase
+    .from("deck_terms")
+    .select("term_id", { count: "exact", head: true })
+    .eq("deck_id", id);
+  if (termsError) {
+    return { message: errorMessage(termsError, "Could not check the deck's terms.") };
+  }
+  if (!count) return { message: "Add at least one term before submitting this deck." };
+
+  const { data, error } = await supabase
+    .from("decks")
+    .update({
+      publication_status: "under_review",
+      submitted_at: new Date().toISOString(),
+      reviewed_at: null,
+      reviewed_by_user_id: null,
+      review_notes: null,
+    })
+    .eq("id", id)
+    .eq("created_by_user_id", user.id)
+    .eq("visibility", "private")
+    .eq("publication_status", deck.publication_status)
+    .select("id")
+    .maybeSingle();
+  if (error) return { message: errorMessage(error, "Could not submit that deck.") };
+  if (!data) return { message: "That deck changed before it could be submitted. Try again." };
+
+  revalidatePath("/my-stuff/decks");
+  revalidatePath("/community/review");
+  return { success: "Deck submitted for review." };
+}
+
 export async function deleteDeck(
   _state: DeckActionState,
   formData: FormData,
