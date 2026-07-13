@@ -71,8 +71,8 @@ function Button({
 
 export default function Demo() {
   return (
-    <main className="flex-1 bg-background px-6 py-10 text-foreground">
-      <div className="mx-auto max-w-6xl space-y-12">
+    <main className="flex-1 bg-background text-foreground">
+      <div className="w-full space-y-12">
         <header className="space-y-3">
           <p className="font-sans text-sm font-bold uppercase text-primary">
             Jingdex demo

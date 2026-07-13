@@ -21,8 +21,8 @@ export default async function JingdexDecksPage() {
   const preferences = normalizeLanguagePreferences(profile);
 
   return (
-    <main className="flex-1 bg-background px-6 py-10 text-foreground">
-      <div className="mx-auto max-w-6xl space-y-8">
+    <main className="flex-1 bg-background text-foreground">
+      <div className="w-full space-y-8">
         <header className="space-y-3">
           <Link className="font-sans text-sm font-bold text-primary hover:text-foreground" href="/community">
             ← Community

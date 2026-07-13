@@ -23,8 +23,8 @@ export default async function CommunityPage() {
   const preferences = normalizeLanguagePreferences(profile);
 
   return (
-    <main className="flex-1 bg-background px-6 py-10 text-foreground">
-      <div className="mx-auto max-w-6xl space-y-8">
+    <main className="flex-1 bg-background text-foreground">
+      <div className="w-full space-y-8">
         <header className="space-y-3">
           <p className="font-sans text-sm font-bold uppercase text-primary">
             Community
@@ -62,10 +62,10 @@ export default async function CommunityPage() {
                 View all decks by Jingdex
               </Link>
             </div>
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {deckState.decks.map((deck) => (
                 <CommunityDeckCard
-                  className="hidden first:block sm:nth-[2]:block lg:nth-[3]:block"
+                  className="hidden first:block md:nth-[2]:block xl:nth-[3]:block"
                   deck={deck}
                   key={deck.id}
                   preferences={preferences}

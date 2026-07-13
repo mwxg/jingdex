@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "./app-sidebar";
+import { SidebarPageLayout } from "./sidebar-page-layout";
 
 type AppShellProps = Readonly<{
   children: React.ReactNode;
@@ -27,11 +28,12 @@ export function AppShell({ children, hasAccount, canAccessDemo }: AppShellProps)
     );
 
   return (
-    <div className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-352 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)] lg:px-8">
-      <aside className="border-b border-muted-background pb-6 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-6">
+    <SidebarPageLayout
+      sidebar={
         <AppSidebar hasAccount={hasAccount} canAccessDemo={canAccessDemo} />
-      </aside>
+      }
+    >
       {content}
-    </div>
+    </SidebarPageLayout>
   );
 }

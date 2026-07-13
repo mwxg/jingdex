@@ -31,8 +31,8 @@ export default async function CommunityDeckPage({
   }
 
   return (
-    <main className="flex-1 bg-background px-6 py-10 text-foreground">
-      <div className="mx-auto max-w-6xl space-y-8">
+    <main className="flex-1 bg-background text-foreground">
+      <div className="w-full space-y-8">
         <Link
           className="inline-flex h-10 items-center rounded-lg border border-muted-background bg-surface px-4 font-sans text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
           href="/community"

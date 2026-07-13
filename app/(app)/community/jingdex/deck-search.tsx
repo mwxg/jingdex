@@ -42,7 +42,7 @@ export function JingdexDeckSearch({
       </div>
 
       {visibleDecks.length > 0 ? (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {visibleDecks.map((deck) => (
             <CommunityDeckCard
               deck={deck}

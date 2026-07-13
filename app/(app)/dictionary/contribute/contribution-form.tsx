@@ -43,7 +43,7 @@ export function ContributionForm() {
   return (
     <form action={action} className="space-y-5">
       <ActionMessage state={state} />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Field label="Simplified" name="simplified" value={simplified} onChange={setSimplified} />
         <Field label="Traditional (optional)" name="traditional" required={false} value={traditional} onChange={setTraditional} />
         <Field label="Pinyin" name="pinyin" value={pinyin} onChange={setPinyin} />

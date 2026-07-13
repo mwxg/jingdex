@@ -1,7 +1,7 @@
 export default function LoadingCommunityDeck() {
   return (
-    <main className="flex-1 bg-background px-6 py-10 text-foreground">
-      <div className="mx-auto max-w-6xl space-y-8">
+    <main className="flex-1 bg-background text-foreground">
+      <div className="w-full space-y-8">
         <div className="h-10 w-40 rounded-lg bg-muted-background" />
         <div className="space-y-3">
           <div className="h-4 w-32 rounded bg-muted-background" />
