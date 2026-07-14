@@ -2,37 +2,38 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
-import { PendingLabel } from "@/components/loading";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
+import { InlineLoadingStatus, PendingLabel } from "@/components/loading";
 import {
   getChineseDisplayForms,
   type LanguagePreferences,
 } from "@/lib/preferences/language";
 import {
   getPartOfSpeechLabel,
-  type PartOfSpeech,
 } from "@/lib/terms/parts-of-speech";
 import { getDefinitionPreview } from "@/lib/terms/definition-preview";
-import { updateBio, type BioFormState } from "./actions";
+import {
+  getProfileDeckPage,
+  getProfileWordPage,
+  updateBio,
+  type BioFormState,
+} from "./actions";
+import {
+  PROFILE_DECKS_PER_PAGE,
+  PROFILE_WORDS_PER_PAGE,
+  type ProfileDeck,
+  type ProfilePageResult,
+  type ProfileTerm,
+} from "./types";
 
-export type ProfileDeck = {
-  description: string | null;
-  id: string;
-  title: string;
-};
-
-export type ProfileTerm = {
-  added_by: string;
-  english_definition: string | null;
-  id: string;
-  notes: string | null;
-  parts_of_speech: PartOfSpeech[] | null;
-  pinyin: string;
-  short_definition: string | null;
-  simplified: string;
-  traditional: string | null;
-  zhuyin: string;
-};
+const PROFILE_PAGE_CACHE_TTL_MS = 60_000;
 
 function BioEditor({ bio }: Readonly<{ bio: string | null }>) {
   const [state, action, pending] = useActionState<BioFormState, FormData>(
@@ -240,20 +241,16 @@ export function ProfileContent({
         </section>
 
         <DeckSection
-          count={deckCount}
-          currentPage={deckPage}
-          decks={decks}
-          username={username}
-          wordPage={wordPage}
+          initialCount={deckCount}
+          initialDecks={decks}
+          initialPage={deckPage}
         />
         <TermSection
-          count={wordCount}
-          currentPage={wordPage}
-          deckPage={deckPage}
+          initialCount={wordCount}
+          initialPage={wordPage}
+          initialTerms={terms}
           onSelect={setSelectedTerm}
           preferences={preferences}
-          terms={terms}
-          username={username}
         />
       </div>
       {selectedTerm ? (
@@ -267,93 +264,237 @@ export function ProfileContent({
   );
 }
 
-function Pagination({
+type CachedPage<T> = ProfilePageResult<T> & { cachedAt: number };
+
+function usePaginatedCollection<T>({
   anchor,
+  fetchPage,
+  initialItems,
+  initialPage,
+  initialTotalCount,
+  paramName,
+}: {
+  anchor: string;
+  fetchPage: (page: number) => Promise<ProfilePageResult<T>>;
+  initialItems: T[];
+  initialPage: number;
+  initialTotalCount: number;
+  paramName: string;
+}) {
+  const cacheRef = useRef(
+    new Map<number, CachedPage<T>>([
+      [
+        initialPage,
+        {
+          cachedAt: 0,
+          items: initialItems,
+          page: initialPage,
+          totalCount: initialTotalCount,
+        },
+      ],
+    ]),
+  );
+
+  const [view, setView] = useState<ProfilePageResult<T>>({
+    items: initialItems,
+    page: initialPage,
+    totalCount: initialTotalCount,
+  });
+  const [isPending, startTransition] = useTransition();
+  const requestIdRef = useRef(0);
+  const currentPageRef = useRef(initialPage);
+  const lastFocusRefreshRef = useRef(0);
+
+  useEffect(() => {
+    const initialCachedPage = cacheRef.current.get(initialPage);
+    if (initialCachedPage?.cachedAt === 0) {
+      cacheRef.current.set(initialPage, {
+        ...initialCachedPage,
+        cachedAt: Date.now(),
+      });
+    }
+  }, [initialPage]);
+
+  useEffect(() => {
+    currentPageRef.current = view.page;
+  }, [view.page]);
+
+  const updateHistory = useCallback(
+    (page: number) => {
+      const url = new URL(window.location.href);
+      if (page > 1) url.searchParams.set(paramName, String(page));
+      else url.searchParams.delete(paramName);
+      url.hash = anchor;
+      window.history.pushState(
+        null,
+        "",
+        `${url.pathname}${url.search}${url.hash}`,
+      );
+    },
+    [anchor, paramName],
+  );
+
+  const loadPage = useCallback(
+    (
+      requestedPage: number,
+      options: { force?: boolean; updateHistory?: boolean } = {},
+    ) => {
+      const page = Math.max(1, Math.floor(requestedPage));
+      const cached = cacheRef.current?.get(page);
+      const isFresh =
+        cached && Date.now() - cached.cachedAt < PROFILE_PAGE_CACHE_TTL_MS;
+
+      if (!options.force && cached && isFresh) {
+        currentPageRef.current = page;
+        setView(cached);
+        if (options.updateHistory !== false) updateHistory(page);
+        return;
+      }
+
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
+      startTransition(async () => {
+        const result = await fetchPage(page);
+        if (requestIdRef.current !== requestId) return;
+
+        if (result.message) {
+          setView((current) => ({ ...current, message: result.message }));
+          return;
+        }
+
+        const cachedResult = { ...result, cachedAt: Date.now() };
+        cacheRef.current?.set(result.page, cachedResult);
+        currentPageRef.current = result.page;
+        setView(result);
+        if (options.updateHistory !== false) updateHistory(result.page);
+      });
+    },
+    [fetchPage, updateHistory],
+  );
+
+  useEffect(() => {
+    function handlePopState() {
+      const rawPage = new URL(window.location.href).searchParams.get(paramName);
+      const parsedPage = Number.parseInt(rawPage ?? "1", 10);
+      loadPage(Number.isFinite(parsedPage) ? parsedPage : 1, {
+        updateHistory: false,
+      });
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [loadPage, paramName]);
+
+  useEffect(() => {
+    function refreshStalePage() {
+      if (document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (now - lastFocusRefreshRef.current < 1_000) return;
+      lastFocusRefreshRef.current = now;
+
+      const page = currentPageRef.current;
+      const cached = cacheRef.current?.get(page);
+      if (
+        cached &&
+        now - cached.cachedAt < PROFILE_PAGE_CACHE_TTL_MS
+      ) {
+        return;
+      }
+
+      cacheRef.current?.clear();
+      loadPage(page, { force: true, updateHistory: false });
+    }
+
+    window.addEventListener("focus", refreshStalePage);
+    document.addEventListener("visibilitychange", refreshStalePage);
+    return () => {
+      window.removeEventListener("focus", refreshStalePage);
+      document.removeEventListener("visibilitychange", refreshStalePage);
+    };
+  }, [loadPage]);
+
+  return { isPending, loadPage, view };
+}
+
+function Pagination({
   currentPage,
-  getHref,
+  disabled,
+  label,
+  onPageChange,
   pageSize,
   totalCount,
 }: Readonly<{
-  anchor: string;
   currentPage: number;
-  getHref: (page: number) => string;
+  disabled?: boolean;
+  label: string;
+  onPageChange: (page: number) => void;
   pageSize: number;
   totalCount: number;
 }>) {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   if (totalPages <= 1) return null;
 
-  const linkClasses =
-    "inline-flex min-h-11 items-center rounded-lg border border-muted-background bg-surface px-4 font-sans text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary";
+  const buttonClasses =
+    "inline-flex min-h-11 cursor-pointer items-center rounded-lg border border-muted-background bg-surface px-4 font-sans text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-muted-background disabled:hover:text-foreground";
 
   return (
     <nav
-      aria-label={`${anchor} pagination`}
+      aria-label={`${label} pagination`}
       className="flex flex-wrap items-center justify-between gap-3"
     >
-      {currentPage > 1 ? (
-        <Link className={linkClasses} href={getHref(currentPage - 1)}>
-          Previous
-        </Link>
-      ) : (
-        <span aria-disabled="true" className={`${linkClasses} opacity-50`}>
-          Previous
-        </span>
-      )}
+      <button
+        className={buttonClasses}
+        disabled={disabled || currentPage <= 1}
+        onClick={() => onPageChange(currentPage - 1)}
+        type="button"
+      >
+        Previous
+      </button>
       <span className="font-sans text-sm text-muted">
         Page {currentPage} of {totalPages}
       </span>
-      {currentPage < totalPages ? (
-        <Link className={linkClasses} href={getHref(currentPage + 1)}>
-          Next
-        </Link>
-      ) : (
-        <span aria-disabled="true" className={`${linkClasses} opacity-50`}>
-          Next
-        </span>
-      )}
+      <button
+        className={buttonClasses}
+        disabled={disabled || currentPage >= totalPages}
+        onClick={() => onPageChange(currentPage + 1)}
+        type="button"
+      >
+        Next
+      </button>
     </nav>
   );
 }
 
-function getProfilePageHref({
-  deckPage,
-  username,
-  wordPage,
-  anchor,
-}: {
-  anchor: string;
-  deckPage: number;
-  username: string;
-  wordPage: number;
-}) {
-  const params = new URLSearchParams();
-  if (deckPage > 1) params.set("decksPage", String(deckPage));
-  if (wordPage > 1) params.set("wordsPage", String(wordPage));
-  const query = params.size ? `?${params.toString()}` : "";
-  return `/users/${encodeURIComponent(username)}${query}#${anchor}`;
-}
-
 function DeckSection({
-  count,
-  currentPage,
-  decks,
-  username,
-  wordPage,
+  initialCount,
+  initialDecks,
+  initialPage,
 }: Readonly<{
-  count: number;
-  currentPage: number;
-  decks: ProfileDeck[];
-  username: string;
-  wordPage: number;
+  initialCount: number;
+  initialDecks: ProfileDeck[];
+  initialPage: number;
 }>) {
-  const rangeStart = decks.length === 0 ? 0 : (currentPage - 1) * 9 + 1;
+  const { isPending, loadPage, view } = usePaginatedCollection({
+    anchor: "profile-decks",
+    fetchPage: getProfileDeckPage,
+    initialItems: initialDecks,
+    initialPage,
+    initialTotalCount: initialCount,
+    paramName: "decksPage",
+  });
+  const rangeStart =
+    view.items.length === 0
+      ? 0
+      : (view.page - 1) * PROFILE_DECKS_PER_PAGE + 1;
   const rangeEnd =
-    decks.length === 0 ? 0 : Math.min(rangeStart + decks.length - 1, count);
+    view.items.length === 0
+      ? 0
+      : Math.min(rangeStart + view.items.length - 1, view.totalCount);
 
   return (
     <section
       aria-labelledby="profile-decks-heading"
+      aria-busy={isPending}
       className="scroll-mt-4 space-y-4"
       id="profile-decks"
     >
@@ -362,12 +503,18 @@ function DeckSection({
           Public decks
         </h2>
         <span className="font-sans text-sm text-muted">
-          Showing {rangeStart}&ndash;{rangeEnd} of {count}
+          Showing {rangeStart}&ndash;{rangeEnd} of {view.totalCount}
         </span>
       </div>
-      {decks.length ? (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {decks.map((deck) => (
+      {view.message ? (
+        <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-sans text-sm font-bold text-danger" role="alert">
+          {view.message}
+        </p>
+      ) : null}
+      {isPending ? <InlineLoadingStatus label="Loading deck page&hellip;" /> : null}
+      {view.items.length ? (
+        <ul className={`grid gap-4 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${isPending ? "opacity-60" : "opacity-100"}`}>
+          {view.items.map((deck) => (
             <li key={deck.id}>
               <Link
                 className="block h-full rounded-lg border border-muted-background bg-surface p-5 transition-colors hover:border-primary focus:border-primary focus:outline-none"
@@ -389,47 +536,51 @@ function DeckSection({
         </p>
       )}
       <Pagination
-        anchor="profile-decks"
-        currentPage={currentPage}
-        getHref={(page) =>
-          getProfilePageHref({
-            anchor: "profile-decks",
-            deckPage: page,
-            username,
-            wordPage,
-          })
-        }
-        pageSize={9}
-        totalCount={count}
+        currentPage={view.page}
+        disabled={isPending}
+        label="Public decks"
+        onPageChange={loadPage}
+        pageSize={PROFILE_DECKS_PER_PAGE}
+        totalCount={view.totalCount}
       />
     </section>
   );
 }
 
 function TermSection({
+  initialCount,
+  initialPage,
+  initialTerms,
   onSelect,
   preferences,
-  terms,
-  count,
-  currentPage,
-  deckPage,
-  username,
 }: Readonly<{
-  count: number;
-  currentPage: number;
-  deckPage: number;
+  initialCount: number;
+  initialPage: number;
+  initialTerms: ProfileTerm[];
   onSelect: (term: ProfileTerm) => void;
   preferences: LanguagePreferences;
-  terms: ProfileTerm[];
-  username: string;
 }>) {
-  const rangeStart = terms.length === 0 ? 0 : (currentPage - 1) * 10 + 1;
+  const { isPending, loadPage, view } = usePaginatedCollection({
+    anchor: "profile-words",
+    fetchPage: getProfileWordPage,
+    initialItems: initialTerms,
+    initialPage,
+    initialTotalCount: initialCount,
+    paramName: "wordsPage",
+  });
+  const rangeStart =
+    view.items.length === 0
+      ? 0
+      : (view.page - 1) * PROFILE_WORDS_PER_PAGE + 1;
   const rangeEnd =
-    terms.length === 0 ? 0 : Math.min(rangeStart + terms.length - 1, count);
+    view.items.length === 0
+      ? 0
+      : Math.min(rangeStart + view.items.length - 1, view.totalCount);
 
   return (
     <section
       aria-labelledby="profile-words-heading"
+      aria-busy={isPending}
       className="scroll-mt-4 space-y-4"
       id="profile-words"
     >
@@ -438,12 +589,18 @@ function TermSection({
           Contributed words
         </h2>
         <span className="font-sans text-sm text-muted">
-          Showing {rangeStart}&ndash;{rangeEnd} of {count}
+          Showing {rangeStart}&ndash;{rangeEnd} of {view.totalCount}
         </span>
       </div>
-      {terms.length ? (
-        <ul className="divide-y divide-muted-background overflow-hidden rounded-lg border border-muted-background bg-surface">
-          {terms.map((term) => {
+      {view.message ? (
+        <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-sans text-sm font-bold text-danger" role="alert">
+          {view.message}
+        </p>
+      ) : null}
+      {isPending ? <InlineLoadingStatus label="Loading word page&hellip;" /> : null}
+      {view.items.length ? (
+        <ul className={`divide-y divide-muted-background overflow-hidden rounded-lg border border-muted-background bg-surface transition-opacity ${isPending ? "opacity-60" : "opacity-100"}`}>
+          {view.items.map((term) => {
             const forms = getChineseDisplayForms(term, preferences.characterSet);
             const primaryPronunciation =
               preferences.pronunciation === "pinyin" ? term.pinyin : term.zhuyin;
@@ -489,18 +646,12 @@ function TermSection({
         </p>
       )}
       <Pagination
-        anchor="profile-words"
-        currentPage={currentPage}
-        getHref={(page) =>
-          getProfilePageHref({
-            anchor: "profile-words",
-            deckPage,
-            username,
-            wordPage: page,
-          })
-        }
-        pageSize={10}
-        totalCount={count}
+        currentPage={view.page}
+        disabled={isPending}
+        label="Contributed words"
+        onPageChange={loadPage}
+        pageSize={PROFILE_WORDS_PER_PAGE}
+        totalCount={view.totalCount}
       />
     </section>
   );

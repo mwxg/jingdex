@@ -4,18 +4,19 @@ import { normalizeLanguagePreferences } from "@/lib/preferences/language";
 import { createClient } from "@/lib/supabase/server";
 import {
   ProfileContent,
+} from "./profile-content";
+import {
+  PROFILE_DECKS_PER_PAGE,
+  PROFILE_WORDS_PER_PAGE,
   type ProfileDeck,
   type ProfileTerm,
-} from "./profile-content";
+} from "./types";
 
 type ProfileRow = {
   bio: string | null;
   created_at: string;
   username: string;
 };
-
-const DECKS_PER_PAGE = 9;
-const WORDS_PER_PAGE = 10;
 
 type ProfileSearchParams = {
   decksPage?: string | string[];
@@ -42,8 +43,8 @@ export default async function UserProfilePage({
   ]);
   const deckPage = getPage(query.decksPage);
   const wordPage = getPage(query.wordsPage);
-  const deckFrom = (deckPage - 1) * DECKS_PER_PAGE;
-  const wordFrom = (wordPage - 1) * WORDS_PER_PAGE;
+  const deckFrom = (deckPage - 1) * PROFILE_DECKS_PER_PAGE;
+  const wordFrom = (wordPage - 1) * PROFILE_WORDS_PER_PAGE;
 
   if (
     !viewer.userId ||
@@ -68,14 +69,14 @@ export default async function UserProfilePage({
       .eq("visibility", "community")
       .eq("publication_status", "approved")
       .order("created_at", { ascending: false })
-      .range(deckFrom, deckFrom + DECKS_PER_PAGE - 1),
+      .range(deckFrom, deckFrom + PROFILE_DECKS_PER_PAGE - 1),
     supabase
       .from("terms")
       .select("id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by", { count: "exact" })
       .eq("added_by_user_id", viewer.userId)
       .eq("is_verified", true)
       .order("created_at", { ascending: false })
-      .range(wordFrom, wordFrom + WORDS_PER_PAGE - 1),
+      .range(wordFrom, wordFrom + PROFILE_WORDS_PER_PAGE - 1),
   ]);
 
   const profile = profileResult.data as ProfileRow | null;
