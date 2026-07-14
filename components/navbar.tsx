@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { hasPermission } from "@/lib/auth/roles";
 import { AccountMenu } from "./account-menu";
+import { JingdexLogo } from "./jingdex-logo";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -24,14 +24,7 @@ export function Navbar({
           className="flex items-center"
           aria-label="Jingdex home"
         >
-          <Image
-            src="/logos/logo_rect.svg"
-            alt="Jingdex"
-            width={128}
-            height={64}
-            className="h-10 w-auto"
-            priority
-          />
+          <JingdexLogo className="h-10 w-auto" priority />
         </Link>
 
         <div className="flex min-w-0 max-w-full items-center gap-1 font-sans text-sm font-bold text-muted">

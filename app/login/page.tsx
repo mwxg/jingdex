@@ -1,6 +1,6 @@
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { getSafeNextPath } from "@/lib/auth/validation";
+import { JingdexLogo } from "@/components/jingdex-logo";
 import { AuthForm } from "./auth-form";
 
 export default async function LoginPage({
@@ -24,14 +24,7 @@ export default async function LoginPage({
   return (
     <main className="grid flex-1 place-items-center bg-background px-6 py-10 text-foreground">
       <div className="w-full max-w-md space-y-6">
-        <Image
-          src="/logos/logo_rect.svg"
-          alt="Jingdex"
-          width={2176}
-          height={1024}
-          className="mx-auto h-20 w-auto"
-          priority
-        />
+        <JingdexLogo className="mx-auto h-20 w-auto" priority />
 
         <section className="rounded-lg border border-muted-background bg-surface p-6">
           <AuthForm

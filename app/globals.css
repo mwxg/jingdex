@@ -47,6 +47,18 @@
   --under-review: #ff9d4d;
 }
 
+.theme-logo-dark {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-logo-light {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-logo-dark {
+  display: block;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
