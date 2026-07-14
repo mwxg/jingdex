@@ -15,7 +15,7 @@ type ProfileRow = {
 };
 
 const DECKS_PER_PAGE = 9;
-const WORDS_PER_PAGE = 20;
+const WORDS_PER_PAGE = 10;
 
 type ProfileSearchParams = {
   decksPage?: string | string[];

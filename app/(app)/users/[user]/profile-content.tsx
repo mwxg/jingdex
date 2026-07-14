@@ -347,6 +347,10 @@ function DeckSection({
   username: string;
   wordPage: number;
 }>) {
+  const rangeStart = decks.length === 0 ? 0 : (currentPage - 1) * 9 + 1;
+  const rangeEnd =
+    decks.length === 0 ? 0 : Math.min(rangeStart + decks.length - 1, count);
+
   return (
     <section
       aria-labelledby="profile-decks-heading"
@@ -357,7 +361,9 @@ function DeckSection({
         <h2 className="font-heading text-3xl font-semibold" id="profile-decks-heading">
           Public decks
         </h2>
-        <span className="font-sans text-sm text-muted">{count}</span>
+        <span className="font-sans text-sm text-muted">
+          Showing {rangeStart}&ndash;{rangeEnd} of {count}
+        </span>
       </div>
       {decks.length ? (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -417,6 +423,10 @@ function TermSection({
   terms: ProfileTerm[];
   username: string;
 }>) {
+  const rangeStart = terms.length === 0 ? 0 : (currentPage - 1) * 10 + 1;
+  const rangeEnd =
+    terms.length === 0 ? 0 : Math.min(rangeStart + terms.length - 1, count);
+
   return (
     <section
       aria-labelledby="profile-words-heading"
@@ -427,7 +437,9 @@ function TermSection({
         <h2 className="font-heading text-3xl font-semibold" id="profile-words-heading">
           Contributed words
         </h2>
-        <span className="font-sans text-sm text-muted">{count}</span>
+        <span className="font-sans text-sm text-muted">
+          Showing {rangeStart}&ndash;{rangeEnd} of {count}
+        </span>
       </div>
       {terms.length ? (
         <ul className="divide-y divide-muted-background overflow-hidden rounded-lg border border-muted-background bg-surface">
@@ -487,7 +499,7 @@ function TermSection({
             wordPage: page,
           })
         }
-        pageSize={20}
+        pageSize={10}
         totalCount={count}
       />
     </section>
