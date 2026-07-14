@@ -60,7 +60,7 @@ export function SubmissionsBrowser({ preferences, submissions }: Readonly<{
         <label className="space-y-2">
           <span className="block font-sans text-sm font-bold">Search your submissions</span>
           <input
-            className="h-11 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base outline-none placeholder:text-muted focus:border-primary"
+            className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base outline-none placeholder:text-muted focus:border-primary"
             onChange={(event) => { setQuery(event.target.value); setPage(1); }}
             placeholder="Term, pronunciation, or definition"
             type="search"
@@ -70,7 +70,7 @@ export function SubmissionsBrowser({ preferences, submissions }: Readonly<{
         <label className="space-y-2">
           <span className="block font-sans text-sm font-bold">Status</span>
           <select
-            className="h-11 w-full rounded-lg border border-muted-background bg-surface px-3 font-sans text-sm font-bold outline-none focus:border-primary"
+            className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base font-bold outline-none focus:border-primary"
             onChange={(event) => { setStatus(event.target.value); setPage(1); }}
             value={status}
           >

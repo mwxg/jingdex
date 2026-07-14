@@ -12,7 +12,7 @@ function DecisionButtons({ pending }: Readonly<{ pending: boolean }>) {
   return (
     <div className="flex flex-wrap gap-2">
       <button
-        className="inline-flex h-10 items-center justify-center rounded-lg bg-confirm px-4 font-sans text-sm font-bold text-text-light disabled:opacity-60"
+        className="inline-flex h-10 items-center justify-center rounded-lg bg-confirm px-4 font-sans text-sm font-bold text-on-confirm disabled:opacity-60"
         disabled={pending}
         formNoValidate
         name="decision"
@@ -23,7 +23,7 @@ function DecisionButtons({ pending }: Readonly<{ pending: boolean }>) {
         {pending && decision === "accepted" ? <PendingLabel>Accepting…</PendingLabel> : "Accept"}
       </button>
       <button
-        className="inline-flex h-10 items-center justify-center rounded-lg bg-danger px-4 font-sans text-sm font-bold text-text-light disabled:opacity-60"
+        className="inline-flex h-10 items-center justify-center rounded-lg bg-danger px-4 font-sans text-sm font-bold text-on-danger disabled:opacity-60"
         disabled={pending}
         name="decision"
         onClick={() => setDecision("rejected")}

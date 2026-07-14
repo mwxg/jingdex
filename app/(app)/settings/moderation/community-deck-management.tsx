@@ -436,7 +436,7 @@ function CommunityDeckEditModal({
             <button className="h-10 rounded-lg border border-danger/40 px-4 font-sans text-sm font-bold text-danger hover:border-danger hover:bg-danger/10 disabled:opacity-50" disabled={isDeleting || isSaving} onClick={() => onDelete(deck)} type="button">{isDeleting ? "Deleting" : "Delete"}</button>
             <div className="flex justify-end gap-2">
               <button className="h-10 rounded-lg border border-muted-background px-4 font-sans text-sm font-bold text-foreground hover:border-primary hover:text-primary" disabled={isDeleting || isSaving} onClick={onClose} type="button">Cancel</button>
-              <button className="h-10 rounded-lg bg-primary px-4 font-sans text-sm font-bold text-text-light disabled:opacity-50" disabled={isDeleting || isSaving} type="submit">{isSaving ? "Saving" : "Save"}</button>
+              <button className="h-10 rounded-lg bg-primary px-4 font-sans text-sm font-bold text-on-primary disabled:opacity-50" disabled={isDeleting || isSaving} type="submit">{isSaving ? "Saving" : "Save"}</button>
             </div>
           </div>
         </form>
@@ -667,7 +667,7 @@ export function CommunityDeckManagement({
           </div>
 
           <button
-            className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={isPublishing}
             type="submit"
           >

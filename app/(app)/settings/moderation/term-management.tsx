@@ -212,7 +212,7 @@ export function TermManagement() {
           />
 
           <button
-            className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90"
+            className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-on-primary transition-colors hover:bg-primary/90"
             type="submit"
           >
             Add term
@@ -241,7 +241,7 @@ export function TermManagement() {
           </label>
 
           <button
-            className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90"
+            className="h-12 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-on-primary transition-colors hover:bg-primary/90"
             type="submit"
           >
             Import terms

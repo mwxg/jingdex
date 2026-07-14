@@ -10,7 +10,7 @@ export function PopupDemo() {
     <div className="rounded-lg border border-muted-background bg-surface p-5">
       <button
         type="button"
-        className="h-11 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90"
+        className="h-11 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-on-primary transition-colors hover:bg-primary/90"
         onClick={() => setIsOpen(true)}
       >
         Show message

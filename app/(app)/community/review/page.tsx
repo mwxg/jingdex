@@ -6,6 +6,7 @@ import { getChineseDisplayForms, normalizeLanguagePreferences } from "@/lib/pref
 import { createClient } from "@/lib/supabase/server";
 import { getPartOfSpeechLabel, type PartOfSpeech } from "@/lib/terms/parts-of-speech";
 import { DeckReviewForm, ReviewForm } from "./review-form";
+import { PageHeader } from "@/components/page-header";
 
 type Submission = {
   id: string;
@@ -72,13 +73,12 @@ export default async function ReviewPage() {
   return (
     <main className="min-w-0 bg-background text-foreground">
       <div className="space-y-8">
-        <header className="space-y-3">
-          <p className="font-sans text-sm font-bold uppercase text-admin">Admin</p>
-          <h1 className="font-heading text-5xl font-semibold leading-none sm:text-6xl">Review</h1>
-          <p className="max-w-3xl font-heading text-2xl font-semibold text-muted sm:text-3xl">
-            Review pending word and deck submissions from the Jingdex community.
-          </p>
-        </header>
+        <PageHeader
+          description="Review pending word and deck submissions from the Jingdex community."
+          eyebrow="Admin"
+          eyebrowTone="admin"
+          title="Review"
+        />
 
         <section aria-labelledby="pending-submissions-title" className="space-y-4">
           <h2 className="font-heading text-3xl font-semibold" id="pending-submissions-title">Pending term submissions</h2>

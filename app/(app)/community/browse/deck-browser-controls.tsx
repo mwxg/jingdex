@@ -183,7 +183,7 @@ export function PublicDeckBrowser({
           {visiblePages(page, totalPages).map((pageNumber) => (
             <button
               aria-current={pageNumber === page ? "page" : undefined}
-              className={`flex h-10 min-w-10 items-center justify-center rounded-lg border px-3 ${pageNumber === page ? "border-primary bg-primary text-text-light" : "border-muted-background bg-surface text-foreground hover:border-primary hover:text-primary"}`}
+              className={`flex h-10 min-w-10 items-center justify-center rounded-lg border px-3 ${pageNumber === page ? "border-primary bg-primary text-on-primary" : "border-muted-background bg-surface text-foreground hover:border-primary hover:text-primary"}`}
               disabled={isPending || pageNumber === page}
               key={pageNumber}
               onClick={() => runSearch(query, sort, pageNumber)}

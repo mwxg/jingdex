@@ -7,19 +7,23 @@
   --foreground: #090c08;
   --text-dark: #090c08;
   --text-light: #ffffff;
-  --primary: #ef9739;
+  --primary: #9f4e00;
   --accent: #2ec4b6;
-  --muted: #6f766c;
+  --muted: #676e64;
   --muted-background: #ecefeb;
-  --danger: #dc3f3f;
-  --confirm: #238b45;
+  --danger: #c92f2f;
+  --confirm: #19763a;
+  --on-primary: #ffffff;
+  --on-danger: #ffffff;
+  --on-confirm: #ffffff;
+  --on-role: #ffffff;
 
   --moderator: #0067bc;
   --admin: #b600bc;
   --developer: #770000;
 
   --community-deck: #6d00a7;
-  --under-review: #ff6f00;
+  --under-review: #a84400;
 
   --font-family-body: var(--font-figtree), Arial, Helvetica, sans-serif;
   --font-family-heading: var(--font-zilla-slab), Georgia, serif;
@@ -38,6 +42,10 @@
   --muted-background: #2c352d;
   --danger: #ff7474;
   --confirm: #64c982;
+  --on-primary: #090c08;
+  --on-danger: #090c08;
+  --on-confirm: #090c08;
+  --on-role: #090c08;
 
   --moderator: #58a9e8;
   --admin: #d56cdb;
@@ -71,12 +79,16 @@
   --color-muted-background: var(--muted-background);
   --color-danger: var(--danger);
   --color-confirm: var(--confirm);
+  --color-on-primary: var(--on-primary);
+  --color-on-danger: var(--on-danger);
+  --color-on-confirm: var(--on-confirm);
+  --color-on-role: var(--on-role);
 
   --color-moderator: var(--moderator);
   --color-admin: var(--admin);
   --color-developer: var(--developer);
 
-  --color-comunity-deck: var(--community-deck);
+  --color-community-deck: var(--community-deck);
   --color-under-review: var(--under-review);
 
   --font-sans: var(--font-family-body);
@@ -87,6 +99,11 @@
 html,
 body {
   min-height: 100%;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 body {

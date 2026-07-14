@@ -3,6 +3,7 @@ import { normalizeLanguagePreferences } from "@/lib/preferences/language";
 import { getViewer } from "@/lib/auth/viewer";
 import { getCommunityDecks } from "../data";
 import { CommunityDeckCard } from "../deck-card";
+import { PageHeader } from "@/components/page-header";
 
 export default async function FeaturedCommunityPage() {
   const [{ profile }, deckState] = await Promise.all([
@@ -14,13 +15,11 @@ export default async function FeaturedCommunityPage() {
   return (
     <main className="flex-1 bg-background text-foreground">
       <div className="w-full space-y-8">
-        <header className="space-y-3">
-          <p className="font-sans text-sm font-bold uppercase text-primary">Community</p>
-          <h1 className="font-heading text-5xl font-semibold leading-none sm:text-6xl">Featured decks</h1>
-          <p className="font-heading text-3xl font-semibold leading-none text-muted">
-            Discover Chinese vocabulary decks selected by Jingdex.
-          </p>
-        </header>
+        <PageHeader
+          description="Discover Chinese vocabulary decks selected by Jingdex."
+          eyebrow="Community"
+          title="Featured decks"
+        />
 
         {deckState.message ? (
           <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-sans text-sm font-bold text-danger">{deckState.message}</p>

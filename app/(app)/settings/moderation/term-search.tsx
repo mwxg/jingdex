@@ -269,7 +269,7 @@ function TermEditModal({
                 Cancel
               </button>
               <button
-                className="h-10 rounded-lg bg-primary px-4 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-10 rounded-lg bg-primary px-4 font-sans text-sm font-bold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={isDeleting || isSaving}
                 type="submit"
               >

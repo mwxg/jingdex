@@ -8,7 +8,7 @@ function SubmitButton({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <button
       type="submit"
-      className="h-11 w-full rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90"
+      className="h-11 w-full rounded-lg bg-primary px-5 font-sans text-sm font-bold text-on-primary transition-colors hover:bg-primary/90"
     >
       {children}
     </button>
@@ -29,7 +29,7 @@ function ModeButton({
       type="button"
       className={`h-10 flex-1 rounded-lg font-sans text-sm font-bold transition-colors ${
         active
-          ? "bg-primary text-text-light"
+          ? "bg-primary text-on-primary"
           : "text-muted hover:bg-muted-background hover:text-foreground"
       }`}
       onClick={onClick}

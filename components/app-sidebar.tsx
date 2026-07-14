@@ -90,8 +90,8 @@ export function AppSidebar({ hasAccount, canAccessDemo, canReview }: AppSidebarP
                       className={`flex items-center justify-between gap-3 rounded-lg px-4 py-3 font-bold transition-colors ${
                         active
                           ? link.special
-                            ? "bg-admin text-text-light hover:bg-admin/90"
-                            : "bg-primary text-text-light hover:bg-primary/90"
+                            ? "bg-admin text-on-role hover:bg-admin/90"
+                            : "bg-primary text-on-primary hover:bg-primary/90"
                           : link.special
                             ? "border border-admin/30 bg-admin/10 text-admin hover:bg-admin/20"
                             : "text-muted hover:bg-muted-background hover:text-primary"

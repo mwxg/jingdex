@@ -108,7 +108,7 @@ export function DeckBrowser({
             Previous
           </button>
           <button
-            className="h-11 rounded-lg bg-primary px-4 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-11 rounded-lg bg-primary px-4 font-sans text-sm font-bold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={termIndex === termCount - 1}
             onClick={() => selectTerm(Math.min(termCount - 1, termIndex + 1))}
             type="button"

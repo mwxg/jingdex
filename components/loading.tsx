@@ -77,7 +77,7 @@ export function PageHeaderSkeleton({
       {backLink ? <Skeleton className="h-10 w-40" /> : null}
       <Skeleton className="h-4 w-24" />
       <Skeleton className="h-12 w-full max-w-lg sm:h-16" />
-      {description ? <Skeleton className="h-7 w-full max-w-2xl" /> : null}
+      {description ? <Skeleton className="h-9 w-full max-w-3xl" /> : null}
     </header>
   );
 }

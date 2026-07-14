@@ -50,7 +50,7 @@ export function ResetPasswordForm() {
       <Field label="Confirm new password" name="confirmPassword" />
       <button
         type="submit"
-        className="h-11 w-full rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90"
+        className="h-11 w-full rounded-lg bg-primary px-5 font-sans text-sm font-bold text-on-primary transition-colors hover:bg-primary/90"
       >
         Update password
       </button>

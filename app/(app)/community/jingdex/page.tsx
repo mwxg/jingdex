@@ -3,6 +3,7 @@ import { normalizeLanguagePreferences } from "@/lib/preferences/language";
 import { getViewer } from "@/lib/auth/viewer";
 import { getAllJingdexDecks } from "../data";
 import { JingdexDeckSearch } from "./deck-search";
+import { PageHeader } from "@/components/page-header";
 
 export default async function JingdexDecksPage() {
   const [{ profile }, deckState] = await Promise.all([
@@ -14,17 +15,15 @@ export default async function JingdexDecksPage() {
   return (
     <main className="flex-1 bg-background text-foreground">
       <div className="w-full space-y-8">
-        <header className="space-y-3">
-          <Link className="font-sans text-sm font-bold text-primary hover:text-foreground" href="/community/featured">
-            ← Community
-          </Link>
-          <h1 className="font-heading text-5xl font-semibold leading-none sm:text-6xl">
-            Decks by Jingdex
-          </h1>
-          <p className="max-w-2xl font-sans text-lg text-muted">
-            Browse Chinese vocabulary decks created by Jingdex.
-          </p>
-        </header>
+        <PageHeader
+          description="Browse Chinese vocabulary decks created by Jingdex."
+          eyebrow={
+            <Link className="hover:text-foreground" href="/community/featured">
+              ← Community
+            </Link>
+          }
+          title="Decks by Jingdex"
+        />
 
         {deckState.message ? <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-sans text-sm font-bold text-danger">{deckState.message}</p> : null}
 

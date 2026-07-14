@@ -198,7 +198,7 @@ export function LanguageSettingsForm({
           />
 
           <button
-            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 font-sans text-sm font-bold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={isPending}
             type="submit"
           >

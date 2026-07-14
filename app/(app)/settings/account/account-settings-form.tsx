@@ -66,7 +66,7 @@ function SubmitButton({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <button
       type="submit"
-      className="h-11 w-fit rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90"
+      className="h-11 w-fit rounded-lg bg-primary px-5 font-sans text-sm font-bold text-on-primary transition-colors hover:bg-primary/90"
     >
       {children}
     </button>
@@ -180,7 +180,7 @@ export function AccountSettingsForm({
             </div>
             <button
               type="submit"
-              className="h-11 w-fit rounded-lg bg-danger px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-danger/90"
+              className="h-11 w-fit rounded-lg bg-danger px-5 font-sans text-sm font-bold text-on-danger transition-colors hover:bg-danger/90"
             >
               Permanently delete account
             </button>
@@ -191,7 +191,7 @@ export function AccountSettingsForm({
       <form action={signOutFromSettings} className="mt-auto border-t border-muted-background pt-6">
         <button
           type="submit"
-          className="h-11 rounded-lg bg-danger px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-danger/90"
+          className="h-11 rounded-lg bg-danger px-5 font-sans text-sm font-bold text-on-danger transition-colors hover:bg-danger/90"
         >
           Sign out
         </button>

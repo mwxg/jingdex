@@ -59,7 +59,7 @@ export function ContributionForm() {
         <span className="font-sans text-sm font-bold">Contributor notes <span className="font-normal text-muted">(optional)</span></span>
         <textarea placeholder="Add your own note to the word (extra context, fun facts, etc). Will be visible to everyone once the term is accepted." className="min-h-24 w-full resize-y rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans outline-none focus:border-primary" name="notes" />
       </label>
-      <button className="inline-flex h-12 items-center justify-center rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light hover:bg-primary/90 disabled:opacity-60" disabled={pending} type="submit">
+      <button className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 font-sans text-sm font-bold text-on-primary hover:bg-primary/90 disabled:opacity-60" disabled={pending} type="submit">
         {pending ? <PendingLabel>Submitting…</PendingLabel> : "Submit for review"}
       </button>
     </form>
