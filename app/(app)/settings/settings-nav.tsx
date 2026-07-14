@@ -52,7 +52,7 @@ export function SettingsNav({ role, roleLabel }: SettingsNavProps) {
             : "text-muted hover:bg-muted-background hover:text-primary"
         }`}
       >
-        Language settings
+        Site settings
       </Link>
       {role && roleLabel ? (
         <Link

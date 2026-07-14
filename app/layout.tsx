@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 const siteName = process.env.SITE_NAME;
 
@@ -50,7 +51,13 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${figtree.variable} ${zillaSlab.variable} ${notoSansSc.variable} ${notoSansTc.variable}`}
+      suppressHydrationWarning
     >
+      <head>
+        <Script id="theme-preference" strategy="beforeInteractive">
+          {`try{document.documentElement.dataset.theme=localStorage.getItem("jingdex-theme")==="dark"?"dark":"light"}catch{document.documentElement.dataset.theme="light"}`}
+        </Script>
+      </head>
       <body className="flex min-h-dvh flex-col">{children}</body>
     </html>
   );

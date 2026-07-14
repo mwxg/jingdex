@@ -8,6 +8,7 @@ import type {
 } from "@/lib/preferences/language";
 import { updateLanguageSettings, type LanguageSettingsState } from "./actions";
 import { PendingLabel } from "@/components/loading";
+import { ThemeSwitch } from "./theme-switch";
 
 function Message({ state }: Readonly<{ state: LanguageSettingsState }>) {
   if (state.success) {
@@ -125,12 +126,37 @@ export function LanguageSettingsForm({
     <div className="space-y-8">
       <div className="space-y-2">
         <h1 className="font-heading text-4xl font-semibold text-foreground">
-          Language settings
+          Site settings
         </h1>
       </div>
 
+      <section className="space-y-5 rounded-lg border border-muted-background bg-surface p-6">
+        <div className="space-y-1">
+          <h2 className="font-heading text-2xl font-semibold text-foreground">
+            Appearance
+          </h2>
+          <p className="font-sans text-sm text-muted">
+            Choose how Jingdex looks on this device.
+          </p>
+        </div>
+        <ThemeSwitch />
+      </section>
+
       <section className="rounded-lg border border-muted-background bg-surface p-6">
-        <form aria-busy={isPending} className="space-y-6" onSubmit={submitSettings}>
+        <form
+          aria-busy={isPending}
+          className="space-y-6"
+          onSubmit={submitSettings}
+        >
+          <div className="space-y-1">
+            <h2 className="font-heading text-2xl font-semibold text-foreground">
+              Language preferences
+            </h2>
+            <p className="font-sans text-sm text-muted">
+              Choose the characters and pronunciation shown most prominently.
+            </p>
+          </div>
+
           <Message state={state} />
 
           <OptionSwitch<CharacterSetPreference>
@@ -176,7 +202,11 @@ export function LanguageSettingsForm({
             disabled={isPending}
             type="submit"
           >
-            {isPending ? <PendingLabel>Saving…</PendingLabel> : "Save language settings"}
+            {isPending ? (
+              <PendingLabel>Saving…</PendingLabel>
+            ) : (
+              "Save language preferences"
+            )}
           </button>
         </form>
       </section>

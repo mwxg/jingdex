@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --background: #f8f8f6;
   --surface: #ffffff;
   --foreground: #090c08;
@@ -24,6 +25,26 @@
   --font-family-heading: var(--font-zilla-slab), Georgia, serif;
   --font-family-chinese: var(--font-noto-sans-sc), var(--font-noto-sans-tc),
     "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #101510;
+  --surface: #192019;
+  --foreground: #f3f5f1;
+  --primary: #f2a24c;
+  --accent: #48d2c5;
+  --muted: #aab4a8;
+  --muted-background: #2c352d;
+  --danger: #ff7474;
+  --confirm: #64c982;
+
+  --moderator: #58a9e8;
+  --admin: #d56cdb;
+  --developer: #e47777;
+
+  --community-deck: #c87af1;
+  --under-review: #ff9d4d;
 }
 
 @theme inline {
