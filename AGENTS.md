@@ -8,7 +8,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This is an app for learning Chinese, mainly through flashcards.
 This app is called "Jingdex" (精dex)
 Do not start dev servers. I will do that manually.
-Look at globals.css when picking colors and fonts to ensure that everything matches the theme nicely.
+
+Implement visual themes through the semantic color variables in app/globals.css, default new users to light mode, and ensure every component remains accessible in both light and dark modes.
 
 This project uses supabase.
 
