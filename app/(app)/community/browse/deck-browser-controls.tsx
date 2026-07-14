@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { type LanguagePreferences } from "@/lib/preferences/language";
+import { InlineLoadingStatus } from "@/components/loading";
 import { type CommunityDeckSummary, type PublicDeckSort } from "../data";
 import { CommunityDeckCard } from "../deck-card";
 
@@ -82,9 +83,12 @@ export function PublicDeckBrowser({
         </label>
       </div>
 
-      <p aria-live="polite" className="font-sans text-sm text-muted">
-        {totalCount} {totalCount === 1 ? "deck" : "decks"}
-      </p>
+      <div className="flex min-h-5 flex-wrap items-center gap-x-4 gap-y-2">
+        <p aria-live="polite" className="font-sans text-sm text-muted">
+          {totalCount} {totalCount === 1 ? "deck" : "decks"}
+        </p>
+        {isPending ? <InlineLoadingStatus label="Updating decks…" /> : null}
+      </div>
 
       <div aria-busy={isPending} className={`transition-opacity ${isPending ? "opacity-60" : "opacity-100"}`}>
         {decks.length > 0 ? (

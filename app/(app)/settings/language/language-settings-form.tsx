@@ -7,6 +7,7 @@ import type {
   PronunciationPreference,
 } from "@/lib/preferences/language";
 import { updateLanguageSettings, type LanguageSettingsState } from "./actions";
+import { PendingLabel } from "@/components/loading";
 
 function Message({ state }: Readonly<{ state: LanguageSettingsState }>) {
   if (state.success) {
@@ -129,7 +130,7 @@ export function LanguageSettingsForm({
       </div>
 
       <section className="rounded-lg border border-muted-background bg-surface p-6">
-        <form className="space-y-6" onSubmit={submitSettings}>
+        <form aria-busy={isPending} className="space-y-6" onSubmit={submitSettings}>
           <Message state={state} />
 
           <OptionSwitch<CharacterSetPreference>
@@ -171,11 +172,11 @@ export function LanguageSettingsForm({
           />
 
           <button
-            className="h-11 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 font-sans text-sm font-bold text-text-light transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={isPending}
             type="submit"
           >
-            {isPending ? "Saving" : "Save language settings"}
+            {isPending ? <PendingLabel>Saving…</PendingLabel> : "Save language settings"}
           </button>
         </form>
       </section>

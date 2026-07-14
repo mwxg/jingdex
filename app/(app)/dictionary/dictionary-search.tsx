@@ -21,6 +21,7 @@ import {
   type DictionaryTerm,
 } from "./actions";
 import { TermSearchModeButton } from "@/components/term-search-mode-button";
+import { InlineLoadingStatus } from "@/components/loading";
 import {
   containsChineseSearchCharacters,
   type TermSearchMode,
@@ -77,14 +78,7 @@ function SearchingStatus({ isSearching }: Readonly<{ isSearching: boolean }>) {
     return null;
   }
 
-  return (
-    <p
-      aria-live="polite"
-      className="font-sans text-sm font-bold text-primary"
-    >
-      Searching...
-    </p>
-  );
+  return <InlineLoadingStatus label="Searching…" />;
 }
 
 function TermDetailsModal({
@@ -282,7 +276,10 @@ export function DictionarySearch({
   }, [inputValue, runSearch, searchMode, sortValue]);
 
   return (
-    <section className="rounded-lg border border-muted-background bg-surface p-6">
+    <section
+      aria-busy={isSearching}
+      className="rounded-lg border border-muted-background bg-surface p-6"
+    >
       <form className="space-y-5" onSubmit={submitSearch}>
         <SearchMessage state={state} />
 
@@ -339,8 +336,9 @@ export function DictionarySearch({
         ) : null}
       </form>
 
-      {hasQuery && state.results.length > 0 ? (
-        <>
+      <div className={`transition-opacity ${isSearching ? "opacity-60" : "opacity-100"}`}>
+        {hasQuery && state.results.length > 0 ? (
+          <>
           <div className="mt-6 flex flex-col gap-2 font-sans text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
             <span>
               Showing {state.results.length} of {state.totalCount} matches
@@ -368,8 +366,9 @@ export function DictionarySearch({
               ))}
             </ul>
           </div>
-        </>
-      ) : null}
+          </>
+        ) : null}
+      </div>
 
       {selectedTerm ? (
         <TermDetailsModal

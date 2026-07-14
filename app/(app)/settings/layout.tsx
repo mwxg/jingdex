@@ -1,13 +1,11 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getAdministrativeRole, roleLabels } from "@/lib/auth/roles";
+import { SidebarSkeleton } from "@/components/loading";
 import { SidebarPageLayout } from "@/components/sidebar-page-layout";
 import { SettingsNav } from "./settings-nav";
 
-export default async function SettingsLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+async function SettingsSidebar() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub ?? null;
@@ -22,13 +20,25 @@ export default async function SettingsLayout({
   const roleLabel = role ? roleLabels[role] : null;
 
   return (
+    <SettingsNav
+      role={role ?? undefined}
+      roleLabel={roleLabel ?? undefined}
+    />
+  );
+}
+
+export default function SettingsLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
     <main className="flex-1 bg-background text-foreground">
       <SidebarPageLayout
         sidebar={
-          <SettingsNav
-            role={role ?? undefined}
-            roleLabel={roleLabel ?? undefined}
-          />
+          <Suspense fallback={<SidebarSkeleton />}>
+            <SettingsSidebar />
+          </Suspense>
         }
       >
         {children}

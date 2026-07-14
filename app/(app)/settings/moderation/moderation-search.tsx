@@ -19,6 +19,7 @@ import {
   type UserSearchResult,
   type UserSearchState,
 } from "./actions";
+import { InlineLoadingStatus } from "@/components/loading";
 
 function canEditUser(
   currentUserId: string | undefined,
@@ -57,14 +58,7 @@ function SearchingStatus({ isSearching }: Readonly<{ isSearching: boolean }>) {
     return null;
   }
 
-  return (
-    <p
-      aria-live="polite"
-      className="font-sans text-sm font-bold text-primary"
-    >
-      Searching...
-    </p>
-  );
+  return <InlineLoadingStatus label="Searching…" />;
 }
 
 function RoleEditModal({

@@ -22,6 +22,7 @@ import {
   type TermSearchState,
 } from "./actions";
 import { TermSearchModeButton } from "@/components/term-search-mode-button";
+import { InlineLoadingStatus } from "@/components/loading";
 import {
   containsChineseSearchCharacters,
   type TermSearchMode,
@@ -70,14 +71,7 @@ function SearchingStatus({ isSearching }: Readonly<{ isSearching: boolean }>) {
     return null;
   }
 
-  return (
-    <p
-      aria-live="polite"
-      className="font-sans text-sm font-bold text-primary"
-    >
-      Searching...
-    </p>
-  );
+  return <InlineLoadingStatus label="Searching…" />;
 }
 
 function EditMessage({ state }: Readonly<{ state: TermEditState }>) {

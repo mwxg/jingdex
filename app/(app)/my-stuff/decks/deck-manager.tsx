@@ -7,6 +7,7 @@ import { createDeck, deleteDeck, submitDeckForReview, updateDeck, updateDeckTerm
 import { searchDictionary, type DictionaryTerm } from "@/app/(app)/dictionary/actions";
 import { getChineseDisplayForms, type LanguagePreferences } from "@/lib/preferences/language";
 import { type CommunityTerm } from "@/app/(app)/community/data";
+import { InlineLoadingStatus, PendingLabel } from "@/components/loading";
 
 export type PersonalDeck = {
   id: string;
@@ -58,12 +59,12 @@ function DeckEditor({ deck, preferences }: { deck: PersonalDeck; preferences: La
   }[deck.publication_status];
 
   return <li className={`rounded-lg border bg-surface p-5 transition-colors ${isPublished ? "border-[color-mix(in_srgb,var(--community-deck)_35%,transparent)] hover:border-comunity-deck" : isUnderReview ? "border-[color-mix(in_srgb,var(--under-review)_35%,transparent)] hover:border-under-review" : "border-muted-background hover:border-primary"}`}>
-    {editing ? <form action={updateAction} className="space-y-4">
+    {editing ? <form action={updateAction} aria-busy={updating} className="space-y-4">
       <input name="id" type="hidden" value={deck.id} />
       <label className="block space-y-2"><span className="text-sm font-bold">Deck title</span><input className={field} defaultValue={deck.title} maxLength={100} name="title" required /></label>
       <label className="block space-y-2"><span className="text-sm font-bold">Description <span className="font-normal text-muted">(optional)</span></span><textarea className={`${field} min-h-28 py-3`} defaultValue={deck.description ?? ""} maxLength={500} name="description" /></label>
       <Message state={updateState} />
-      <div className="flex flex-wrap gap-3"><button className="h-11 rounded-lg bg-primary px-5 text-sm font-bold text-text-light disabled:opacity-60" disabled={updating} type="submit">{updating ? "Saving…" : "Save changes"}</button><button className="h-11 rounded-lg border border-muted-background px-5 text-sm font-bold hover:border-primary" onClick={() => setEditing(false)} type="button">Cancel</button></div>
+      <div className="flex flex-wrap gap-3"><button className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-bold text-text-light disabled:opacity-60" disabled={updating} type="submit">{updating ? <PendingLabel>Saving…</PendingLabel> : "Save changes"}</button><button className="h-11 rounded-lg border border-muted-background px-5 text-sm font-bold hover:border-primary" onClick={() => setEditing(false)} type="button">Cancel</button></div>
     </form> : <>
       <Link className={`block rounded-lg focus:outline-none focus-visible:ring-2 ${isPublished ? "focus-visible:ring-comunity-deck" : isUnderReview ? "focus-visible:ring-under-review" : "focus-visible:ring-primary"}`} href={`/my-stuff/decks/${deck.id}`}>
         <div className={`flex min-h-40 items-center justify-center rounded-lg px-4 py-6 ${isPublished ? "bg-[color-mix(in_srgb,var(--community-deck)_9%,var(--surface))]" : isUnderReview ? "bg-[color-mix(in_srgb,var(--under-review)_9%,var(--surface))]" : "bg-muted-background"}`}>
@@ -79,8 +80,8 @@ function DeckEditor({ deck, preferences }: { deck: PersonalDeck; preferences: La
       {canEdit ? <div className="mt-5 flex flex-wrap gap-3 border-t border-muted-background pt-4">
         <button className="h-10 rounded-lg border border-muted-background px-4 text-sm font-bold hover:border-primary hover:text-primary" onClick={() => setEditing(true)} type="button">Edit details</button>
         <button className="h-10 rounded-lg border border-muted-background px-4 text-sm font-bold hover:border-primary hover:text-primary" onClick={() => setEditingTerms(true)} type="button">Edit terms</button>
-        {canSubmit ? <form action={submitAction}><input name="id" type="hidden" value={deck.id} /><button className="h-10 rounded-lg bg-confirm px-4 text-sm font-bold text-text-light disabled:cursor-not-allowed disabled:opacity-60" disabled={submitting || !hasDescription || termCount === 0} title={!hasDescription ? "Add a description before submitting" : undefined} type="submit">{submitting ? "Submitting…" : deck.publication_status === "rejected" ? "Resubmit for review" : "Submit for review"}</button></form> : null}
-        <form action={deleteAction} onSubmit={(event) => { if (!window.confirm(`Delete “${deck.title}”? This cannot be undone.`)) event.preventDefault(); }}><input name="id" type="hidden" value={deck.id} /><button className="h-10 rounded-lg border border-danger/30 px-4 text-sm font-bold text-danger hover:bg-danger/10 disabled:opacity-60" disabled={deleting} type="submit">{deleting ? "Deleting…" : "Delete"}</button></form>
+        {canSubmit ? <form action={submitAction} aria-busy={submitting}><input name="id" type="hidden" value={deck.id} /><button className="inline-flex h-10 items-center justify-center rounded-lg bg-confirm px-4 text-sm font-bold text-text-light disabled:cursor-not-allowed disabled:opacity-60" disabled={submitting || !hasDescription || termCount === 0} title={!hasDescription ? "Add a description before submitting" : undefined} type="submit">{submitting ? <PendingLabel>Submitting…</PendingLabel> : deck.publication_status === "rejected" ? "Resubmit for review" : "Submit for review"}</button></form> : null}
+        <form action={deleteAction} aria-busy={deleting} onSubmit={(event) => { if (!window.confirm(`Delete “${deck.title}”? This cannot be undone.`)) event.preventDefault(); }}><input name="id" type="hidden" value={deck.id} /><button className="inline-flex h-10 items-center justify-center rounded-lg border border-danger/30 px-4 text-sm font-bold text-danger hover:bg-danger/10 disabled:opacity-60" disabled={deleting} type="submit">{deleting ? <PendingLabel>Deleting…</PendingLabel> : "Delete"}</button></form>
       </div> : null}
       {canSubmit && !hasDescription ? <p className="mt-3 text-sm font-bold text-muted">Add a description before submitting this deck for review.</p> : null}
       <Message state={submitState} />
@@ -143,7 +144,7 @@ function TermPicker({ preferences, selected, setSelected }: {
 
   return <div className="space-y-3">
     <label className="block space-y-2" htmlFor={inputId}><span className="text-sm font-bold">Add terms</span><input className={field} id={inputId} onChange={(event) => setQuery(event.target.value)} placeholder="Search hanzi, pinyin, zhuyin, or definition" type="search" value={query} /></label>
-    {searching && query.trim() ? <p aria-live="polite" className="text-sm font-bold text-primary">Searching…</p> : null}
+    {searching && query.trim() ? <InlineLoadingStatus label="Searching…" /> : null}
     {message ? <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm font-bold text-danger">{message}</p> : null}
     {query.trim() && results.length ? <ul className="max-h-72 divide-y divide-muted-background overflow-y-auto rounded-lg border border-muted-background">{results.map((term) => {
       const forms = getChineseDisplayForms(term, preferences.characterSet);
@@ -165,7 +166,7 @@ function EditTermsModal({ deck, onClose, preferences }: { deck: PersonalDeck; on
   return <div aria-labelledby={`edit-terms-${deck.id}`} aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 px-4 py-6" role="dialog">
     <div className="max-h-full w-full max-w-3xl overflow-y-auto rounded-lg border border-muted-background bg-surface p-5 shadow-lg sm:p-6">
       <div className="flex items-start justify-between gap-4"><div><h2 className="font-heading text-2xl font-semibold" id={`edit-terms-${deck.id}`}>Edit terms</h2><p className="mt-1 text-sm text-muted">{deck.title}</p></div><button aria-label="Close term editor" className="grid size-10 place-items-center rounded-lg hover:bg-muted-background" onClick={onClose} type="button"><Image alt="" height={16} src="/icons/cross.svg" width={16} /></button></div>
-      <form action={action} className="mt-5 space-y-5"><input name="id" type="hidden" value={deck.id} /><TermPicker preferences={preferences} selected={selected} setSelected={setSelected} /><Message state={state} /><div className="flex justify-end gap-3"><button className="h-10 rounded-lg border border-muted-background px-4 text-sm font-bold hover:border-primary" onClick={onClose} type="button">Cancel</button><button className="h-10 rounded-lg bg-primary px-4 text-sm font-bold text-text-light disabled:opacity-50" disabled={pending || selected.length === 0} type="submit">{pending ? "Saving…" : "Save terms"}</button></div></form>
+      <form action={action} aria-busy={pending} className="mt-5 space-y-5"><input name="id" type="hidden" value={deck.id} /><TermPicker preferences={preferences} selected={selected} setSelected={setSelected} /><Message state={state} /><div className="flex justify-end gap-3"><button className="h-10 rounded-lg border border-muted-background px-4 text-sm font-bold hover:border-primary" onClick={onClose} type="button">Cancel</button><button className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-text-light disabled:opacity-50" disabled={pending || selected.length === 0} type="submit">{pending ? <PendingLabel>Saving…</PendingLabel> : "Save terms"}</button></div></form>
     </div>
   </div>;
 }
@@ -180,12 +181,12 @@ export function DeckManager({ decks, preferences }: { decks: PersonalDeck[]; pre
   }, initialState);
   return <div className="space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-4"><button className="h-11 rounded-lg bg-primary px-5 text-sm font-bold text-text-light hover:bg-primary/90" onClick={() => setShowCreate((value) => !value)} type="button">{showCreate ? "Close" : "Create deck"}</button></div>
-    {showCreate && <form action={action} className="space-y-4 rounded-lg border border-muted-background bg-surface p-5 sm:p-6">
+    {showCreate && <form action={action} aria-busy={pending} className="space-y-4 rounded-lg border border-muted-background bg-surface p-5 sm:p-6">
       <h2 className="font-heading text-2xl font-semibold">Create a private deck</h2>
       <label className="block space-y-2"><span className="text-sm font-bold">Deck title</span><input autoFocus className={field} maxLength={100} name="title" placeholder="Food and restaurants" required /></label>
       <label className="block space-y-2"><span className="text-sm font-bold">Description <span className="font-normal text-muted">(optional)</span></span><textarea className={`${field} min-h-28 py-3`} maxLength={500} name="description" placeholder="Words I want to practice before my trip." /></label>
       <TermPicker preferences={preferences} selected={selectedTerms} setSelected={setSelectedTerms} />
-      <Message state={state} /><button className="h-11 rounded-lg bg-confirm px-5 text-sm font-bold text-text-light disabled:opacity-60" disabled={pending || selectedTerms.length === 0} type="submit">{pending ? "Creating…" : "Create deck"}</button>
+      <Message state={state} /><button className="inline-flex h-11 items-center justify-center rounded-lg bg-confirm px-5 text-sm font-bold text-text-light disabled:opacity-60" disabled={pending || selectedTerms.length === 0} type="submit">{pending ? <PendingLabel>Creating…</PendingLabel> : "Create deck"}</button>
     </form>}
     {decks.length ? <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{decks.map((deck) => <DeckEditor deck={deck} key={deck.id} preferences={preferences} />)}</ul> : <div className="rounded-lg border border-muted-background bg-surface p-6 text-muted"><p className="font-bold text-foreground">No personal decks yet</p><p className="mt-2 text-sm leading-6">Create your first private deck to start organizing vocabulary.</p></div>}
   </div>;

@@ -1,19 +1,16 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { AppSidebar } from "./app-sidebar";
 import { SidebarPageLayout } from "./sidebar-page-layout";
 
 type AppShellProps = Readonly<{
   children: React.ReactNode;
-  hasAccount: boolean;
-  canAccessDemo: boolean;
-  canReview: boolean;
+  sidebar: React.ReactNode;
 }>;
 
 const sidebarSections = ["/dictionary", "/community", "/my-stuff", "/demo"];
 
-export function AppShell({ children, hasAccount, canAccessDemo, canReview }: AppShellProps) {
+export function AppShell({ children, sidebar }: AppShellProps) {
   const pathname = usePathname();
   const hasSidebar = sidebarSections.some(
     (section) => pathname === section || pathname.startsWith(`${section}/`),
@@ -30,9 +27,7 @@ export function AppShell({ children, hasAccount, canAccessDemo, canReview }: App
 
   return (
     <SidebarPageLayout
-      sidebar={
-        <AppSidebar hasAccount={hasAccount} canAccessDemo={canAccessDemo} canReview={canReview} />
-      }
+      sidebar={sidebar}
     >
       {content}
     </SidebarPageLayout>

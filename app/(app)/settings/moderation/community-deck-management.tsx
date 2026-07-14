@@ -30,6 +30,7 @@ import {
   type TermSearchState,
 } from "./actions";
 import { TermSearchModeButton } from "@/components/term-search-mode-button";
+import { InlineLoadingStatus } from "@/components/loading";
 import {
   containsChineseSearchCharacters,
   type TermSearchMode,
@@ -278,14 +279,7 @@ function MiniTermSearch({
         </div>
       </div>
 
-      {isSearching ? (
-        <p
-          aria-live="polite"
-          className="font-sans text-sm font-bold text-primary"
-        >
-          Searching...
-        </p>
-      ) : null}
+      {isSearching ? <InlineLoadingStatus label="Searching…" /> : null}
 
       {state.message ? (
         <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-sans text-sm font-bold text-danger">
@@ -549,14 +543,7 @@ function CommunityDeckEditing({ preferences }: Readonly<{ preferences: LanguageP
           />
         </label>
 
-        {isSearching ? (
-          <p
-            aria-live="polite"
-            className="font-sans text-sm font-bold text-primary"
-          >
-            Searching...
-          </p>
-        ) : null}
+        {isSearching ? <InlineLoadingStatus label="Searching…" /> : null}
       </form>
 
       {hasQuery && results.length > 0 ? (

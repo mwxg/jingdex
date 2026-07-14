@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { hasPermission } from "@/lib/auth/roles";
-import { createClient } from "@/lib/supabase/server";
 import { AccountMenu } from "./account-menu";
 
 const navLinks = [
@@ -12,18 +11,11 @@ const navLinks = [
   { href: "/demo", label: "Demo" },
 ];
 
-export async function Navbar() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims?.sub ?? null;
-  const { data: profile } = userId
-    ? await supabase
-        .from("profiles")
-        .select("username,role")
-        .eq("id", userId)
-        .maybeSingle()
-    : { data: null };
-
+export function Navbar({
+  profile,
+}: Readonly<{
+  profile: { role: string; username: string } | null;
+}>) {
   return (
     <header className="border-b border-muted-background bg-surface">
       <nav className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-3 sm:flex-nowrap sm:py-0">
