@@ -4,6 +4,7 @@ import { normalizeLanguagePreferences } from "@/lib/preferences/language";
 import { getViewer } from "@/lib/auth/viewer";
 import { getCommunityDeck } from "../data";
 import { DeckBrowser } from "./deck-browser";
+import { UsernameLink } from "@/components/username-link";
 
 export default async function CommunityDeckPage({
   params,
@@ -49,7 +50,9 @@ export default async function CommunityDeckPage({
               <div className="flex flex-col gap-2 font-sans text-sm text-muted sm:flex-row sm:items-center">
                 <span>{deckState.deck.term_count} terms</span>
                 <span className="hidden sm:inline">/</span>
-                <span>By {deckState.deck.created_by || "Jingdex"}</span>
+                <span>
+                  By <UsernameLink username={deckState.deck.created_by} />
+                </span>
               </div>
               {deckState.deck.description ? (
                 <p className="max-w-3xl font-sans text-lg leading-8 text-muted">

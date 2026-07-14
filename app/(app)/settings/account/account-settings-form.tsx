@@ -2,11 +2,13 @@
 
 import { useActionState, useState } from "react";
 import type { AuthFormState } from "@/lib/auth/validation";
+import { PendingLabel } from "@/components/loading";
 import {
   changeUsername,
   deleteOwnAccount,
   sendPasswordChangeEmail,
   signOutFromSettings,
+  updateProfileVisibility,
 } from "./actions";
 
 function Message({ state }: Readonly<{ state: AuthFormState }>) {
@@ -75,12 +77,18 @@ function SubmitButton({ children }: Readonly<{ children: React.ReactNode }>) {
 
 export function AccountSettingsForm({
   email,
+  isProfilePublic: initialIsProfilePublic,
   username,
 }: Readonly<{
   email: string;
+  isProfilePublic: boolean;
   username: string;
 }>) {
-  const [isProfilePublic, setIsProfilePublic] = useState(true);
+  const [isProfilePublic, setIsProfilePublic] = useState(
+    initialIsProfilePublic,
+  );
+  const [visibilityState, visibilityAction, visibilityPending] =
+    useActionState(updateProfileVisibility, {});
   const [passwordState, passwordAction] = useActionState(
     sendPasswordChangeEmail,
     {},
@@ -98,14 +106,16 @@ export function AccountSettingsForm({
 
       <div className="grid gap-6">
         <section className="rounded-lg border border-muted-background bg-surface p-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <form action={visibilityAction} className="space-y-5">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <h2 className="font-heading text-2xl font-semibold text-foreground">
                 Profile visibility
               </h2>
               <p className="max-w-2xl font-sans text-sm leading-6 text-muted">
-                Your profile is {isProfilePublic ? "public" : "private"}. This
-                preview control does not save or change who can view it yet.
+                Public profiles show your bio, public decks, and contributed
+                words. Private profiles only show your username, picture, and
+                join date to other users.
               </p>
             </div>
             <label className="inline-flex min-h-11 cursor-pointer items-center gap-3 font-sans text-sm font-bold text-foreground">
@@ -115,6 +125,8 @@ export function AccountSettingsForm({
                 onChange={(event) => setIsProfilePublic(event.target.checked)}
                 role="switch"
                 type="checkbox"
+                name="isPublic"
+                value="true"
               />
               <span
                 aria-hidden="true"
@@ -123,6 +135,19 @@ export function AccountSettingsForm({
               {isProfilePublic ? "Public" : "Private"}
             </label>
           </div>
+            <Message state={visibilityState} />
+            <button
+              className="h-11 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-wait disabled:opacity-70"
+              disabled={visibilityPending}
+              type="submit"
+            >
+              {visibilityPending ? (
+                <PendingLabel>Saving visibility</PendingLabel>
+              ) : (
+                "Save visibility"
+              )}
+            </button>
+          </form>
         </section>
 
         <section className="rounded-lg border border-muted-background bg-surface p-6">

@@ -11,6 +11,7 @@ import {
   useTransition,
 } from "react";
 import { InlineLoadingStatus, PendingLabel } from "@/components/loading";
+import { UsernameLink } from "@/components/username-link";
 import {
   getChineseDisplayForms,
   type LanguagePreferences,
@@ -162,7 +163,7 @@ function TermDetailsModal({
           <div>
             <dt className="text-sm font-bold text-muted">Added by</dt>
             <dd className="mt-1 text-foreground">
-              {term.added_by || "Jingdex"}
+              <UsernameLink username={term.added_by} />
             </dd>
           </div>
           {term.short_definition ? (
@@ -191,10 +192,13 @@ function TermDetailsModal({
 
 export function ProfileContent({
   bio,
+  canViewContent,
   createdAt,
   deckCount,
   deckPage,
   decks,
+  isOwner,
+  isPublic,
   preferences,
   terms,
   username,
@@ -202,10 +206,13 @@ export function ProfileContent({
   wordPage,
 }: Readonly<{
   bio: string | null;
+  canViewContent: boolean;
   createdAt: string;
   deckCount: number;
   deckPage: number;
   decks: ProfileDeck[];
+  isOwner: boolean;
+  isPublic: boolean;
   preferences: LanguagePreferences;
   terms: ProfileTerm[];
   username: string;
@@ -228,7 +235,7 @@ export function ProfileContent({
           />
           <div className="min-w-0">
             <p className="font-sans text-sm font-bold uppercase text-primary">
-              My profile
+              {isPublic ? "Public profile" : "Private profile"}
             </p>
             <h1 className="mt-1 wrap-break-word font-heading text-4xl font-semibold sm:text-5xl">
               {username}
@@ -236,22 +243,33 @@ export function ProfileContent({
             <p className="mt-2 font-sans text-sm text-muted">
               Joined {createdAt}
             </p>
-            <BioEditor bio={bio} />
+            {canViewContent && isOwner ? <BioEditor bio={bio} /> : null}
+            {canViewContent && !isOwner ? (
+              <p className="mt-5 max-w-3xl whitespace-pre-line font-sans text-sm leading-6 text-muted">
+                {bio || "No bio added."}
+              </p>
+            ) : null}
           </div>
         </section>
 
-        <DeckSection
-          initialCount={deckCount}
-          initialDecks={decks}
-          initialPage={deckPage}
-        />
-        <TermSection
-          initialCount={wordCount}
-          initialPage={wordPage}
-          initialTerms={terms}
-          onSelect={setSelectedTerm}
-          preferences={preferences}
-        />
+        {canViewContent ? (
+          <>
+            <DeckSection
+              initialCount={deckCount}
+              initialDecks={decks}
+              initialPage={deckPage}
+              username={username}
+            />
+            <TermSection
+              initialCount={wordCount}
+              initialPage={wordPage}
+              initialTerms={terms}
+              onSelect={setSelectedTerm}
+              preferences={preferences}
+              username={username}
+            />
+          </>
+        ) : null}
       </div>
       {selectedTerm ? (
         <TermDetailsModal
@@ -469,14 +487,20 @@ function DeckSection({
   initialCount,
   initialDecks,
   initialPage,
+  username,
 }: Readonly<{
   initialCount: number;
   initialDecks: ProfileDeck[];
   initialPage: number;
+  username: string;
 }>) {
+  const fetchPage = useCallback(
+    (page: number) => getProfileDeckPage(username, page),
+    [username],
+  );
   const { isPending, loadPage, view } = usePaginatedCollection({
     anchor: "profile-decks",
-    fetchPage: getProfileDeckPage,
+    fetchPage,
     initialItems: initialDecks,
     initialPage,
     initialTotalCount: initialCount,
@@ -553,16 +577,22 @@ function TermSection({
   initialTerms,
   onSelect,
   preferences,
+  username,
 }: Readonly<{
   initialCount: number;
   initialPage: number;
   initialTerms: ProfileTerm[];
   onSelect: (term: ProfileTerm) => void;
   preferences: LanguagePreferences;
+  username: string;
 }>) {
+  const fetchPage = useCallback(
+    (page: number) => getProfileWordPage(username, page),
+    [username],
+  );
   const { isPending, loadPage, view } = usePaginatedCollection({
     anchor: "profile-words",
-    fetchPage: getProfileWordPage,
+    fetchPage,
     initialItems: initialTerms,
     initialPage,
     initialTotalCount: initialCount,

@@ -7,6 +7,7 @@ import {
 } from "@/lib/preferences/language";
 import { getPartOfSpeechLabel } from "@/lib/terms/parts-of-speech";
 import { type CommunityDeckDetails } from "../data";
+import { UsernameLink } from "@/components/username-link";
 
 function getPartsOfSpeechLabel(partsOfSpeech: string[] | null) {
   if (!partsOfSpeech || partsOfSpeech.length === 0) {
@@ -157,7 +158,9 @@ export function DeckBrowser({
           ) : null}
           <div>
             <dt className="text-sm font-bold text-muted">Added by</dt>
-            <dd className="mt-1 text-foreground">{term.added_by_display}</dd>
+            <dd className="mt-1 text-foreground">
+              <UsernameLink username={term.added_by_display} />
+            </dd>
           </div>
           {term.short_definition ? (
             <div className="sm:col-span-2">

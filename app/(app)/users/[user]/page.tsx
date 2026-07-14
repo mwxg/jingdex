@@ -2,9 +2,7 @@ import { notFound } from "next/navigation";
 import { getViewer } from "@/lib/auth/viewer";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
 import { createClient } from "@/lib/supabase/server";
-import {
-  ProfileContent,
-} from "./profile-content";
+import { ProfileContent } from "./profile-content";
 import {
   PROFILE_DECKS_PER_PAGE,
   PROFILE_WORDS_PER_PAGE,
@@ -13,8 +11,9 @@ import {
 } from "./types";
 
 type ProfileRow = {
-  bio: string | null;
   created_at: string;
+  id: string;
+  is_public: boolean;
   username: string;
 };
 
@@ -46,41 +45,47 @@ export default async function UserProfilePage({
   const deckFrom = (deckPage - 1) * PROFILE_DECKS_PER_PAGE;
   const wordFrom = (wordPage - 1) * PROFILE_WORDS_PER_PAGE;
 
-  if (
-    !viewer.userId ||
-    !viewer.profile ||
-    requestedUsername.toLocaleLowerCase() !==
-      viewer.profile.username.toLocaleLowerCase()
-  ) {
-    notFound();
-  }
+  if (!viewer.userId || !viewer.profile) notFound();
 
   const supabase = await createClient();
-  const [profileResult, decksResult, termsResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("username,created_at,bio")
-      .eq("id", viewer.userId)
-      .maybeSingle(),
-    supabase
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("id,username,created_at,is_public")
+    .eq("username", requestedUsername)
+    .maybeSingle();
+  const profile = profileData as ProfileRow | null;
+
+  if (!profile) notFound();
+
+  const isOwner = profile.id === viewer.userId;
+  const canViewContent = profile.is_public || isOwner;
+  const contentResults = canViewContent
+    ? await Promise.all([
+        supabase
+          .from("profile_bios")
+          .select("bio")
+          .eq("user_id", profile.id)
+          .maybeSingle(),
+        supabase
       .from("decks")
       .select("id,title,description", { count: "exact" })
-      .eq("created_by_user_id", viewer.userId)
+      .eq("created_by_user_id", profile.id)
       .eq("visibility", "community")
       .eq("publication_status", "approved")
       .order("created_at", { ascending: false })
       .range(deckFrom, deckFrom + PROFILE_DECKS_PER_PAGE - 1),
-    supabase
+        supabase
       .from("terms")
       .select("id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by", { count: "exact" })
-      .eq("added_by_user_id", viewer.userId)
+      .eq("added_by_user_id", profile.id)
       .eq("is_verified", true)
       .order("created_at", { ascending: false })
       .range(wordFrom, wordFrom + PROFILE_WORDS_PER_PAGE - 1),
-  ]);
-
-  const profile = profileResult.data as ProfileRow | null;
-  if (!profile) notFound();
+      ])
+    : null;
+  const bio = contentResults?.[0].data?.bio ?? null;
+  const decksResult = contentResults?.[1] ?? { count: 0, data: [] };
+  const termsResult = contentResults?.[2] ?? { count: 0, data: [] };
 
   const createdAt = new Intl.DateTimeFormat("en-US", {
     dateStyle: "long",
@@ -89,11 +94,14 @@ export default async function UserProfilePage({
 
   return (
     <ProfileContent
-      bio={profile.bio}
+      bio={bio}
+      canViewContent={canViewContent}
       createdAt={createdAt}
       deckCount={decksResult.count ?? 0}
       deckPage={deckPage}
       decks={(decksResult.data ?? []) as ProfileDeck[]}
+      isOwner={isOwner}
+      isPublic={profile.is_public}
       preferences={normalizeLanguagePreferences(viewer.profile)}
       terms={(termsResult.data ?? []) as ProfileTerm[]}
       username={profile.username}

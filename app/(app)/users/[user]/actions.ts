@@ -26,16 +26,39 @@ async function getAuthenticatedUserId() {
   return { supabase, userId };
 }
 
+async function getAccessibleProfile(targetUsername: string) {
+  const { supabase, userId } = await getAuthenticatedUserId();
+
+  if (!userId || !/^[a-zA-Z0-9][a-zA-Z0-9_]{2,31}$/.test(targetUsername)) {
+    return { profileId: null, supabase };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id,is_public")
+    .eq("username", targetUsername)
+    .maybeSingle();
+
+  const canViewContent =
+    Boolean(profile?.is_public) || profile?.id === userId;
+
+  return {
+    profileId: canViewContent ? profile?.id ?? null : null,
+    supabase,
+  };
+}
+
 export async function getProfileDeckPage(
+  targetUsername: string,
   requestedPage: number,
 ): Promise<ProfilePageResult<ProfileDeck>> {
   const page = normalizePage(requestedPage);
-  const { supabase, userId } = await getAuthenticatedUserId();
+  const { supabase, profileId } = await getAccessibleProfile(targetUsername);
 
-  if (!userId) {
+  if (!profileId) {
     return {
       items: [],
-      message: "Sign in again to view profile decks.",
+      message: "That profile's decks are not available.",
       page,
       totalCount: 0,
     };
@@ -45,7 +68,7 @@ export async function getProfileDeckPage(
   const { data, error, count } = await supabase
     .from("decks")
     .select("id,title,description", { count: "exact" })
-    .eq("created_by_user_id", userId)
+    .eq("created_by_user_id", profileId)
     .eq("visibility", "community")
     .eq("publication_status", "approved")
     .order("created_at", { ascending: false })
@@ -68,15 +91,16 @@ export async function getProfileDeckPage(
 }
 
 export async function getProfileWordPage(
+  targetUsername: string,
   requestedPage: number,
 ): Promise<ProfilePageResult<ProfileTerm>> {
   const page = normalizePage(requestedPage);
-  const { supabase, userId } = await getAuthenticatedUserId();
+  const { supabase, profileId } = await getAccessibleProfile(targetUsername);
 
-  if (!userId) {
+  if (!profileId) {
     return {
       items: [],
-      message: "Sign in again to view contributed words.",
+      message: "That profile's contributed words are not available.",
       page,
       totalCount: 0,
     };
@@ -86,7 +110,7 @@ export async function getProfileWordPage(
   const { data, error, count } = await supabase
     .from("terms")
     .select("id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by", { count: "exact" })
-    .eq("added_by_user_id", userId)
+    .eq("added_by_user_id", profileId)
     .eq("is_verified", true)
     .order("created_at", { ascending: false })
     .range(from, from + PROFILE_WORDS_PER_PAGE - 1);
@@ -126,10 +150,10 @@ export async function updateBio(
     return { message: "Sign in again before editing your bio." };
   }
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({ bio: bio || null })
-    .eq("id", userId);
+  const { error } = await supabase.from("profile_bios").upsert({
+    bio: bio || null,
+    user_id: userId,
+  });
 
   if (error) {
     return { message: "Could not update your bio." };

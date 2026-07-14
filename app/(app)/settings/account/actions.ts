@@ -193,6 +193,41 @@ export async function changeUsername(
   return { success: "Username changed." };
 }
 
+export async function updateProfileVisibility(
+  _state: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const isPublic = formData.get("isPublic") === "true";
+  const { supabase, user, error: userError } = await getCurrentUser();
+
+  if (userError || !user?.id) {
+    return {
+      message: getErrorMessage(
+        userError,
+        "Sign in again before changing profile visibility.",
+      ),
+    };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ is_public: isPublic })
+    .eq("id", user.id);
+
+  if (error) {
+    return {
+      message: getErrorMessage(error, "Could not change profile visibility."),
+    };
+  }
+
+  revalidatePath("/", "layout");
+  revalidatePath("/settings/account");
+  revalidatePath("/users", "layout");
+  return {
+    success: `Profile changed to ${isPublic ? "public" : "private"}.`,
+  };
+}
+
 export async function deleteOwnAccount(
   _state: AuthFormState,
   formData: FormData,

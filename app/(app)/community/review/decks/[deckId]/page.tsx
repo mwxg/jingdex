@@ -6,6 +6,7 @@ import { getViewer } from "@/lib/auth/viewer";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
 import { DeckReviewForm } from "../../review-form";
 import { getReviewDeck } from "../../data";
+import { UsernameLink } from "@/components/username-link";
 
 export default async function DeckReviewPage({
   params,
@@ -35,7 +36,9 @@ export default async function DeckReviewPage({
           <div className="flex flex-wrap gap-x-3 gap-y-1 font-sans text-sm text-muted">
             <span>{deck.term_count} {deck.term_count === 1 ? "term" : "terms"}</span>
             <span aria-hidden="true">/</span>
-            <span>By {deck.created_by || "Jingdex user"}</span>
+            <span>
+              By <UsernameLink username={deck.created_by} />
+            </span>
           </div>
           <p className="max-w-3xl font-sans text-lg leading-8 text-muted">{deck.description}</p>
         </header>

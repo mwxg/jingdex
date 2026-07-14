@@ -27,6 +27,7 @@ import {
   type TermSearchMode,
 } from "@/lib/terms/search-mode";
 import { getDefinitionPreview } from "@/lib/terms/definition-preview";
+import { UsernameLink } from "@/components/username-link";
 
 const initialState: DictionarySearchState = {
   results: [],
@@ -138,7 +139,9 @@ function TermDetailsModal({
           ) : null}
           <div>
             <dt className="text-sm font-bold text-muted">Added by</dt>
-            <dd className="mt-1 text-foreground">{term.added_by_display}</dd>
+            <dd className="mt-1 text-foreground">
+              <UsernameLink username={term.added_by_display} />
+            </dd>
           </div>
           {term.short_definition ? (
             <div>

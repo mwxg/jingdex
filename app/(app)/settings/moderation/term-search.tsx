@@ -27,6 +27,7 @@ import {
   containsChineseSearchCharacters,
   type TermSearchMode,
 } from "@/lib/terms/search-mode";
+import { UsernameLink } from "@/components/username-link";
 
 const TERMS_PER_PAGE = 20;
 const initialState: TermSearchState = {
@@ -188,9 +189,10 @@ function TermEditModal({
           </p>
           <p className="font-sans text-sm text-muted">
             Added by{" "}
-            <span className="font-bold text-foreground">
-              {term.added_by_display}
-            </span>
+            <UsernameLink
+              className="font-bold text-foreground underline decoration-muted underline-offset-2 transition-colors hover:text-primary"
+              username={term.added_by_display}
+            />
           </p>
         </div>
 

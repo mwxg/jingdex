@@ -16,6 +16,7 @@ import {
   getChineseDisplayForms,
   type LanguagePreferences,
 } from "@/lib/preferences/language";
+import { UsernameLink } from "@/components/username-link";
 import {
   createCommunityDeck,
   deleteCommunityDeck,
@@ -363,7 +364,7 @@ function CommunityDeckRow({
         <div className="min-w-0">
           <p className="truncate font-bold text-foreground">{deck.title}</p>
           <p className="truncate text-xs text-muted">
-            Created by {deck.created_by || "Jingdex"}
+            Created by <UsernameLink username={deck.created_by} />
           </p>
         </div>
       </div>
@@ -422,7 +423,7 @@ function CommunityDeckEditModal({
     <div aria-labelledby="deck-edit-title" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 px-4 py-6" role="dialog">
       <div className="max-h-full w-full max-w-3xl overflow-y-auto rounded-lg border border-muted-background bg-surface p-6 shadow-lg">
         <h2 id="deck-edit-title" className="font-heading text-2xl font-semibold text-foreground">Edit community deck</h2>
-        <p className="mt-1 font-sans text-sm text-muted">Created by <span className="font-bold text-foreground">{deck.created_by || "Jingdex"}</span></p>
+        <p className="mt-1 font-sans text-sm text-muted">Created by <UsernameLink username={deck.created_by} /></p>
         <form action={onSubmit} className="mt-5 space-y-5">
           <input name="deckId" type="hidden" value={deck.id} />
           <DeckMessage state={editState} />

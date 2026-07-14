@@ -13,5 +13,11 @@ export default async function AccountSettingsPage() {
     redirect("/login?next=/settings/account");
   }
 
-  return <AccountSettingsForm email={email} username={profile.username} />;
+  return (
+    <AccountSettingsForm
+      email={email}
+      isProfilePublic={profile.is_public}
+      username={profile.username}
+    />
+  );
 }

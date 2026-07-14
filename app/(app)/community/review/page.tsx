@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPartOfSpeechLabel, type PartOfSpeech } from "@/lib/terms/parts-of-speech";
 import { DeckReviewForm, ReviewForm } from "./review-form";
 import { PageHeader } from "@/components/page-header";
+import { UsernameLink } from "@/components/username-link";
 
 type Submission = {
   id: string;
@@ -88,7 +89,7 @@ export default async function ReviewPage() {
                 <article className="rounded-lg border border-muted-background bg-surface p-5" key={submission.id}>
                   <TermSummary preferences={preferences} submission={submission} />
                   <p className="mt-3 font-sans text-xs font-bold text-muted">
-                    Submitted by {usernames.get(submission.submitted_by_user_id) ?? "Unknown user"} · {new Date(submission.created_at).toLocaleDateString("en-US")}
+                    Submitted by <UsernameLink username={usernames.get(submission.submitted_by_user_id) ?? "Unknown user"} /> · {new Date(submission.created_at).toLocaleDateString("en-US")}
                   </p>
                   <ReviewForm submissionId={submission.id} />
                 </article>
@@ -111,7 +112,7 @@ export default async function ReviewPage() {
                     <p className="mt-3 font-sans text-sm font-bold text-foreground">{deck.deck_terms.length} {deck.deck_terms.length === 1 ? "term" : "terms"}</p>
                   </Link>
                   <p className="mt-3 font-sans text-xs font-bold text-muted">
-                    Submitted by {usernames.get(deck.created_by_user_id) ?? "Unknown user"} · {new Date(deck.submitted_at ?? deck.updated_at).toLocaleDateString("en-US")}
+                    Submitted by <UsernameLink username={usernames.get(deck.created_by_user_id) ?? "Unknown user"} /> · {new Date(deck.submitted_at ?? deck.updated_at).toLocaleDateString("en-US")}
                   </p>
                   <Link className="mt-4 inline-flex h-10 items-center rounded-lg border border-admin/30 px-4 font-sans text-sm font-bold text-admin transition-colors hover:bg-admin/10" href={`/community/review/decks/${deck.id}`}>Look through deck</Link>
                   <DeckReviewForm deckId={deck.id} />
