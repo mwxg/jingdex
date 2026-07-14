@@ -40,20 +40,12 @@ export default async function BrowseCommunityDecksPage({
           <p className="max-w-3xl font-sans text-lg text-muted">Search all public Chinese vocabulary decks shared by the community.</p>
         </header>
 
-        {deckState.message ? (
-          <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-sans text-sm font-bold text-danger">{deckState.message}</p>
-        ) : (
-          <PublicDeckBrowser
-            decks={deckState.decks}
-            initialQuery={query}
-            initialSort={sort}
-            key={`${query}:${sort}`}
-            page={deckState.page}
-            preferences={preferences}
-            totalCount={deckState.totalCount}
-            totalPages={deckState.totalPages}
-          />
-        )}
+        <PublicDeckBrowser
+          initialQuery={query}
+          initialSort={sort}
+          initialState={deckState}
+          preferences={preferences}
+        />
       </div>
     </main>
   );
