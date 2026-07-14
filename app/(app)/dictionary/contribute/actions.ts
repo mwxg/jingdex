@@ -5,6 +5,10 @@ import { hasPermission } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { getCanonicalSimplified } from "@/lib/terms/generated-forms";
 import { normalizePartsOfSpeech } from "@/lib/terms/parts-of-speech";
+import {
+  TERM_DEFINITION_MAX_LENGTH,
+  TERM_NOTES_MAX_LENGTH,
+} from "@/lib/terms/content-limits";
 
 export type ContributionActionState = { message?: string; success?: string };
 
@@ -34,6 +38,14 @@ export async function submitContribution(
 
   if (!simplified || !pinyin || !zhuyin || !definition) {
     return { message: "Add simplified, pinyin, zhuyin, and a definition." };
+  }
+
+  if (definition.length > TERM_DEFINITION_MAX_LENGTH) {
+    return { message: "Keep the definition to 10,000 characters or fewer." };
+  }
+
+  if (notes.length > TERM_NOTES_MAX_LENGTH) {
+    return { message: "Keep contributor notes to 4,000 characters or fewer." };
   }
 
   const supabase = await createClient();

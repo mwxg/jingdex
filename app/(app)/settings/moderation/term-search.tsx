@@ -28,6 +28,11 @@ import {
   type TermSearchMode,
 } from "@/lib/terms/search-mode";
 import { UsernameLink } from "@/components/username-link";
+import {
+  TERM_DEFINITION_MAX_LENGTH,
+  TERM_NOTES_MAX_LENGTH,
+  TERM_SHORT_DEFINITION_MAX_LENGTH,
+} from "@/lib/terms/content-limits";
 
 const TERMS_PER_PAGE = 20;
 const initialState: TermSearchState = {
@@ -97,11 +102,13 @@ function EditMessage({ state }: Readonly<{ state: TermEditState }>) {
 
 function EditTextInput({
   label,
+  maxLength,
   name,
   required = false,
   value,
 }: Readonly<{
   label: string;
+  maxLength?: number;
   name: string;
   required?: boolean;
   value: string;
@@ -114,21 +121,29 @@ function EditTextInput({
       <input
         className="h-12 w-full rounded-lg border border-muted-background bg-surface px-4 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
         defaultValue={value}
+        maxLength={maxLength}
         name={name}
         required={required}
         type="text"
       />
+      {maxLength ? (
+        <span className="block font-sans text-xs text-muted">
+          Up to {maxLength.toLocaleString()} characters.
+        </span>
+      ) : null}
     </label>
   );
 }
 
 function EditTextArea({
   label,
+  maxLength,
   name,
   required = false,
   value,
 }: Readonly<{
   label: string;
+  maxLength?: number;
   name: string;
   required?: boolean;
   value: string;
@@ -141,9 +156,15 @@ function EditTextArea({
       <textarea
         className="min-h-24 w-full resize-y rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
         defaultValue={value}
+        maxLength={maxLength}
         name={name}
         required={required}
       />
+      {maxLength ? (
+        <span className="block font-sans text-xs text-muted">
+          Up to {maxLength.toLocaleString()} characters.
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -227,6 +248,7 @@ function TermEditModal({
             />
             <EditTextInput
               label="Short definition"
+              maxLength={TERM_SHORT_DEFINITION_MAX_LENGTH}
               name="shortDefinition"
               value={term.short_definition ?? ""}
             />
@@ -235,12 +257,18 @@ function TermEditModal({
 
           <EditTextArea
             label="Definition"
+            maxLength={TERM_DEFINITION_MAX_LENGTH}
             name="englishDefinition"
             required
             value={term.english_definition ?? ""}
           />
 
-          <EditTextArea label="Notes" name="notes" value={term.notes ?? ""} />
+          <EditTextArea
+            label="Notes"
+            maxLength={TERM_NOTES_MAX_LENGTH}
+            name="notes"
+            value={term.notes ?? ""}
+          />
 
           <label className="flex items-center gap-3 font-sans text-sm font-bold text-foreground">
             <input

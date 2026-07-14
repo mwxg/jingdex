@@ -8,6 +8,7 @@ import {
   type TermAddState,
 } from "./actions";
 import { PartOfSpeechSelect } from "./part-of-speech-select";
+import { TERM_DEFINITION_MAX_LENGTH } from "@/lib/terms/content-limits";
 
 const initialState: TermAddState = {};
 
@@ -83,9 +84,13 @@ function TextAreaInput({
       <textarea
         className="min-h-28 w-full resize-y rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans text-base text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary"
         name={name}
+        maxLength={TERM_DEFINITION_MAX_LENGTH}
         placeholder={placeholder}
         required
       />
+      <span className="block font-sans text-xs text-muted">
+        Up to 10,000 characters.
+      </span>
     </label>
   );
 }

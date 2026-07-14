@@ -18,6 +18,11 @@ import {
 import OpenCC from "opencc-js";
 import { convert } from "pinyin-pro";
 import { type TermSearchMode } from "@/lib/terms/search-mode";
+import {
+  TERM_DEFINITION_MAX_LENGTH,
+  TERM_NOTES_MAX_LENGTH,
+  TERM_SHORT_DEFINITION_MAX_LENGTH,
+} from "@/lib/terms/content-limits";
 
 const USERS_PER_PAGE = 20;
 const TERMS_PER_PAGE = 20;
@@ -709,6 +714,18 @@ export async function updateTerm(formData: FormData): Promise<TermEditState> {
     };
   }
 
+  if (englishDefinition.length > TERM_DEFINITION_MAX_LENGTH) {
+    return { message: "Keep the definition to 10,000 characters or fewer." };
+  }
+
+  if (shortDefinition.length > TERM_SHORT_DEFINITION_MAX_LENGTH) {
+    return { message: "Keep the short definition to 150 characters or fewer." };
+  }
+
+  if (notes.length > TERM_NOTES_MAX_LENGTH) {
+    return { message: "Keep notes to 4,000 characters or fewer." };
+  }
+
   const canonicalSimplified = getCanonicalSimplified(simplifiedInput);
 
   if (!canonicalSimplified) {
@@ -811,6 +828,10 @@ export async function addSingleTerm(
       message:
         "Add simplified, pinyin, zhuyin, and a definition before saving.",
     };
+  }
+
+  if (englishDefinition.length > TERM_DEFINITION_MAX_LENGTH) {
+    return { message: "Keep the definition to 10,000 characters or fewer." };
   }
 
   const canonicalSimplified = getCanonicalSimplified(simplifiedInput);
