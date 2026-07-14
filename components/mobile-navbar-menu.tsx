@@ -53,7 +53,11 @@ export function MobileNavbarMenu({ links, username }: MobileNavbarMenuProps) {
         aria-controls={panelId}
         aria-expanded={isOpen}
         aria-label={isOpen ? "Close navigation" : "Open navigation"}
-        className="grid size-11 cursor-pointer place-items-center rounded-lg border border-muted-background bg-background text-foreground transition-colors hover:border-primary hover:text-primary"
+        className={`grid size-11 cursor-pointer place-items-center rounded-lg border transition-colors ${
+          isOpen
+            ? "border-primary bg-primary text-on-primary hover:bg-primary/90"
+            : "border-muted-background bg-background text-foreground hover:border-primary hover:text-primary"
+        }`}
         onClick={() =>
           setOpenPathname((current) =>
             current === pathname ? null : pathname,

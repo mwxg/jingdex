@@ -36,11 +36,15 @@ export function SidebarPageLayout({
 
   return (
     <div className="mx-auto grid min-h-[calc(100dvh-4rem)] w-full max-w-[112rem] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[clamp(12rem,16vw,15rem)_minmax(0,1fr)] lg:gap-8 lg:px-8 lg:py-8">
-      <aside className="min-w-0 lg:border-r lg:pr-6">
+      <aside className="min-w-0 border-muted-background lg:border-r lg:pr-6">
         <button
           aria-controls={sidebarId}
           aria-expanded={isOpen}
-          className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-muted-background bg-surface px-4 font-sans text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary lg:hidden"
+          className={`flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-lg border px-4 font-sans text-sm font-bold transition-colors lg:hidden ${
+            isOpen
+              ? "border-primary bg-primary text-on-primary hover:bg-primary/90"
+              : "border-muted-background bg-surface text-foreground hover:border-primary hover:text-primary"
+          }`}
           onClick={() =>
             setOpenPathname((current) =>
               current === pathname ? null : pathname,
