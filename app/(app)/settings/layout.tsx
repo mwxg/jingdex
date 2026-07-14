@@ -26,6 +26,7 @@ export default function SettingsLayout({
   return (
     <main className="flex-1 bg-background text-foreground">
       <SidebarPageLayout
+        mobileLabel="Settings sections"
         sidebar={
           <Suspense fallback={<SidebarSkeleton />}>
             <SettingsSidebar />

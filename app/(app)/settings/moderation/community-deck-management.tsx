@@ -357,26 +357,37 @@ function CommunityDeckRow({
   onEdit: (deck: CommunityDeckSearchResult) => void;
 }>) {
   return (
-    <li className="grid gap-3 px-4 py-4 font-sans text-sm sm:grid-cols-[minmax(12rem,1fr)_minmax(12rem,1.2fr)_8rem_6rem] sm:items-center">
-      <div className="min-w-0">
-        <p className="truncate font-bold text-foreground">{deck.title}</p>
-        <p className="truncate text-xs text-muted">
-          Created by {deck.created_by || "Jingdex"}
+    <li className="grid gap-3 px-4 py-4 font-sans text-sm lg:grid-cols-[minmax(12rem,1fr)_minmax(12rem,1.2fr)_8rem_6rem] lg:items-center">
+      <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] gap-3 lg:block">
+        <span className="font-bold text-muted lg:hidden">Deck</span>
+        <div className="min-w-0">
+          <p className="truncate font-bold text-foreground">{deck.title}</p>
+          <p className="truncate text-xs text-muted">
+            Created by {deck.created_by || "Jingdex"}
+          </p>
+        </div>
+      </div>
+      <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] gap-3 lg:block">
+        <span className="font-bold text-muted lg:hidden">Description</span>
+        <p className="min-w-0 text-muted lg:truncate">
+          {deck.description || "No description"}
         </p>
       </div>
-      <p className="min-w-0 truncate text-muted">
-        {deck.description || "No description"}
-      </p>
-      <span className="whitespace-nowrap text-muted">
-        {deck.publication_status}
+      <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 lg:block">
+        <span className="font-bold text-muted lg:hidden">Status</span>
+        <span className="whitespace-nowrap text-muted">
+          {deck.publication_status}
+        </span>
+      </div>
+      <span className="pl-[6.25rem] lg:pl-0">
+        <button
+          className="min-h-11 rounded-lg border border-muted-background px-4 font-sans text-xs font-bold text-foreground transition-colors hover:border-primary hover:text-primary lg:min-h-9 lg:px-3"
+          onClick={() => onEdit(deck)}
+          type="button"
+        >
+          Edit
+        </button>
       </span>
-      <button
-        className="h-9 rounded-lg border border-muted-background px-3 font-sans text-xs font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
-        onClick={() => onEdit(deck)}
-        type="button"
-      >
-        Edit
-      </button>
     </li>
   );
 }
@@ -547,9 +558,9 @@ function CommunityDeckEditing({ preferences }: Readonly<{ preferences: LanguageP
       </form>
 
       {hasQuery && results.length > 0 ? (
-        <div className="mt-6 overflow-x-auto rounded-lg border border-muted-background">
-          <div className="min-w-3xl">
-            <div className="grid grid-cols-[minmax(12rem,1fr)_minmax(12rem,1.2fr)_8rem_6rem] items-center gap-3 border-b border-muted-background bg-muted-background px-4 py-3 font-sans text-sm font-bold text-muted">
+        <div className="mt-6 overflow-hidden rounded-lg border border-muted-background lg:overflow-x-auto">
+          <div className="lg:min-w-3xl">
+            <div className="hidden grid-cols-[minmax(12rem,1fr)_minmax(12rem,1.2fr)_8rem_6rem] items-center gap-3 border-b border-muted-background bg-muted-background px-4 py-3 font-sans text-sm font-bold text-muted lg:grid">
               <span>Deck</span>
               <span>Description</span>
               <span>Status</span>

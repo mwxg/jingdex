@@ -300,30 +300,45 @@ function TermRow({
 
   return (
     <li
-      className={`${gridColumns} grid items-center gap-4 px-4 py-4 font-sans text-sm`}
+      className={`${gridColumns} grid gap-3 px-4 py-4 font-sans text-sm lg:items-center lg:gap-4`}
     >
-      <div className="min-w-0">
-        <p className="truncate font-chinese text-2xl font-bold text-foreground">
-          {forms.primary}
-        </p>
-        {forms.secondary ? (
-          <p className="truncate font-chinese text-sm text-muted">
-            {forms.secondary}
+      <div className="grid min-w-0 grid-cols-[6rem_minmax(0,1fr)] gap-3 lg:block">
+        <span className="font-bold text-muted lg:hidden">Term</span>
+        <div className="min-w-0">
+          <p className="truncate font-chinese text-2xl font-bold text-foreground">
+            {forms.primary}
           </p>
-        ) : null}
+          {forms.secondary ? (
+            <p className="truncate font-chinese text-sm text-muted">
+              {forms.secondary}
+            </p>
+          ) : null}
+        </div>
       </div>
-      <span className="min-w-0 truncate text-muted">{term.pinyin}</span>
-      <span className="min-w-0 truncate text-muted">{term.zhuyin}</span>
-      <span className="min-w-0 truncate text-foreground">
-        {term.english_definition ?? "null"}
-      </span>
-      <span className="whitespace-nowrap text-muted">
-        {term.is_verified ? "Yes" : "No"}
-      </span>
+      <div className="grid min-w-0 grid-cols-[6rem_minmax(0,1fr)] gap-3 lg:block">
+        <span className="font-bold text-muted lg:hidden">Pinyin</span>
+        <span className="block min-w-0 truncate text-muted">{term.pinyin}</span>
+      </div>
+      <div className="grid min-w-0 grid-cols-[6rem_minmax(0,1fr)] gap-3 lg:block">
+        <span className="font-bold text-muted lg:hidden">Zhuyin</span>
+        <span className="block min-w-0 truncate text-muted">{term.zhuyin}</span>
+      </div>
+      <div className="grid min-w-0 grid-cols-[6rem_minmax(0,1fr)] gap-3 lg:block">
+        <span className="font-bold text-muted lg:hidden">Definition</span>
+        <span className="block min-w-0 text-foreground lg:truncate">
+          {term.english_definition ?? "null"}
+        </span>
+      </div>
+      <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 lg:block">
+        <span className="font-bold text-muted lg:hidden">Verified</span>
+        <span className="whitespace-nowrap text-muted">
+          {term.is_verified ? "Yes" : "No"}
+        </span>
+      </div>
       {canEditTerms ? (
-        <span className="text-right">
+        <span className="pl-[6.75rem] lg:pl-0 lg:text-right">
           <button
-            className="h-9 rounded-lg border border-muted-background px-3 font-sans text-xs font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
+            className="min-h-11 rounded-lg border border-muted-background px-4 font-sans text-xs font-bold text-foreground transition-colors hover:border-primary hover:text-primary lg:min-h-9 lg:px-3"
             onClick={() => onEdit(term)}
             type="button"
           >
@@ -363,8 +378,8 @@ export function TermSearch({
   const hasPreviousPage = page > 1;
   const hasNextPage = lastResult < totalCount;
   const resultGridColumns = canEditTerms
-    ? "grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_minmax(10rem,1fr)_minmax(16rem,1.6fr)_6rem_4.5rem]"
-    : "grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_minmax(10rem,1fr)_minmax(16rem,1.6fr)_6rem]";
+    ? "lg:grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_minmax(10rem,1fr)_minmax(16rem,1.6fr)_6rem_4.5rem]"
+    : "lg:grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_minmax(10rem,1fr)_minmax(16rem,1.6fr)_6rem]";
   const isSearching = isPending && inputValue.trim().length > 0;
 
   const searchTerms = useCallback(
@@ -471,10 +486,10 @@ export function TermSearch({
       </form>
 
       {hasQuery && results.length > 0 ? (
-        <div className="mt-6 overflow-x-auto rounded-lg border border-muted-background">
-          <div className="min-w-248">
+        <div className="mt-6 overflow-hidden rounded-lg border border-muted-background lg:overflow-x-auto">
+          <div className="lg:min-w-248">
             <div
-              className={`${resultGridColumns} grid items-center gap-4 border-b border-muted-background bg-muted-background px-4 py-3 font-sans text-sm font-bold text-muted`}
+              className={`${resultGridColumns} hidden items-center gap-4 border-b border-muted-background bg-muted-background px-4 py-3 font-sans text-sm font-bold text-muted lg:grid`}
             >
               <span>Term</span>
               <span>Pinyin</span>

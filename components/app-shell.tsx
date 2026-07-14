@@ -27,6 +27,7 @@ export function AppShell({ children, sidebar }: AppShellProps) {
 
   return (
     <SidebarPageLayout
+      mobileLabel="App sections"
       sidebar={sidebar}
     >
       {content}

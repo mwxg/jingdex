@@ -253,10 +253,11 @@ export function NavbarSkeleton() {
   return (
     <header className="border-b border-muted-background bg-surface">
       <LoadingAnnouncement label="Loading navigation" />
-      <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-6 py-3 sm:py-0">
+      <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:py-0">
         <Skeleton className="h-10 w-32" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="hidden h-10 w-20 sm:block" />
+        <Skeleton className="size-11 lg:hidden" />
+        <div className="hidden items-center gap-2 lg:flex">
+          <Skeleton className="h-10 w-20" />
           <Skeleton className="h-10 w-24" />
         </div>
       </div>

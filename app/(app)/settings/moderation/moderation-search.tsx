@@ -225,9 +225,9 @@ export function ModerationSearch({
       </form>
 
       {hasQuery && results.length > 0 ? (
-        <div className="mt-6 overflow-x-auto rounded-lg border border-muted-background">
-          <div className="min-w-248">
-            <div className="grid grid-cols-[minmax(10rem,1fr)_minmax(14rem,1.35fr)_13rem_7rem_4.5rem] items-center gap-4 border-b border-muted-background bg-muted-background px-4 py-3 font-sans text-sm font-bold text-muted">
+        <div className="mt-6 overflow-hidden rounded-lg border border-muted-background lg:overflow-x-auto">
+          <div className="lg:min-w-248">
+            <div className="hidden grid-cols-[minmax(10rem,1fr)_minmax(14rem,1.35fr)_13rem_7rem_4.5rem] items-center gap-4 border-b border-muted-background bg-muted-background px-4 py-3 font-sans text-sm font-bold text-muted lg:grid">
               <span>Username</span>
               <span>Email</span>
               <span>Created</span>
@@ -238,24 +238,36 @@ export function ModerationSearch({
               {results.map((user) => (
                 <li
                   key={user.id}
-                  className="grid grid-cols-[minmax(10rem,1fr)_minmax(14rem,1.35fr)_13rem_7rem_4.5rem] items-center gap-4 px-4 py-4 font-sans text-sm"
+                  className="grid gap-3 px-4 py-4 font-sans text-sm lg:grid-cols-[minmax(10rem,1fr)_minmax(14rem,1.35fr)_13rem_7rem_4.5rem] lg:items-center lg:gap-4"
                 >
-                  <span className="min-w-0 truncate font-bold text-foreground">
-                    {user.username}
-                  </span>
-                  <span className="min-w-0 truncate text-muted">
-                    {user.email}
-                  </span>
-                  <span className="whitespace-nowrap text-muted">
-                    {new Date(user.created_at).toLocaleString()}
-                  </span>
-                  <span className="whitespace-nowrap text-muted">
-                    {user.role}
-                  </span>
-                  <span className="text-right">
+                  <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] gap-3 lg:block">
+                    <span className="font-bold text-muted lg:hidden">Username</span>
+                    <span className="block min-w-0 truncate font-bold text-foreground">
+                      {user.username}
+                    </span>
+                  </div>
+                  <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] gap-3 lg:block">
+                    <span className="font-bold text-muted lg:hidden">Email</span>
+                    <span className="min-w-0 break-all text-muted lg:block lg:truncate">
+                      {user.email}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 lg:block">
+                    <span className="font-bold text-muted lg:hidden">Created</span>
+                    <span className="text-muted lg:whitespace-nowrap">
+                      {new Date(user.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 lg:block">
+                    <span className="font-bold text-muted lg:hidden">Role</span>
+                    <span className="whitespace-nowrap text-muted">
+                      {user.role}
+                    </span>
+                  </div>
+                  <span className="pl-[6.25rem] lg:pl-0 lg:text-right">
                     {canEditUser(currentUserId, currentUserRole, user) ? (
                       <button
-                        className="h-9 rounded-lg border border-muted-background px-3 font-sans text-xs font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
+                        className="min-h-11 rounded-lg border border-muted-background px-4 font-sans text-xs font-bold text-foreground transition-colors hover:border-primary hover:text-primary lg:min-h-9 lg:px-3"
                         onClick={() => setSelectedUser(user)}
                         type="button"
                       >

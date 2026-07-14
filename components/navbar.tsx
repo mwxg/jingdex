@@ -2,6 +2,7 @@ import Link from "next/link";
 import { hasPermission } from "@/lib/auth/roles";
 import { AccountMenu } from "./account-menu";
 import { JingdexLogo } from "./jingdex-logo";
+import { MobileNavbarMenu } from "./mobile-navbar-menu";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -16,9 +17,16 @@ export function Navbar({
 }: Readonly<{
   profile: { role: string; username: string } | null;
 }>) {
+  const visibleLinks = navLinks.filter(
+    (link) =>
+      (!link.requiresAccount || Boolean(profile)) &&
+      (link.href !== "/demo" ||
+        hasPermission(profile?.role, "accessModerationPage")),
+  );
+
   return (
     <header className="border-b border-muted-background bg-surface">
-      <nav className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-3 sm:flex-nowrap sm:py-0">
+      <nav className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:py-0">
         <Link
           href="/"
           className="flex items-center"
@@ -27,16 +35,9 @@ export function Navbar({
           <JingdexLogo className="h-10 w-auto" priority />
         </Link>
 
-        <div className="flex min-w-0 max-w-full items-center gap-1 font-sans text-sm font-bold text-muted">
-          <div className="flex min-w-0 items-center gap-1 overflow-x-auto">
-            {navLinks
-              .filter(
-                (link) =>
-                  (!link.requiresAccount || Boolean(profile)) &&
-                  (link.href !== "/demo" ||
-                    hasPermission(profile?.role, "accessModerationPage")),
-              )
-              .map((link) => (
+        <div className="hidden min-w-0 max-w-full items-center gap-1 font-sans text-sm font-bold text-muted lg:flex">
+          <div className="flex min-w-0 items-center gap-1">
+            {visibleLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -48,6 +49,11 @@ export function Navbar({
           </div>
           {profile ? <AccountMenu username={profile.username} /> : null}
         </div>
+
+        <MobileNavbarMenu
+          links={visibleLinks}
+          username={profile?.username}
+        />
       </nav>
     </header>
   );
