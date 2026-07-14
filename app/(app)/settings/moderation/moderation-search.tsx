@@ -20,6 +20,7 @@ import {
   type UserSearchState,
 } from "./actions";
 import { InlineLoadingStatus } from "@/components/loading";
+import { UsernameLink } from "@/components/username-link";
 
 function canEditUser(
   currentUserId: string | undefined,
@@ -91,7 +92,9 @@ function RoleEditModal({
           >
             Edit role
           </h2>
-          <p className="font-sans text-sm text-muted">{user.username}</p>
+          <p className="font-sans text-sm text-muted">
+            <UsernameLink username={user.username} />
+          </p>
         </div>
 
         <form action={action} className="mt-5 space-y-5">
@@ -242,9 +245,10 @@ export function ModerationSearch({
                 >
                   <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] gap-3 lg:block">
                     <span className="font-bold text-muted lg:hidden">Username</span>
-                    <span className="block min-w-0 truncate font-bold text-foreground">
-                      {user.username}
-                    </span>
+                    <UsernameLink
+                      className="block min-w-0 truncate font-bold text-foreground underline decoration-muted underline-offset-2 transition-colors hover:text-primary"
+                      username={user.username}
+                    />
                   </div>
                   <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] gap-3 lg:block">
                     <span className="font-bold text-muted lg:hidden">Email</span>
