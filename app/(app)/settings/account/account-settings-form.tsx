@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { AuthFormState } from "@/lib/auth/validation";
 import {
   changeUsername,
@@ -80,6 +80,7 @@ export function AccountSettingsForm({
   email: string;
   username: string;
 }>) {
+  const [isProfilePublic, setIsProfilePublic] = useState(true);
   const [passwordState, passwordAction] = useActionState(
     sendPasswordChangeEmail,
     {},
@@ -96,6 +97,34 @@ export function AccountSettingsForm({
       </div>
 
       <div className="grid gap-6">
+        <section className="rounded-lg border border-muted-background bg-surface p-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <h2 className="font-heading text-2xl font-semibold text-foreground">
+                Profile visibility
+              </h2>
+              <p className="max-w-2xl font-sans text-sm leading-6 text-muted">
+                Your profile is {isProfilePublic ? "public" : "private"}. This
+                preview control does not save or change who can view it yet.
+              </p>
+            </div>
+            <label className="inline-flex min-h-11 cursor-pointer items-center gap-3 font-sans text-sm font-bold text-foreground">
+              <input
+                checked={isProfilePublic}
+                className="peer sr-only"
+                onChange={(event) => setIsProfilePublic(event.target.checked)}
+                role="switch"
+                type="checkbox"
+              />
+              <span
+                aria-hidden="true"
+                className="relative h-7 w-12 shrink-0 rounded-full bg-muted-background transition-colors after:absolute after:left-1 after:top-1 after:size-5 after:rounded-full after:bg-surface after:shadow-sm after:transition-transform peer-checked:bg-primary peer-checked:after:translate-x-5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary"
+              />
+              {isProfilePublic ? "Public" : "Private"}
+            </label>
+          </div>
+        </section>
+
         <section className="rounded-lg border border-muted-background bg-surface p-6">
           <form action={passwordAction} className="space-y-5">
             <div className="space-y-2">

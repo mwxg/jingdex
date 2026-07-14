@@ -54,6 +54,14 @@ export function AccountMenu({ username }: Readonly<{ username: string }>) {
           role="menu"
         >
           <Link
+            href={`/users/${encodeURIComponent(username)}`}
+            className="flex h-11 items-center px-4 text-foreground transition-colors hover:bg-muted-background hover:text-primary"
+            onClick={() => setIsOpen(false)}
+            role="menuitem"
+          >
+            My profile
+          </Link>
+          <Link
             href="/settings/account"
             className="flex h-11 items-center px-4 text-foreground transition-colors hover:bg-muted-background hover:text-primary"
             onClick={() => setIsOpen(false)}

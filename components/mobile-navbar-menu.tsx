@@ -108,6 +108,13 @@ export function MobileNavbarMenu({ links, username }: MobileNavbarMenuProps) {
               </p>
               <Link
                 className="flex min-h-11 items-center rounded-lg px-4 text-foreground transition-colors hover:bg-muted-background hover:text-primary"
+                href={`/users/${encodeURIComponent(username)}`}
+                onClick={() => setOpenPathname(null)}
+              >
+                My profile
+              </Link>
+              <Link
+                className="flex min-h-11 items-center rounded-lg px-4 text-foreground transition-colors hover:bg-muted-background hover:text-primary"
                 href="/settings/account"
                 onClick={() => setOpenPathname(null)}
               >
