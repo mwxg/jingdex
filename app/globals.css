@@ -7,7 +7,7 @@
   --foreground: #090c08;
   --text-dark: #090c08;
   --text-light: #ffffff;
-  --primary: #9f4e00;
+  --primary: #ef9739
   --accent: #2ec4b6;
   --muted: #676e64;
   --muted-background: #ecefeb;
@@ -34,12 +34,12 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --background: #101510;
-  --surface: #192019;
+  --surface: #19201f;
   --foreground: #f3f5f1;
-  --primary: #f2a24c;
+  --primary: #ef9739;
   --accent: #48d2c5;
   --muted: #aab4a8;
-  --muted-background: #2c352d;
+  --muted-background: #2c3535;
   --danger: #ff7474;
   --confirm: #64c982;
   --on-primary: #090c08;
@@ -51,8 +51,9 @@
   --admin: #d56cdb;
   --developer: #e47777;
 
-  --community-deck: #c87af1;
+  --community-deck: #b73dcd;
   --under-review: #ff9d4d;
+  
 }
 
 .theme-logo-dark {
