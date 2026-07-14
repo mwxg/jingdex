@@ -29,6 +29,10 @@ export type CommunityDeckDetails = CommunityDeckSummary & {
   terms: CommunityTerm[];
 };
 
+export type PublicDeckSort = "alphabetical" | "latest" | "oldest";
+
+export const PUBLIC_DECKS_PAGE_SIZE = 30;
+
 type DeckRow = {
   id: string;
   title: string;
@@ -177,6 +181,100 @@ export async function getCommunityDecks() {
 
 export async function getAllJingdexDecks(query = "") {
   return getJingdexDeckSummaries(query);
+}
+
+export async function getPublicDecks({
+  page = 1,
+  query = "",
+  sort = "alphabetical",
+}: {
+  page?: number;
+  query?: string;
+  sort?: PublicDeckSort;
+}) {
+  const supabase = await createClient();
+  const normalizedQuery = query.trim().normalize("NFC");
+  const normalizedPage = Math.max(1, Math.floor(page));
+  const from = (normalizedPage - 1) * PUBLIC_DECKS_PAGE_SIZE;
+  const to = from + PUBLIC_DECKS_PAGE_SIZE - 1;
+
+  let deckQuery = supabase
+    .from("decks")
+    .select("id,title,description,created_by,created_at", { count: "exact" })
+    .eq("visibility", "community")
+    .eq("publication_status", "approved");
+
+  if (normalizedQuery) {
+    deckQuery = deckQuery.ilike("title", `%${normalizedQuery}%`);
+  }
+
+  if (sort === "latest") {
+    deckQuery = deckQuery.order("created_at", { ascending: false });
+  } else if (sort === "oldest") {
+    deckQuery = deckQuery.order("created_at", { ascending: true });
+  } else {
+    deckQuery = deckQuery.order("title", { ascending: true });
+  }
+
+  const { data: deckRows, error: decksError, count } = await deckQuery
+    .order("id", { ascending: true })
+    .range(from, to);
+
+  if (decksError) {
+    return {
+      decks: [],
+      message: getErrorMessage(decksError, "Could not load public decks."),
+      page: normalizedPage,
+      totalCount: 0,
+      totalPages: 0,
+    };
+  }
+
+  const decks = (deckRows ?? []) as DeckRow[];
+  const totalCount = count ?? 0;
+  const totalPages = Math.ceil(totalCount / PUBLIC_DECKS_PAGE_SIZE);
+
+  if (decks.length === 0) {
+    return { decks: [], message: null, page: normalizedPage, totalCount, totalPages };
+  }
+
+  const { data: termRows, error: termsError } = await supabase
+    .from("deck_terms")
+    .select(
+      "deck_id,position,terms(id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by)",
+    )
+    .in("deck_id", decks.map((deck) => deck.id))
+    .order("position", { ascending: true });
+
+  if (termsError) {
+    return {
+      decks: [],
+      message: getErrorMessage(termsError, "Could not load public deck terms."),
+      page: normalizedPage,
+      totalCount,
+      totalPages,
+    };
+  }
+
+  const termsByDeckId = new Map<string, CommunityTerm[]>();
+  for (const row of ((termRows ?? []) as DeckTermRow[])) {
+    const term = getJoinedTerm(row);
+    if (!term) continue;
+    const currentTerms = termsByDeckId.get(row.deck_id) ?? [];
+    currentTerms.push(term);
+    termsByDeckId.set(row.deck_id, currentTerms);
+  }
+
+  return {
+    decks: decks.map((deck) => {
+      const terms = addAttributionLabels(termsByDeckId.get(deck.id) ?? []);
+      return { ...deck, first_term: terms[0] ?? null, term_count: terms.length };
+    }),
+    message: null,
+    page: normalizedPage,
+    totalCount,
+    totalPages,
+  };
 }
 
 export async function getCommunityDeck(deckId: string) {

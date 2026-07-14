@@ -74,6 +74,9 @@ export async function reviewDeck(
   if (!data) return { message: "That deck is no longer awaiting review." };
 
   revalidatePath("/community");
+  revalidatePath("/community/featured");
+  revalidatePath("/community/browse");
+  revalidatePath("/community/jingdex");
   revalidatePath("/community/review");
   revalidatePath(`/community/review/decks/${deckId}`);
   revalidatePath("/my-stuff/decks");

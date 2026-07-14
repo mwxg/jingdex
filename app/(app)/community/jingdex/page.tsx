@@ -24,7 +24,7 @@ export default async function JingdexDecksPage() {
     <main className="flex-1 bg-background text-foreground">
       <div className="w-full space-y-8">
         <header className="space-y-3">
-          <Link className="font-sans text-sm font-bold text-primary hover:text-foreground" href="/community">
+          <Link className="font-sans text-sm font-bold text-primary hover:text-foreground" href="/community/featured">
             ← Community
           </Link>
           <h1 className="font-heading text-5xl font-semibold leading-none sm:text-6xl">

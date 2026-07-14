@@ -31,7 +31,8 @@ const sections: readonly SidebarSection[] = [
   {
     label: "Community",
     links: [
-      { href: "/community", label: "Browse decks" },
+      { href: "/community/featured", label: "Featured" },
+      { href: "/community/browse", label: "Browse decks" },
       { href: "/community/review", label: "Review", special: true },
     ],
   },
@@ -75,11 +76,12 @@ export function AppSidebar({ hasAccount, canAccessDemo, canReview }: AppSidebarP
             <ul className="space-y-1">
               {section.links.map((link) => {
                 if (link.special && !canReview) return null;
-                const active =
-                  pathname === link.href ||
-                  (link.href === "/community"
-                    ? pathname.startsWith("/community/") && !pathname.startsWith("/community/review")
-                    : pathname.startsWith(`${link.href}/`));
+                const isCommunityDeck = /^\/community\/[^/]+$/.test(pathname)
+                  && !["/community/featured", "/community/browse", "/community/jingdex", "/community/review"].includes(pathname);
+                const active = pathname === link.href
+                  || pathname.startsWith(`${link.href}/`)
+                  || (link.href === "/community/featured" && pathname === "/community/jingdex")
+                  || (link.href === "/community/browse" && isCommunityDeck);
 
                 return (
                   <li key={link.href}>
