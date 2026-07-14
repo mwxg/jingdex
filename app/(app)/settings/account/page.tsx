@@ -1,25 +1,17 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/auth/viewer";
 import { AccountSettingsForm } from "./account-settings-form";
 
 export default async function AccountSettingsPage() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  const user = data.user;
+  const { email, profile, userId } = await getViewer();
 
-  if (error || !user?.id || !user.email) {
+  if (!userId || !email) {
     redirect("/login?next=/settings/account");
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("id", user.id)
-    .maybeSingle();
 
   if (!profile) {
     redirect("/login?next=/settings/account");
   }
 
-  return <AccountSettingsForm email={user.email} username={profile.username} />;
+  return <AccountSettingsForm email={email} username={profile.username} />;
 }

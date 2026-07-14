@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getViewerIdentity } from "@/lib/auth/viewer";
 import { ContributionForm } from "./contribution-form";
 
 export default async function ContributePage() {
-  const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getClaims();
-  const userId = authData?.claims?.sub ?? null;
+  const { userId } = await getViewerIdentity();
 
   return (
     <div className="space-y-8">

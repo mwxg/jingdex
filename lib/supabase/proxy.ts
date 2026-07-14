@@ -61,13 +61,18 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id,role")
-    .eq("id", userId)
-    .maybeSingle();
+  const needsProfile =
+    requiresModerator ||
+    LOGGED_IN_REDIRECT_PATHS.has(request.nextUrl.pathname);
+  const { data: profile } = needsProfile
+    ? await supabase
+        .from("profiles")
+        .select("id,role")
+        .eq("id", userId)
+        .maybeSingle()
+    : { data: null };
 
-  if (!profile && !isPublicPath) {
+  if (requiresModerator && !profile) {
     return redirectWithNext(request, "/login");
   }
 

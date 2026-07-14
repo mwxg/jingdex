@@ -2,19 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeckBrowser } from "@/app/(app)/community/[deckId]/deck-browser";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
-import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/auth/viewer";
 import { getPersonalDeck } from "../data";
 
 export default async function PersonalDeckPage({ params }: Readonly<{ params: Promise<{ deckId: string }> }>) {
   const { deckId } = await params;
-  const deck = await getPersonalDeck(deckId);
+  const [deck, { profile }] = await Promise.all([
+    getPersonalDeck(deckId),
+    getViewer(),
+  ]);
   if (!deck) notFound();
-
-  const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getUser();
-  const { data: profile } = await supabase.from("profiles")
-    .select("preferred_character_set,preferred_pronunciation")
-    .eq("id", authData.user!.id).maybeSingle();
   const isPublished = deck.visibility === "community" && deck.publication_status === "approved";
   const statusLabel = isPublished
     ? "Visible to the community"

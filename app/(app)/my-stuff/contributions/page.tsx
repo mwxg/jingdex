@@ -1,6 +1,7 @@
 import {
   normalizeLanguagePreferences,
 } from "@/lib/preferences/language";
+import { getViewer, getViewerIdentity } from "@/lib/auth/viewer";
 import { createClient } from "@/lib/supabase/server";
 import {
   SubmissionsBrowser,
@@ -8,22 +9,18 @@ import {
 } from "./submissions-browser";
 
 export default async function MyContributionsPage() {
+  const viewerPromise = getViewer();
+  const { userId } = await getViewerIdentity();
   const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getClaims();
-  const userId = authData?.claims?.sub;
-
-  const [{ data: profile }, { data: submissions }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("preferred_character_set,preferred_pronunciation")
-      .eq("id", userId!)
-      .maybeSingle(),
-    supabase
-      .from("term_submissions")
-      .select("id,submitted_by_user_id,simplified,traditional,pinyin,zhuyin,english_definition,parts_of_speech,notes,status,reviewer_notes,created_at")
-      .eq("submitted_by_user_id", userId!)
-      .order("created_at", { ascending: false })
-      .limit(500),
+  const submissionsPromise = supabase
+    .from("term_submissions")
+    .select("id,submitted_by_user_id,simplified,traditional,pinyin,zhuyin,english_definition,parts_of_speech,notes,status,reviewer_notes,created_at")
+    .eq("submitted_by_user_id", userId!)
+    .order("created_at", { ascending: false })
+    .limit(500);
+  const [{ profile }, { data: submissions }] = await Promise.all([
+    viewerPromise,
+    submissionsPromise,
   ]);
 
   return (

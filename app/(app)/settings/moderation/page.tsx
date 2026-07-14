@@ -1,31 +1,24 @@
 import { redirect } from "next/navigation";
 import {
+  type AppRole,
   getAdministrativeRole,
   hasPermission,
   roleLabels,
 } from "@/lib/auth/roles";
+import { getViewer } from "@/lib/auth/viewer";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
-import { createClient } from "@/lib/supabase/server";
-import { getUserSearchPage } from "./actions";
+import { type UserSearchState } from "./actions";
 import { CommunityDeckManagement } from "./community-deck-management";
 import { ModerationSearch } from "./moderation-search";
 import { TermManagement } from "./term-management";
 import { TermSearch } from "./term-search";
 
 export default async function ModerationPage() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  const user = data.user;
+  const { profile, userId } = await getViewer();
 
-  if (error || !user?.id) {
+  if (!userId) {
     redirect("/login?next=/settings/moderation");
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role,preferred_character_set,preferred_pronunciation")
-    .eq("id", user.id)
-    .maybeSingle();
   const preferences = normalizeLanguagePreferences(profile);
 
   const role = getAdministrativeRole(profile?.role);
@@ -40,7 +33,14 @@ export default async function ModerationPage() {
     redirect("/settings/account");
   }
 
-  const initialSearchState = await getUserSearchPage();
+  const initialSearchState: UserSearchState = {
+    currentUserId: userId,
+    currentUserRole: profile?.role as AppRole | undefined,
+    page: 1,
+    query: "",
+    results: [],
+    totalCount: 0,
+  };
 
   return (
     <div className="space-y-8">

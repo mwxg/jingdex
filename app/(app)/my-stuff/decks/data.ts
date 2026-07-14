@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getViewerIdentity } from "@/lib/auth/viewer";
 import { type CommunityDeckDetails, type CommunityTerm } from "@/app/(app)/community/data";
 
 type DeckTermRow = {
@@ -29,12 +30,12 @@ export type PersonalDeckSummary = Omit<CommunityDeckDetails, "terms"> & {
 };
 
 export async function getPersonalDecks() {
+  const { userId } = await getViewerIdentity();
+  if (!userId) return [];
   const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData.user) return [];
 
   const { data } = await supabase.from("decks").select(deckSelection)
-    .eq("created_by_user_id", authData.user.id)
+    .eq("created_by_user_id", userId)
     .order("updated_at", { ascending: false });
 
   return (data ?? []).map((deck) => {
@@ -44,12 +45,12 @@ export async function getPersonalDecks() {
 }
 
 export async function getPersonalDeck(deckId: string) {
+  const { userId } = await getViewerIdentity();
+  if (!userId) return null;
   const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData.user) return null;
 
   const { data } = await supabase.from("decks").select(deckSelection)
-    .eq("id", deckId).eq("created_by_user_id", authData.user.id)
+    .eq("id", deckId).eq("created_by_user_id", userId)
     .maybeSingle();
   if (!data) return null;
   const terms = termsFromRows((data.deck_terms ?? []) as DeckTermRow[]);

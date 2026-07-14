@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
-import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/auth/viewer";
 import { getCommunityDeck } from "../data";
 import { DeckBrowser } from "./deck-browser";
 
@@ -11,19 +11,10 @@ export default async function CommunityDeckPage({
   params: Promise<{ deckId: string }>;
 }>) {
   const { deckId } = await params;
-  const supabase = await createClient();
-  const [{ data: authData }, deckState] = await Promise.all([
-    supabase.auth.getClaims(),
+  const [{ profile }, deckState] = await Promise.all([
+    getViewer(),
     getCommunityDeck(deckId),
   ]);
-  const userId = authData?.claims?.sub ?? null;
-  const { data: profile } = userId
-    ? await supabase
-        .from("profiles")
-        .select("preferred_character_set,preferred_pronunciation")
-        .eq("id", userId)
-        .maybeSingle()
-    : { data: null };
   const preferences = normalizeLanguagePreferences(profile);
 
   if (!deckState.deck && !deckState.message) {

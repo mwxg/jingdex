@@ -1,5 +1,5 @@
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
-import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/auth/viewer";
 import { getPublicDecks, type PublicDeckSort } from "../data";
 import { PublicDeckBrowser } from "./deck-browser-controls";
 
@@ -25,19 +25,10 @@ export default async function BrowseCommunityDecksPage({
   const parsedPage = Number.parseInt(first(params.page), 10);
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
-  const supabase = await createClient();
-  const [{ data: authData }, deckState] = await Promise.all([
-    supabase.auth.getClaims(),
+  const [{ profile }, deckState] = await Promise.all([
+    getViewer(),
     getPublicDecks({ page, query, sort }),
   ]);
-  const userId = authData?.claims?.sub ?? null;
-  const { data: profile } = userId
-    ? await supabase
-        .from("profiles")
-        .select("preferred_character_set,preferred_pronunciation")
-        .eq("id", userId)
-        .maybeSingle()
-    : { data: null };
   const preferences = normalizeLanguagePreferences(profile);
 
   return (

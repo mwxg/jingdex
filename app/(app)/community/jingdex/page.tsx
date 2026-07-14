@@ -1,23 +1,14 @@
 import Link from "next/link";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
-import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/auth/viewer";
 import { getAllJingdexDecks } from "../data";
 import { JingdexDeckSearch } from "./deck-search";
 
 export default async function JingdexDecksPage() {
-  const supabase = await createClient();
-  const [{ data: authData }, deckState] = await Promise.all([
-    supabase.auth.getClaims(),
+  const [{ profile }, deckState] = await Promise.all([
+    getViewer(),
     getAllJingdexDecks(),
   ]);
-  const userId = authData?.claims?.sub ?? null;
-  const { data: profile } = userId
-    ? await supabase
-        .from("profiles")
-        .select("preferred_character_set,preferred_pronunciation")
-        .eq("id", userId)
-        .maybeSingle()
-    : { data: null };
   const preferences = normalizeLanguagePreferences(profile);
 
   return (

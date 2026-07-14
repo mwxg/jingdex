@@ -42,9 +42,15 @@ type DeckRow = {
 };
 
 type DeckTermRow = {
-  deck_id: string;
+  deck_id?: string;
   position: number;
   terms: CommunityTerm | CommunityTerm[] | null;
+};
+
+type DeckSummaryRpcRow = DeckRow & {
+  first_term: CommunityTerm | null;
+  term_count: number | string;
+  total_count?: number | string;
 };
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -77,7 +83,28 @@ function getJoinedTerm(row: DeckTermRow) {
   return row.terms;
 }
 
-async function getJingdexDeckSummaries(query = "", randomLimit?: number) {
+function getRpcDeckSummary(row: DeckSummaryRpcRow): CommunityDeckSummary {
+  const firstTerm = row.first_term
+    ? addAttributionLabels([row.first_term])[0]
+    : null;
+
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    created_by: row.created_by,
+    created_at: row.created_at,
+    first_term: firstTerm,
+    term_count: Number(row.term_count),
+  };
+}
+
+function isMissingDeckSummaryRpc(error: { message?: string } | null) {
+  const message = error?.message?.toLocaleLowerCase() ?? "";
+  return message.includes("schema cache") || message.includes("could not find the function");
+}
+
+async function getJingdexDeckSummariesLegacy(query = "", randomLimit?: number) {
   const supabase = await createClient();
   const { data: registryRows, error: registryError } = await supabase
     .from("jingdex_decks")
@@ -151,14 +178,15 @@ async function getJingdexDeckSummaries(query = "", randomLimit?: number) {
 
   for (const row of ((termRows ?? []) as DeckTermRow[])) {
     const term = getJoinedTerm(row);
+    const deckId = row.deck_id;
 
-    if (!term) {
+    if (!term || !deckId) {
       continue;
     }
 
-    const currentTerms = termsByDeckId.get(row.deck_id) ?? [];
+    const currentTerms = termsByDeckId.get(deckId) ?? [];
     currentTerms.push(term);
-    termsByDeckId.set(row.deck_id, currentTerms);
+    termsByDeckId.set(deckId, currentTerms);
   }
 
   return {
@@ -175,6 +203,31 @@ async function getJingdexDeckSummaries(query = "", randomLimit?: number) {
   };
 }
 
+async function getJingdexDeckSummaries(query = "", randomLimit?: number) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_jingdex_deck_summaries", {
+    search_query: query,
+    max_results: randomLimit ?? null,
+    randomize: Boolean(randomLimit),
+  });
+
+  if (!error) {
+    return {
+      decks: ((data ?? []) as DeckSummaryRpcRow[]).map(getRpcDeckSummary),
+      message: null,
+    };
+  }
+
+  if (isMissingDeckSummaryRpc(error)) {
+    return getJingdexDeckSummariesLegacy(query, randomLimit);
+  }
+
+  return {
+    decks: [],
+    message: getErrorMessage(error, "Could not load community decks."),
+  };
+}
+
 export async function getCommunityDecks() {
   return getJingdexDeckSummaries("", 3);
 }
@@ -183,7 +236,7 @@ export async function getAllJingdexDecks(query = "") {
   return getJingdexDeckSummaries(query);
 }
 
-export async function getPublicDecks({
+async function getPublicDecksLegacy({
   page = 1,
   query = "",
   sort = "alphabetical",
@@ -259,10 +312,11 @@ export async function getPublicDecks({
   const termsByDeckId = new Map<string, CommunityTerm[]>();
   for (const row of ((termRows ?? []) as DeckTermRow[])) {
     const term = getJoinedTerm(row);
-    if (!term) continue;
-    const currentTerms = termsByDeckId.get(row.deck_id) ?? [];
+    const deckId = row.deck_id;
+    if (!term || !deckId) continue;
+    const currentTerms = termsByDeckId.get(deckId) ?? [];
     currentTerms.push(term);
-    termsByDeckId.set(row.deck_id, currentTerms);
+    termsByDeckId.set(deckId, currentTerms);
   }
 
   return {
@@ -277,11 +331,57 @@ export async function getPublicDecks({
   };
 }
 
+export async function getPublicDecks({
+  page = 1,
+  query = "",
+  sort = "alphabetical",
+}: {
+  page?: number;
+  query?: string;
+  sort?: PublicDeckSort;
+}) {
+  const normalizedPage = Math.max(1, Math.floor(page));
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_public_deck_summaries", {
+    search_query: query.trim().normalize("NFC"),
+    sort_order: sort,
+    result_offset: (normalizedPage - 1) * PUBLIC_DECKS_PAGE_SIZE,
+    result_limit: PUBLIC_DECKS_PAGE_SIZE,
+  });
+
+  if (isMissingDeckSummaryRpc(error)) {
+    return getPublicDecksLegacy({ page: normalizedPage, query, sort });
+  }
+
+  if (error) {
+    return {
+      decks: [],
+      message: getErrorMessage(error, "Could not load public decks."),
+      page: normalizedPage,
+      totalCount: 0,
+      totalPages: 0,
+    };
+  }
+
+  const rows = (data ?? []) as DeckSummaryRpcRow[];
+  const totalCount = rows.length ? Number(rows[0].total_count ?? 0) : 0;
+
+  return {
+    decks: rows.map(getRpcDeckSummary),
+    message: null,
+    page: normalizedPage,
+    totalCount,
+    totalPages: Math.ceil(totalCount / PUBLIC_DECKS_PAGE_SIZE),
+  };
+}
+
 export async function getCommunityDeck(deckId: string) {
   const supabase = await createClient();
   const { data: deckRow, error: deckError } = await supabase
     .from("decks")
-    .select("id,title,description,created_by,created_at")
+    .select(
+      "id,title,description,created_by,created_at,deck_terms(position,terms(id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by))",
+    )
     .eq("id", deckId)
     .eq("visibility", "community")
     .eq("publication_status", "approved")
@@ -298,30 +398,20 @@ export async function getCommunityDeck(deckId: string) {
     return { deck: null, message: null };
   }
 
-  const { data: termRows, error: termsError } = await supabase
-    .from("deck_terms")
-    .select(
-      "deck_id,position,terms(id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by)",
-    )
-    .eq("deck_id", deckRow.id)
-    .order("position", { ascending: true });
-
-  if (termsError) {
-    return {
-      deck: null,
-      message: getErrorMessage(termsError, "Could not load deck terms."),
-    };
-  }
-
   const terms = addAttributionLabels(
-    ((termRows ?? []) as DeckTermRow[])
+    ((deckRow.deck_terms ?? []) as DeckTermRow[])
+      .sort((left, right) => left.position - right.position)
       .map(getJoinedTerm)
       .filter((term): term is CommunityTerm => Boolean(term)),
   );
 
   return {
     deck: {
-      ...(deckRow as DeckRow),
+      id: deckRow.id,
+      title: deckRow.title,
+      description: deckRow.description,
+      created_by: deckRow.created_by,
+      created_at: deckRow.created_at,
       first_term: terms[0] ?? null,
       term_count: terms.length,
       terms,

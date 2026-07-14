@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeckBrowser } from "@/app/(app)/community/[deckId]/deck-browser";
 import { hasPermission } from "@/lib/auth/roles";
+import { getViewer } from "@/lib/auth/viewer";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
-import { createClient } from "@/lib/supabase/server";
 import { DeckReviewForm } from "../../review-form";
 import { getReviewDeck } from "../../data";
 
@@ -11,19 +11,12 @@ export default async function DeckReviewPage({
   params,
 }: Readonly<{ params: Promise<{ deckId: string }> }>) {
   const { deckId } = await params;
-  const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getClaims();
-  const userId = authData?.claims?.sub ?? null;
-  const { data: profile } = userId
-    ? await supabase
-        .from("profiles")
-        .select("role,preferred_character_set,preferred_pronunciation")
-        .eq("id", userId)
-        .maybeSingle()
-    : { data: null };
+  const [{ profile }, deck] = await Promise.all([
+    getViewer(),
+    getReviewDeck(deckId),
+  ]);
 
   if (!hasPermission(profile?.role, "manageCommunityDecks")) notFound();
-  const deck = await getReviewDeck(deckId);
   if (!deck) notFound();
 
   const statusLabel = {

@@ -1,18 +1,9 @@
 import { DictionarySearch } from "../dictionary-search";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
-import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/auth/viewer";
 
 export default async function DictionarySearchPage() {
-  const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getClaims();
-  const userId = authData?.claims?.sub ?? null;
-  const { data: profile } = userId
-    ? await supabase
-        .from("profiles")
-        .select("preferred_character_set,preferred_pronunciation")
-        .eq("id", userId)
-        .maybeSingle()
-    : { data: null };
+  const { profile } = await getViewer();
 
   return (
     <div className="space-y-8">

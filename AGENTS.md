@@ -27,6 +27,8 @@ The user has a setting for whether they prefer simplified/traditional and zhuyin
 
 Use the reusable loading primitives in components/loading.tsx for route skeletons, inline pending states, and action feedback; preserve content dimensions and include accessible status announcements.
 
+When adding server-side data fetching, minimize critical-path network round trips: reuse request-scoped auth/profile lookups, run independent queries in parallel, and consolidate dependent query chains with relational selects or Supabase RPCs.
+
 Only edit necessary files for the task.
 
 If there is anything I need to do on my end to complete a task, such as run an sql query in supabase, let me know.

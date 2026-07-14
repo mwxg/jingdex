@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { hasPermission } from "@/lib/auth/roles";
+import { getViewer } from "@/lib/auth/viewer";
 import { getChineseDisplayForms, normalizeLanguagePreferences } from "@/lib/preferences/language";
 import { createClient } from "@/lib/supabase/server";
 import { getPartOfSpeechLabel, type PartOfSpeech } from "@/lib/terms/parts-of-speech";
@@ -32,33 +33,32 @@ type DeckSubmission = {
 };
 
 export default async function ReviewPage() {
+  const viewerPromise = getViewer();
   const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getClaims();
-  const userId = authData?.claims?.sub ?? null;
-  const { data: profile } = userId
-    ? await supabase
-        .from("profiles")
-        .select("role,preferred_character_set,preferred_pronunciation")
-        .eq("id", userId)
-        .maybeSingle()
-    : { data: null };
+  const [
+    { profile },
+    { data: pendingRows },
+    { data: pendingDeckRows },
+  ] = await Promise.all([
+    viewerPromise,
+    supabase
+      .from("term_submissions")
+      .select("id,submitted_by_user_id,simplified,traditional,pinyin,zhuyin,english_definition,parts_of_speech,notes,status,reviewer_notes,created_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(100),
+    supabase
+      .from("decks")
+      .select("id,title,description,created_by_user_id,submitted_at,updated_at,deck_terms(term_id)")
+      .eq("publication_status", "under_review")
+      .order("created_at", { ascending: true })
+      .limit(100),
+  ]);
 
   if (!hasPermission(profile?.role, "reviewTermSubmissions")) notFound();
 
   const preferences = normalizeLanguagePreferences(profile);
-  const { data: pendingRows } = await supabase
-    .from("term_submissions")
-    .select("id,submitted_by_user_id,simplified,traditional,pinyin,zhuyin,english_definition,parts_of_speech,notes,status,reviewer_notes,created_at")
-    .eq("status", "pending")
-    .order("created_at", { ascending: true })
-    .limit(100);
   const pending = (pendingRows ?? []) as Submission[];
-  const { data: pendingDeckRows } = await supabase
-    .from("decks")
-    .select("id,title,description,created_by_user_id,submitted_at,updated_at,deck_terms(term_id)")
-    .eq("publication_status", "under_review")
-    .order("created_at", { ascending: true })
-    .limit(100);
   const pendingDecks = (pendingDeckRows ?? []) as DeckSubmission[];
   const submitterIds = [...new Set([
     ...pending.map((row) => row.submitted_by_user_id),

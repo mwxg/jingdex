@@ -1,21 +1,12 @@
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
 import { getAdministrativeRole, roleLabels } from "@/lib/auth/roles";
+import { getViewer } from "@/lib/auth/viewer";
 import { SidebarSkeleton } from "@/components/loading";
 import { SidebarPageLayout } from "@/components/sidebar-page-layout";
 import { SettingsNav } from "./settings-nav";
 
 async function SettingsSidebar() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims?.sub ?? null;
-  const { data: profile } = userId
-    ? await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .maybeSingle()
-    : { data: null };
+  const { profile } = await getViewer();
   const role = getAdministrativeRole(profile?.role);
   const roleLabel = role ? roleLabels[role] : null;
 

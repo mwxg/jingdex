@@ -1,16 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
+import { getViewer } from "@/lib/auth/viewer";
 import { DeckManager, type PersonalDeck } from "./deck-manager";
 import { getPersonalDecks } from "./data";
 
 export default async function MyDecksPage() {
-  const supabase = await createClient();
-  const { data: authData } = await supabase.auth.getClaims();
-  const userId = authData?.claims?.sub;
-  const [decks, { data: profile }] = await Promise.all([
+  const [decks, { profile }] = await Promise.all([
     getPersonalDecks(),
-    supabase.from("profiles").select("preferred_character_set,preferred_pronunciation")
-      .eq("id", userId!).maybeSingle(),
+    getViewer(),
   ]);
 
   return (
