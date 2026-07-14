@@ -26,27 +26,14 @@ import {
   containsChineseSearchCharacters,
   type TermSearchMode,
 } from "@/lib/terms/search-mode";
+import { getDefinitionPreview } from "@/lib/terms/definition-preview";
 
-const DEFINITION_PREVIEW_LIMIT = 150;
 const initialState: DictionarySearchState = {
   results: [],
   query: "",
   sort: "pinyin-asc",
   totalCount: 0,
 };
-
-function getDefinitionPreview(term: DictionaryTerm) {
-  const definition =
-    term.short_definition ||
-    term.english_definition?.split(/\r?\n/, 1)[0] ||
-    "";
-
-  if (definition.length <= DEFINITION_PREVIEW_LIMIT) {
-    return definition;
-  }
-
-  return `${definition.slice(0, DEFINITION_PREVIEW_LIMIT).trim()}...`;
-}
 
 function getPartsOfSpeechLabel(partsOfSpeech: string[]) {
   return partsOfSpeech.map(getPartOfSpeechLabel).join(", ");

@@ -12,6 +12,7 @@ import {
   getPartOfSpeechLabel,
   type PartOfSpeech,
 } from "@/lib/terms/parts-of-speech";
+import { getDefinitionPreview } from "@/lib/terms/definition-preview";
 import { updateBio, type BioFormState } from "./actions";
 
 export type ProfileDeck = {
@@ -190,17 +191,25 @@ function TermDetailsModal({
 export function ProfileContent({
   bio,
   createdAt,
+  deckCount,
+  deckPage,
   decks,
   preferences,
   terms,
   username,
+  wordCount,
+  wordPage,
 }: Readonly<{
   bio: string | null;
   createdAt: string;
+  deckCount: number;
+  deckPage: number;
   decks: ProfileDeck[];
   preferences: LanguagePreferences;
   terms: ProfileTerm[];
   username: string;
+  wordCount: number;
+  wordPage: number;
 }>) {
   const [selectedTerm, setSelectedTerm] = useState<ProfileTerm | null>(null);
 
@@ -230,11 +239,21 @@ export function ProfileContent({
           </div>
         </section>
 
-        <DeckSection decks={decks} />
+        <DeckSection
+          count={deckCount}
+          currentPage={deckPage}
+          decks={decks}
+          username={username}
+          wordPage={wordPage}
+        />
         <TermSection
+          count={wordCount}
+          currentPage={wordPage}
+          deckPage={deckPage}
           onSelect={setSelectedTerm}
           preferences={preferences}
           terms={terms}
+          username={username}
         />
       </div>
       {selectedTerm ? (
@@ -248,14 +267,97 @@ export function ProfileContent({
   );
 }
 
-function DeckSection({ decks }: Readonly<{ decks: ProfileDeck[] }>) {
+function Pagination({
+  anchor,
+  currentPage,
+  getHref,
+  pageSize,
+  totalCount,
+}: Readonly<{
+  anchor: string;
+  currentPage: number;
+  getHref: (page: number) => string;
+  pageSize: number;
+  totalCount: number;
+}>) {
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  if (totalPages <= 1) return null;
+
+  const linkClasses =
+    "inline-flex min-h-11 items-center rounded-lg border border-muted-background bg-surface px-4 font-sans text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary";
+
   return (
-    <section aria-labelledby="profile-decks-heading" className="space-y-4">
+    <nav
+      aria-label={`${anchor} pagination`}
+      className="flex flex-wrap items-center justify-between gap-3"
+    >
+      {currentPage > 1 ? (
+        <Link className={linkClasses} href={getHref(currentPage - 1)}>
+          Previous
+        </Link>
+      ) : (
+        <span aria-disabled="true" className={`${linkClasses} opacity-50`}>
+          Previous
+        </span>
+      )}
+      <span className="font-sans text-sm text-muted">
+        Page {currentPage} of {totalPages}
+      </span>
+      {currentPage < totalPages ? (
+        <Link className={linkClasses} href={getHref(currentPage + 1)}>
+          Next
+        </Link>
+      ) : (
+        <span aria-disabled="true" className={`${linkClasses} opacity-50`}>
+          Next
+        </span>
+      )}
+    </nav>
+  );
+}
+
+function getProfilePageHref({
+  deckPage,
+  username,
+  wordPage,
+  anchor,
+}: {
+  anchor: string;
+  deckPage: number;
+  username: string;
+  wordPage: number;
+}) {
+  const params = new URLSearchParams();
+  if (deckPage > 1) params.set("decksPage", String(deckPage));
+  if (wordPage > 1) params.set("wordsPage", String(wordPage));
+  const query = params.size ? `?${params.toString()}` : "";
+  return `/users/${encodeURIComponent(username)}${query}#${anchor}`;
+}
+
+function DeckSection({
+  count,
+  currentPage,
+  decks,
+  username,
+  wordPage,
+}: Readonly<{
+  count: number;
+  currentPage: number;
+  decks: ProfileDeck[];
+  username: string;
+  wordPage: number;
+}>) {
+  return (
+    <section
+      aria-labelledby="profile-decks-heading"
+      className="scroll-mt-4 space-y-4"
+      id="profile-decks"
+    >
       <div className="flex items-end justify-between gap-4">
         <h2 className="font-heading text-3xl font-semibold" id="profile-decks-heading">
           Public decks
         </h2>
-        <span className="font-sans text-sm text-muted">{decks.length}</span>
+        <span className="font-sans text-sm text-muted">{count}</span>
       </div>
       {decks.length ? (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -280,6 +382,20 @@ function DeckSection({ decks }: Readonly<{ decks: ProfileDeck[] }>) {
           No public decks yet.
         </p>
       )}
+      <Pagination
+        anchor="profile-decks"
+        currentPage={currentPage}
+        getHref={(page) =>
+          getProfilePageHref({
+            anchor: "profile-decks",
+            deckPage: page,
+            username,
+            wordPage,
+          })
+        }
+        pageSize={9}
+        totalCount={count}
+      />
     </section>
   );
 }
@@ -288,18 +404,30 @@ function TermSection({
   onSelect,
   preferences,
   terms,
+  count,
+  currentPage,
+  deckPage,
+  username,
 }: Readonly<{
+  count: number;
+  currentPage: number;
+  deckPage: number;
   onSelect: (term: ProfileTerm) => void;
   preferences: LanguagePreferences;
   terms: ProfileTerm[];
+  username: string;
 }>) {
   return (
-    <section aria-labelledby="profile-words-heading" className="space-y-4">
+    <section
+      aria-labelledby="profile-words-heading"
+      className="scroll-mt-4 space-y-4"
+      id="profile-words"
+    >
       <div className="flex items-end justify-between gap-4">
         <h2 className="font-heading text-3xl font-semibold" id="profile-words-heading">
           Contributed words
         </h2>
-        <span className="font-sans text-sm text-muted">{terms.length}</span>
+        <span className="font-sans text-sm text-muted">{count}</span>
       </div>
       {terms.length ? (
         <ul className="divide-y divide-muted-background overflow-hidden rounded-lg border border-muted-background bg-surface">
@@ -313,7 +441,7 @@ function TermSection({
             return (
               <li key={term.id}>
                 <button
-                  className="grid w-full gap-2 px-4 py-3 text-left transition-colors hover:bg-background focus:bg-background focus:outline-none sm:grid-cols-[minmax(9rem,0.8fr)_minmax(0,1fr)] sm:items-center sm:px-5"
+                  className="grid w-full gap-2 px-4 py-3 text-left transition-colors hover:bg-background focus:bg-background focus:outline-none sm:grid-cols-[minmax(9rem,0.7fr)_minmax(8rem,0.7fr)_minmax(12rem,1.4fr)] sm:items-center sm:px-5"
                   onClick={() => onSelect(term)}
                   type="button"
                 >
@@ -335,6 +463,9 @@ function TermSection({
                       {secondaryPronunciation}
                     </span>
                   </span>
+                  <span className="min-w-0 font-sans text-sm leading-6 text-muted sm:line-clamp-2">
+                    {getDefinitionPreview(term) || "No definition added."}
+                  </span>
                 </button>
               </li>
             );
@@ -345,6 +476,20 @@ function TermSection({
           No contributed words yet.
         </p>
       )}
+      <Pagination
+        anchor="profile-words"
+        currentPage={currentPage}
+        getHref={(page) =>
+          getProfilePageHref({
+            anchor: "profile-words",
+            deckPage,
+            username,
+            wordPage: page,
+          })
+        }
+        pageSize={20}
+        totalCount={count}
+      />
     </section>
   );
 }
