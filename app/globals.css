@@ -18,6 +18,7 @@
   --developer: #770000;
 
   --community-deck: #6d00a7;
+  --under-review: #ff6f00;
 
   --font-family-body: var(--font-figtree), Arial, Helvetica, sans-serif;
   --font-family-heading: var(--font-zilla-slab), Georgia, serif;
@@ -43,6 +44,7 @@
   --color-developer: var(--developer);
 
   --color-comunity-deck: var(--community-deck);
+  --color-under-review: var(--under-review);
 
   --font-sans: var(--font-family-body);
   --font-heading: var(--font-family-heading);
