@@ -129,7 +129,17 @@ export function MobileNavbarMenu({ links, username }: MobileNavbarMenuProps) {
                 </button>
               </form>
             </div>
-          ) : null}
+          ) : (
+            <div className="mt-2 border-t border-muted-background pt-2">
+              <Link
+                className="flex min-h-11 items-center rounded-lg px-4 text-foreground transition-colors hover:bg-muted-background hover:text-primary"
+                href="/login"
+                onClick={() => setOpenPathname(null)}
+              >
+                Log in/Sign up
+              </Link>
+            </div>
+          )}
         </div>
       ) : null}
     </div>

@@ -46,8 +46,6 @@ export default async function UserProfilePage({
   const deckFrom = (deckPage - 1) * PROFILE_DECKS_PER_PAGE;
   const wordFrom = (wordPage - 1) * PROFILE_WORDS_PER_PAGE;
 
-  if (!viewer.userId || !viewer.profile) notFound();
-
   const supabase = await createClient();
   const { data: profileData } = await supabase
     .from("profiles")
@@ -58,7 +56,7 @@ export default async function UserProfilePage({
 
   if (!profile) notFound();
 
-  const isOwner = profile.id === viewer.userId;
+  const isOwner = Boolean(viewer.userId) && profile.id === viewer.userId;
   const canViewContent = profile.is_public || isOwner;
   const [tagsResult, contentResults] = await Promise.all([
     profile.is_public || isOwner

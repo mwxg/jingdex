@@ -5,6 +5,8 @@ import {
   Skeleton,
 } from "@/components/loading";
 import { PageHeader } from "@/components/page-header";
+import { LoginRequired } from "@/components/login-required";
+import { getViewerIdentity } from "@/lib/auth/viewer";
 import { PopupDemo } from "./popup-demo";
 
 const buttonBase =
@@ -74,7 +76,28 @@ function Swatch({
   );
 }
 
-export default function DemoPage() {
+export default async function DemoPage() {
+  const { userId } = await getViewerIdentity();
+
+  if (!userId) {
+    return (
+      <main className="min-w-0 bg-background text-foreground">
+        <div className="w-full space-y-8">
+          <PageHeader
+            description="A reference for the interface patterns used throughout Jingdex."
+            eyebrow="Jingdex demo"
+            title="Interface guide"
+          />
+          <LoginRequired
+            description="Log in with an authorized account to view the interface guide."
+            nextPath="/demo"
+            title="Log in to view this page"
+          />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-w-0 bg-background text-foreground">
       <div className="w-full space-y-12">

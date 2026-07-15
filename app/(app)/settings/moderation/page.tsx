@@ -20,7 +20,7 @@ export default async function ModerationPage() {
   const { profile, userId } = await getViewer();
 
   if (!userId) {
-    redirect("/login?next=/settings/moderation");
+    return null;
   }
   const preferences = normalizeLanguagePreferences(profile);
 

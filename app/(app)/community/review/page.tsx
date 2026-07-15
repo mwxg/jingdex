@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPartOfSpeechLabel, type PartOfSpeech } from "@/lib/terms/parts-of-speech";
 import { DeckReviewForm, ReviewForm } from "./review-form";
 import { PageHeader } from "@/components/page-header";
+import { LoginRequired } from "@/components/login-required";
 import { UsernameLink } from "@/components/username-link";
 
 type Submission = {
@@ -35,14 +36,39 @@ type DeckSubmission = {
 };
 
 export default async function ReviewPage() {
-  const viewerPromise = getViewer();
+  const viewer = await getViewer();
+
+  if (!viewer.userId) {
+    return (
+      <main className="min-w-0 bg-background text-foreground">
+        <div className="space-y-8">
+          <PageHeader
+            description="Review pending word and deck submissions from the Jingdex community."
+            eyebrow="Admin"
+            eyebrowTone="admin"
+            title="Review"
+          />
+          <LoginRequired
+            description="Log in with an authorized account to access the review queue."
+            nextPath="/community/review"
+            title="Log in to view this page"
+          />
+        </div>
+      </main>
+    );
+  }
+
+  if (!hasPermission(viewer.profile?.role, "reviewTermSubmissions")) {
+    notFound();
+  }
+
   const supabase = await createClient();
   const [
     { profile },
     { data: pendingRows },
     { data: pendingDeckRows },
   ] = await Promise.all([
-    viewerPromise,
+    Promise.resolve(viewer),
     supabase
       .from("term_submissions")
       .select("id,submitted_by_user_id,simplified,traditional,pinyin,zhuyin,english_definition,parts_of_speech,notes,status,reviewer_notes,created_at")
@@ -56,8 +82,6 @@ export default async function ReviewPage() {
       .order("created_at", { ascending: true })
       .limit(100),
   ]);
-
-  if (!hasPermission(profile?.role, "reviewTermSubmissions")) notFound();
 
   const preferences = normalizeLanguagePreferences(profile);
   const pending = (pendingRows ?? []) as Submission[];

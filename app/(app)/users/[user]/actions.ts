@@ -29,7 +29,7 @@ async function getAuthenticatedUserId() {
 async function getAccessibleProfile(targetUsername: string) {
   const { supabase, userId } = await getAuthenticatedUserId();
 
-  if (!userId || !/^[a-zA-Z0-9][a-zA-Z0-9_]{2,31}$/.test(targetUsername)) {
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_]{2,31}$/.test(targetUsername)) {
     return { profileId: null, supabase };
   }
 

@@ -4,14 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 type AppSidebarProps = Readonly<{
-  hasAccount: boolean;
   canAccessDemo: boolean;
   canReview: boolean;
 }>;
 
 type SidebarSection = Readonly<{
   label: string;
-  requiresAccount?: boolean;
   requiresDemoAccess?: boolean;
   links: readonly Readonly<{
     href: string;
@@ -38,7 +36,6 @@ const sections: readonly SidebarSection[] = [
   },
   {
     label: "My stuff",
-    requiresAccount: true,
     links: [
       { href: "/my-stuff/decks", label: "My decks" },
       { href: "/my-stuff/contributions", label: "My contributions" },
@@ -51,13 +48,12 @@ const sections: readonly SidebarSection[] = [
   },
 ];
 
-export function AppSidebar({ hasAccount, canAccessDemo, canReview }: AppSidebarProps) {
+export function AppSidebar({ canAccessDemo, canReview }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
     <nav aria-label="App sections" className="font-sans text-sm">
       {sections.map((section) => {
-        if (section.requiresAccount && !hasAccount) return null;
         if (section.requiresDemoAccess && !canAccessDemo) return null;
 
         return (

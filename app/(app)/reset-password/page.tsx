@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { JingdexLogo } from "@/components/jingdex-logo";
+import { LoginRequired } from "@/components/login-required";
 import { ResetPasswordForm } from "./reset-password-form";
 
 export default async function ResetPasswordPage() {
@@ -8,7 +8,18 @@ export default async function ResetPasswordPage() {
   const { data, error } = await supabase.auth.getUser();
 
   if (error || !data.user) {
-    redirect("/login");
+    return (
+      <main className="grid flex-1 place-items-center bg-background px-6 py-10 text-foreground">
+        <div className="w-full max-w-md space-y-6">
+          <JingdexLogo className="mx-auto h-20 w-auto" priority />
+          <LoginRequired
+            description="Log in before choosing a new password for your Jingdex account."
+            nextPath="/reset-password"
+            title="Log in to reset your password"
+          />
+        </div>
+      </main>
+    );
   }
 
   return (

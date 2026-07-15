@@ -7,17 +7,37 @@ import { normalizeLanguagePreferences } from "@/lib/preferences/language";
 import { DeckReviewForm } from "../../review-form";
 import { getReviewDeck } from "../../data";
 import { UsernameLink } from "@/components/username-link";
+import { LoginRequired } from "@/components/login-required";
+import { PageHeader } from "@/components/page-header";
 
 export default async function DeckReviewPage({
   params,
 }: Readonly<{ params: Promise<{ deckId: string }> }>) {
   const { deckId } = await params;
-  const [{ profile }, deck] = await Promise.all([
-    getViewer(),
-    getReviewDeck(deckId),
-  ]);
+  const { profile, userId } = await getViewer();
+
+  if (!userId) {
+    return (
+      <main className="min-w-0 bg-background text-foreground">
+        <div className="space-y-8">
+          <PageHeader
+            description="Inspect a submitted community deck before making a review decision."
+            eyebrow="Admin"
+            eyebrowTone="admin"
+            title="Deck review"
+          />
+          <LoginRequired
+            description="Log in with an authorized account to review this deck."
+            nextPath={`/community/review/decks/${deckId}`}
+            title="Log in to view this page"
+          />
+        </div>
+      </main>
+    );
+  }
 
   if (!hasPermission(profile?.role, "manageCommunityDecks")) notFound();
+  const deck = await getReviewDeck(deckId);
   if (!deck) notFound();
 
   const statusLabel = {

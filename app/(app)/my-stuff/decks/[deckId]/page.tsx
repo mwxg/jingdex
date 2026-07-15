@@ -7,10 +7,9 @@ import { getPersonalDeck } from "../data";
 
 export default async function PersonalDeckPage({ params }: Readonly<{ params: Promise<{ deckId: string }> }>) {
   const { deckId } = await params;
-  const [deck, { profile }] = await Promise.all([
-    getPersonalDeck(deckId),
-    getViewer(),
-  ]);
+  const { profile, userId } = await getViewer();
+  if (!userId) return null;
+  const deck = await getPersonalDeck(deckId);
   if (!deck) notFound();
   const isPublished = deck.visibility === "community" && deck.publication_status === "approved";
   const statusLabel = isPublished

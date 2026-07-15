@@ -2,14 +2,44 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasPermission } from "@/lib/auth/roles";
 
-const PUBLIC_PATHS = new Set(["/login", "/auth/callback"]);
+const PUBLIC_PATHS = new Set([
+  "/",
+  "/login",
+  "/auth/callback",
+  "/dictionary",
+  "/dictionary/search",
+  "/community",
+  "/community/featured",
+  "/community/browse",
+  "/community/jingdex",
+]);
 const LOGGED_IN_REDIRECT_PATHS = new Set(["/login"]);
 const MODERATOR_PATHS = new Set(["/demo"]);
+const PUBLIC_PATH_PREFIXES = ["/users/"];
+const GUEST_RENDERABLE_PATHS = new Set([
+  "/dictionary/contribute",
+  "/community/review",
+  "/my-stuff",
+  "/settings",
+  "/reset-password",
+  "/demo",
+]);
 
 function matchesPath(pathname: string, paths: ReadonlySet<string>) {
   return [...paths].some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
+}
+
+function isPublicPath(pathname: string) {
+  if (PUBLIC_PATHS.has(pathname)) return true;
+  if (PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return true;
+  }
+  if (matchesPath(pathname, GUEST_RENDERABLE_PATHS)) return true;
+
+  return pathname.startsWith("/community/")
+    && !pathname.startsWith("/community/review");
 }
 
 function redirectWithNext(request: NextRequest, pathname: string) {
@@ -50,10 +80,10 @@ export async function updateSession(request: NextRequest) {
   const { data, error } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub ?? null;
   const isLoggedIn = !error && Boolean(userId);
-  const isPublicPath = PUBLIC_PATHS.has(request.nextUrl.pathname);
+  const isPublicRequest = isPublicPath(request.nextUrl.pathname);
   const requiresModerator = matchesPath(request.nextUrl.pathname, MODERATOR_PATHS);
 
-  if (!isLoggedIn && !isPublicPath) {
+  if (!isLoggedIn && !isPublicRequest) {
     return redirectWithNext(request, "/login");
   }
 

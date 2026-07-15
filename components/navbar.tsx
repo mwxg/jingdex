@@ -8,7 +8,7 @@ const navLinks = [
   { href: "/", label: "Home" },
   { href: "/dictionary/search", label: "Dictionary" },
   { href: "/community", label: "Community" },
-  { href: "/my-stuff/decks", label: "My stuff", requiresAccount: true },
+  { href: "/my-stuff/decks", label: "My stuff" },
   { href: "/demo", label: "Demo" },
 ];
 
@@ -19,7 +19,6 @@ export function Navbar({
 }>) {
   const visibleLinks = navLinks.filter(
     (link) =>
-      (!link.requiresAccount || Boolean(profile)) &&
       (link.href !== "/demo" ||
         hasPermission(profile?.role, "accessModerationPage")),
   );
@@ -47,7 +46,16 @@ export function Navbar({
                 </Link>
               ))}
           </div>
-          {profile ? <AccountMenu username={profile.username} /> : null}
+          {profile ? (
+            <AccountMenu username={profile.username} />
+          ) : (
+            <Link
+              className="ml-2 flex h-10 items-center rounded-lg border border-muted-background bg-background px-3 text-foreground transition-colors hover:border-primary hover:text-primary"
+              href="/login"
+            >
+              Log in/Sign up
+            </Link>
+          )}
         </div>
 
         <MobileNavbarMenu
