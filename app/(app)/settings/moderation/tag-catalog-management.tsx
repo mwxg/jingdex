@@ -1,6 +1,14 @@
 "use client";
 
-import { type FormEvent, useMemo, useState, useTransition } from "react";
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { InlineLoadingStatus, PendingLabel } from "@/components/loading";
 import { UserTagBadge } from "@/components/user-tag";
 import {
@@ -12,6 +20,7 @@ import {
   createTagStyleForManagement,
   deleteManualTagForManagement,
   reorderTagsForManagement,
+  updateTagDetailsForManagement,
   updateTagStyleForManagement,
   updateTagStyleColorsForManagement,
   type TagCatalogState,
@@ -134,6 +143,122 @@ function ThemePreviews({ tag }: Readonly<{ tag: UserTag }>) {
   );
 }
 
+function TagDetailsEditor({
+  disabled,
+  error,
+  onClose,
+  onSave,
+  tag,
+}: Readonly<{
+  disabled: boolean;
+  error?: string;
+  onClose: () => void;
+  onSave: (event: FormEvent<HTMLFormElement>, tagId: string) => void;
+  tag: UserTag;
+}>) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      aria-labelledby="edit-tag-title"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 px-4 py-6"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !disabled) onClose();
+      }}
+      role="dialog"
+    >
+      <div className="max-h-full w-full max-w-lg overflow-y-auto rounded-lg border border-muted-background bg-surface p-5 shadow-xl sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-heading text-2xl font-semibold text-foreground" id="edit-tag-title">
+              Edit tag
+            </h2>
+            <p className="mt-1 font-mono text-xs text-muted">{tag.slug}</p>
+          </div>
+          <button
+            aria-label="Close tag editor"
+            className="grid size-11 shrink-0 place-items-center rounded-lg text-2xl leading-none text-foreground transition-colors hover:bg-muted-background disabled:opacity-60"
+            disabled={disabled}
+            onClick={onClose}
+            ref={closeButtonRef}
+            type="button"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        {error ? (
+          <p className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-sans text-sm font-bold text-danger" role="alert">
+            {error}
+          </p>
+        ) : null}
+
+        <form className="mt-5 space-y-5" onSubmit={(event) => onSave(event, tag.id)}>
+          <label className="space-y-2">
+            <span className="block font-sans text-sm font-bold text-foreground">Display name</span>
+            <input
+              autoComplete="off"
+              className="h-12 w-full rounded-lg border border-muted-background bg-background px-4 font-sans text-base text-foreground outline-none focus:border-primary"
+              defaultValue={tag.label}
+              disabled={disabled}
+              maxLength={40}
+              name="label"
+              required
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="block font-sans text-sm font-bold text-foreground">Description</span>
+            <textarea
+              className="min-h-28 w-full resize-y rounded-lg border border-muted-background bg-background px-4 py-3 font-sans text-base text-foreground outline-none focus:border-primary"
+              defaultValue={tag.description ?? ""}
+              disabled={disabled}
+              maxLength={240}
+              name="description"
+              placeholder="Shown when users inspect the tag."
+            />
+          </label>
+          <div className="flex flex-wrap justify-end gap-3">
+            <button
+              className="min-h-11 rounded-lg border border-muted-background px-4 font-sans text-sm font-bold text-foreground hover:border-primary disabled:opacity-60"
+              disabled={disabled}
+              onClick={onClose}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              className="min-h-11 rounded-lg bg-primary px-5 font-sans text-sm font-bold text-on-primary hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60"
+              disabled={disabled}
+              type="submit"
+            >
+              {disabled ? <PendingLabel>Saving tag</PendingLabel> : "Save changes"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export function TagCatalogManagement({
   initialState,
 }: Readonly<{
@@ -142,11 +267,12 @@ export function TagCatalogManagement({
   const [state, setState] = useState(initialState);
   const [isPending, startTransition] = useTransition();
   const [pendingOperation, setPendingOperation] = useState<
-    "style" | "style-edit" | "tag" | "tag-style" | "delete" | "reorder" | null
+    "style" | "style-edit" | "tag" | "tag-details" | "tag-style" | "delete" | "reorder" | null
   >(null);
   const [editingStyleId, setEditingStyleId] = useState<string | null>(null);
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const [deletingTagId, setDeletingTagId] = useState<string | null>(null);
+  const [editingDetailsTag, setEditingDetailsTag] = useState<UserTag | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [tagLabel, setTagLabel] = useState("");
   const [selectedStyleId, setSelectedStyleId] = useState(
@@ -179,6 +305,7 @@ export function TagCatalogManagement({
     [darkColor, darkColorEnd, lightColor, lightColorEnd, styleLabel],
   );
   const stylePreview = makePreviewTag("Tag preview", pendingStyle);
+  const closeTagEditor = useCallback(() => setEditingDetailsTag(null), []);
 
   function createStyle(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -258,6 +385,23 @@ export function TagCatalogManagement({
     startTransition(async () => {
       setState(await updateTagStyleForManagement(tagId, formData));
       setEditingTagId(null);
+      setPendingOperation(null);
+    });
+  }
+
+  function editTagDetails(event: FormEvent<HTMLFormElement>, tagId: string) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    setPendingOperation("tag-details");
+    startTransition(async () => {
+      const nextState = await updateTagDetailsForManagement(tagId, formData);
+      setState((current) => ({
+        ...nextState,
+        styles: nextState.styles.length > 0 ? nextState.styles : current.styles,
+        tags: nextState.tags.length > 0 ? nextState.tags : current.tags,
+      }));
+      if (nextState.success) setEditingDetailsTag(null);
       setPendingOperation(null);
     });
   }
@@ -410,6 +554,17 @@ export function TagCatalogManagement({
                     </button>
                   </form>
                   <div className="flex flex-wrap gap-2 sm:justify-end">
+                  <button
+                    className="min-h-11 rounded-lg border border-primary px-4 font-sans text-sm font-bold text-primary hover:bg-primary/10 disabled:opacity-60"
+                    disabled={isPending}
+                    onClick={() => {
+                      setState((current) => ({ ...current, message: undefined, success: undefined }));
+                      setEditingDetailsTag(tag);
+                    }}
+                    type="button"
+                  >
+                    Edit
+                  </button>
                   <button aria-label={`Move ${tag.label} up`} className="size-11 rounded-lg border border-muted-background font-bold text-foreground hover:border-primary disabled:opacity-30" disabled={isPending || index === 0} onClick={() => moveTag(index, index - 1)} type="button">↑</button>
                   <button aria-label={`Move ${tag.label} down`} className="size-11 rounded-lg border border-muted-background font-bold text-foreground hover:border-primary disabled:opacity-30" disabled={isPending || index === state.tags.length - 1} onClick={() => moveTag(index, index + 1)} type="button">↓</button>
                   <button className="min-h-11 rounded-lg border border-danger/40 px-4 font-sans text-sm font-bold text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:border-muted-background disabled:text-muted disabled:hover:bg-transparent" disabled={isPending || tag.is_automatic} onClick={() => deleteTag(tag.id, tag.label)} type="button">
@@ -424,6 +579,15 @@ export function TagCatalogManagement({
           <p className="mt-3 font-sans text-sm text-muted">No tags found.</p>
         )}
       </div>
+      {editingDetailsTag ? (
+        <TagDetailsEditor
+          disabled={pendingOperation === "tag-details"}
+          error={state.message}
+          onClose={closeTagEditor}
+          onSave={editTagDetails}
+          tag={editingDetailsTag}
+        />
+      ) : null}
     </section>
   );
 }

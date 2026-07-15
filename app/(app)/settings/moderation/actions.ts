@@ -655,6 +655,40 @@ export async function updateTagStyleForManagement(
   return { ...current, success: current.message ? undefined : "Tag style updated." };
 }
 
+export async function updateTagDetailsForManagement(
+  tagId: string,
+  formData: FormData,
+): Promise<TagCatalogState> {
+  const normalizedTagId = tagId.trim();
+  const label = getRequiredString(formData, "label");
+  const description = getRequiredString(formData, "description");
+
+  if (!normalizedTagId || !label || label.length > 40 || description.length > 240) {
+    return {
+      message: "Use a display name of 1–40 characters and a description of up to 240 characters.",
+      tags: [],
+      styles: [],
+    };
+  }
+
+  const { supabase, authorized, message } = await getTagManagementSupabaseClient();
+  if (!authorized) return { message: message ?? "Only developers can manage tags.", tags: [], styles: [] };
+
+  const { error } = await supabase.rpc("update_tag_details_for_management", {
+    target_tag_id: normalizedTagId,
+    tag_label: label,
+    tag_description: description,
+  });
+
+  if (error) {
+    const current = await loadTagCatalog(supabase);
+    return { ...current, message: getErrorMessage(error, "Could not update that tag.") };
+  }
+
+  const current = await loadTagCatalog(supabase);
+  return { ...current, success: current.message ? undefined : "Tag updated." };
+}
+
 export async function deleteManualTagForManagement(
   tagId: string,
 ): Promise<TagCatalogState> {
