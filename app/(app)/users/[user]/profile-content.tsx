@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  type CSSProperties,
   useActionState,
   useCallback,
   useEffect,
@@ -192,6 +193,120 @@ function TermDetailsModal({
   );
 }
 
+function ProfileTags({
+  tags,
+  username,
+}: Readonly<{
+  tags: UserTag[];
+  username: string;
+}>) {
+  const [popover, setPopover] = useState<{
+    horizontalOffset: number;
+    horizontalSide: "left" | "right";
+    tagId: string;
+    verticalOffset: number;
+    verticalSide: "bottom" | "top";
+  } | null>(null);
+  const selectedTag = tags.find((tag) => tag.id === popover?.tagId) ?? null;
+
+  useEffect(() => {
+    if (!popover) return;
+
+    function dismissPopover(event: PointerEvent) {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest("[data-profile-tag-trigger]")
+      ) {
+        return;
+      }
+      setPopover(null);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setPopover(null);
+    }
+
+    document.addEventListener("pointerdown", dismissPopover);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", dismissPopover);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [popover]);
+
+  const popoverStyle: CSSProperties | undefined = popover
+    ? {
+        [popover.horizontalSide]: popover.horizontalOffset,
+        [popover.verticalSide]: popover.verticalOffset,
+      }
+    : undefined;
+
+  return (
+    <div className="mt-3">
+      <ul aria-label={`${username}'s tags`} className="flex flex-wrap gap-2">
+        {tags.map((tag) => {
+          const isSelected = popover?.tagId === tag.id;
+
+          return (
+            <li key={tag.id}>
+              <button
+                aria-controls="profile-tag-description"
+                aria-expanded={isSelected}
+                aria-label={`${isSelected ? "Hide" : "Show"} description for ${tag.label}`}
+                className="inline-flex min-h-11 cursor-pointer items-center rounded-full"
+                data-profile-tag-trigger
+                onClick={(event) => {
+                  if (isSelected) {
+                    setPopover(null);
+                    return;
+                  }
+
+                  const bounds = event.currentTarget.getBoundingClientRect();
+                  const activatedWithKeyboard = event.detail === 0;
+                  const x = activatedWithKeyboard
+                    ? bounds.left + bounds.width / 2
+                    : event.clientX;
+                  const y = activatedWithKeyboard ? bounds.bottom : event.clientY;
+                  const showOnLeft = x > window.innerWidth / 2;
+                  const showAbove = y > window.innerHeight / 2;
+
+                  setPopover({
+                    horizontalOffset: showOnLeft
+                      ? window.innerWidth - x + 12
+                      : x + 12,
+                    horizontalSide: showOnLeft ? "right" : "left",
+                    tagId: tag.id,
+                    verticalOffset: showAbove
+                      ? window.innerHeight - y + 12
+                      : y + 12,
+                    verticalSide: showAbove ? "bottom" : "top",
+                  });
+                }}
+                type="button"
+              >
+                <UserTagBadge tag={tag} />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {selectedTag ? (
+        <div
+          className="fixed z-20 w-[min(24rem,calc(100vw-2.5rem))] rounded-lg border border-muted-background bg-surface px-4 py-3 font-sans shadow-xl"
+          id="profile-tag-description"
+          style={popoverStyle}
+        >
+          <p className="text-sm font-bold text-foreground">{selectedTag.label}</p>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            {selectedTag.description || "No description has been added for this tag."}
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function ProfileContent({
   bio,
   canViewContent,
@@ -248,13 +363,7 @@ export function ProfileContent({
               Joined {createdAt}
             </p>
             {(isPublic || isOwner) && tags.length > 0 ? (
-              <ul aria-label={`${username}'s tags`} className="mt-3 flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <li key={tag.id}>
-                    <UserTagBadge tag={tag} />
-                  </li>
-                ))}
-              </ul>
+              <ProfileTags tags={tags} username={username} />
             ) : null}
             {canViewContent && isOwner ? <BioEditor bio={bio} /> : null}
             {canViewContent && !isOwner ? (
