@@ -244,6 +244,9 @@ export function ProfileContent({
             <h1 className="mt-1 wrap-break-word font-heading text-4xl font-semibold sm:text-5xl">
               {username}
             </h1>
+            <p className="mt-2 font-sans text-sm text-muted">
+              Joined {createdAt}
+            </p>
             {tags.length > 0 ? (
               <ul aria-label={`${username}'s tags`} className="mt-3 flex flex-wrap gap-2">
                 {tags.map((tag) => (
@@ -253,9 +256,6 @@ export function ProfileContent({
                 ))}
               </ul>
             ) : null}
-            <p className="mt-2 font-sans text-sm text-muted">
-              Joined {createdAt}
-            </p>
             {canViewContent && isOwner ? <BioEditor bio={bio} /> : null}
             {canViewContent && !isOwner ? (
               <p className="mt-5 max-w-3xl whitespace-pre-line font-sans text-sm leading-6 text-muted">
