@@ -121,10 +121,11 @@ body {
 .user-tag-badge {
   --tag-color: var(--tag-color-light);
   --tag-color-end: var(--tag-color-light-end);
+  position: relative;
   display: inline-flex;
   min-height: 1.75rem;
   align-items: center;
-  border: 2px solid var(--tag-color);
+  border: 2px solid transparent;
   border-radius: 9999px;
   padding: 0.25rem 0.75rem;
   background: linear-gradient(
@@ -136,6 +137,21 @@ body {
   font-family: var(--font-family-body);
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+.user-tag-badge::before {
+  position: absolute;
+  inset: -2px;
+  padding: 2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--tag-color), var(--tag-color-end));
+  content: "";
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
 
 :root[data-theme="dark"] .user-tag-badge:not(.user-tag-preview-light),
