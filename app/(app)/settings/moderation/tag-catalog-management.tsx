@@ -192,7 +192,6 @@ function TagDetailsEditor({
             <h2 className="font-heading text-2xl font-semibold text-foreground" id="edit-tag-title">
               Edit tag
             </h2>
-            <p className="mt-1 font-mono text-xs text-muted">{tag.slug}</p>
           </div>
           <button
             aria-label="Close tag editor"
@@ -213,6 +212,12 @@ function TagDetailsEditor({
         ) : null}
 
         <form className="mt-5 space-y-5" onSubmit={(event) => onSave(event, tag.id)}>
+          <div className="space-y-2">
+            <span className="block font-sans text-sm font-bold text-foreground">Slug</span>
+            <code className="block min-h-12 rounded-lg border border-muted-background bg-muted-background px-4 py-3 font-mono text-sm text-muted">
+              {tag.slug}
+            </code>
+          </div>
           <label className="space-y-2">
             <span className="block font-sans text-sm font-bold text-foreground">Display name</span>
             <input
