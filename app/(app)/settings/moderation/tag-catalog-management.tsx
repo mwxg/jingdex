@@ -12,6 +12,7 @@ import {
   createTagStyleForManagement,
   deleteManualTagForManagement,
   reorderTagsForManagement,
+  updateTagStyleForManagement,
   updateTagStyleColorsForManagement,
   type TagCatalogState,
 } from "./actions";
@@ -141,9 +142,10 @@ export function TagCatalogManagement({
   const [state, setState] = useState(initialState);
   const [isPending, startTransition] = useTransition();
   const [pendingOperation, setPendingOperation] = useState<
-    "style" | "style-edit" | "tag" | "delete" | "reorder" | null
+    "style" | "style-edit" | "tag" | "tag-style" | "delete" | "reorder" | null
   >(null);
   const [editingStyleId, setEditingStyleId] = useState<string | null>(null);
+  const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const [deletingTagId, setDeletingTagId] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [tagLabel, setTagLabel] = useState("");
@@ -243,6 +245,19 @@ export function TagCatalogManagement({
     startTransition(async () => {
       setState(await deleteManualTagForManagement(tagId));
       setDeletingTagId(null);
+      setPendingOperation(null);
+    });
+  }
+
+  function editTagStyle(event: FormEvent<HTMLFormElement>, tagId: string) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    setEditingTagId(tagId);
+    setPendingOperation("tag-style");
+    startTransition(async () => {
+      setState(await updateTagStyleForManagement(tagId, formData));
+      setEditingTagId(null);
       setPendingOperation(null);
     });
   }
@@ -382,12 +397,25 @@ export function TagCatalogManagement({
                   </div>
                   <p className="font-sans text-sm text-muted">{tag.description || "No description."}</p>
                 </div>
-                <div className="flex flex-wrap gap-2 sm:justify-end">
+                <div className="flex flex-col gap-3 sm:items-end">
+                  <form className="flex flex-wrap items-end gap-2" key={`${tag.id}-${tag.style_id}`} onSubmit={(event) => editTagStyle(event, tag.id)}>
+                    <label className="space-y-1">
+                      <span className="block font-sans text-xs font-bold text-muted">Tag style</span>
+                      <select className="h-11 min-w-40 rounded-lg border border-muted-background bg-surface px-3 font-sans text-sm text-foreground outline-none focus:border-primary" defaultValue={tag.style_id} disabled={isPending} name="styleId" required>
+                        {state.styles.map((style) => <option key={style.id} value={style.id}>{style.label}</option>)}
+                      </select>
+                    </label>
+                    <button className="min-h-11 rounded-lg border border-primary px-4 font-sans text-sm font-bold text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60" disabled={isPending} type="submit">
+                      {pendingOperation === "tag-style" && editingTagId === tag.id ? <PendingLabel>Saving tag style</PendingLabel> : "Save style"}
+                    </button>
+                  </form>
+                  <div className="flex flex-wrap gap-2 sm:justify-end">
                   <button aria-label={`Move ${tag.label} up`} className="size-11 rounded-lg border border-muted-background font-bold text-foreground hover:border-primary disabled:opacity-30" disabled={isPending || index === 0} onClick={() => moveTag(index, index - 1)} type="button">↑</button>
                   <button aria-label={`Move ${tag.label} down`} className="size-11 rounded-lg border border-muted-background font-bold text-foreground hover:border-primary disabled:opacity-30" disabled={isPending || index === state.tags.length - 1} onClick={() => moveTag(index, index + 1)} type="button">↓</button>
                   <button className="min-h-11 rounded-lg border border-danger/40 px-4 font-sans text-sm font-bold text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:border-muted-background disabled:text-muted disabled:hover:bg-transparent" disabled={isPending || tag.is_automatic} onClick={() => deleteTag(tag.id, tag.label)} type="button">
                     {deletingTagId === tag.id ? <PendingLabel>Deleting tag</PendingLabel> : tag.is_automatic ? "Protected" : "Delete"}
                   </button>
+                  </div>
                 </div>
               </li>
             ))}

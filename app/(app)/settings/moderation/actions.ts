@@ -627,6 +627,34 @@ export async function createManualTagForManagement(
   return { ...current, success: current.message ? undefined : "Tag created." };
 }
 
+export async function updateTagStyleForManagement(
+  tagId: string,
+  formData: FormData,
+): Promise<TagCatalogState> {
+  const normalizedTagId = tagId.trim();
+  const styleId = getRequiredString(formData, "styleId");
+
+  if (!normalizedTagId || !styleId) {
+    return { message: "Choose a valid tag and style.", tags: [], styles: [] };
+  }
+
+  const { supabase, authorized, message } = await getTagManagementSupabaseClient();
+  if (!authorized) return { message: message ?? "Only developers can manage tags.", tags: [], styles: [] };
+
+  const { error } = await supabase.rpc("update_tag_style_for_management", {
+    target_tag_id: normalizedTagId,
+    target_style_id: styleId,
+  });
+
+  if (error) {
+    const current = await loadTagCatalog(supabase);
+    return { ...current, message: getErrorMessage(error, "Could not update that tag's style.") };
+  }
+
+  const current = await loadTagCatalog(supabase);
+  return { ...current, success: current.message ? undefined : "Tag style updated." };
+}
+
 export async function deleteManualTagForManagement(
   tagId: string,
 ): Promise<TagCatalogState> {
