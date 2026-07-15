@@ -298,7 +298,6 @@ type ModerationTermInsert = {
   canonical_simplified: string;
   english_definition: string;
   parts_of_speech: PartOfSpeech[] | null;
-  added_by: string;
   is_verified: boolean;
 };
 
@@ -386,7 +385,7 @@ async function getAuthorizedTermsSupabaseClient() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role,username")
+    .select("role")
     .eq("id", authData.user.id)
     .maybeSingle();
 
@@ -406,7 +405,6 @@ async function getAuthorizedTermsSupabaseClient() {
   return {
     supabase,
     userId: authData.user.id,
-    addedBy: profile.role === "developer" ? "Jingdex" : profile.username,
     authorized: true,
     message: null,
   };
@@ -840,7 +838,7 @@ export async function addSingleTerm(
     return { message: "Add a valid simplified term before saving." };
   }
 
-  const { supabase, userId, addedBy, authorized, message } =
+  const { supabase, userId, authorized, message } =
     await getAuthorizedTermsSupabaseClient();
 
   if (!authorized || !userId) {
@@ -892,7 +890,6 @@ export async function addSingleTerm(
       canonical_simplified: canonicalSimplified,
       english_definition: englishDefinition,
       parts_of_speech: partsOfSpeech.length > 0 ? partsOfSpeech : null,
-      added_by: addedBy ?? "Jingdex",
       is_verified: true,
     },
   ]);
@@ -980,7 +977,7 @@ export async function addBulkTerms(
     };
   }
 
-  const { supabase, userId, addedBy, authorized, message } =
+  const { supabase, userId, authorized, message } =
     await getAuthorizedTermsSupabaseClient();
 
   if (!authorized || !userId) {
@@ -997,7 +994,6 @@ export async function addBulkTerms(
       canonical_simplified: term.canonicalSimplified,
       english_definition: BULK_TERM_DEFINITION_PLACEHOLDER,
       parts_of_speech: null,
-      added_by: addedBy ?? "Jingdex",
       is_verified: true,
     })),
   );
