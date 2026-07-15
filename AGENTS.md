@@ -34,4 +34,6 @@ Only edit necessary files for the task.
 
 Use the reusable dictionary short-definition preview logic whenever a compact term summary is needed: prefer short_definition, otherwise use the first line of english_definition, truncate it to 150 characters, and omit the full definition.
 
+If something is created by Jingdex, do not link it to a profile. Otherwise, whenever usernames of users are displayed, they should link to the actual profile. Check how the site is currently wired up if guidance is needed on how it currently works.
+
 If there is anything I need to do on my end to complete a task, such as run an sql query in supabase, let me know.
