@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getViewer } from "@/lib/auth/viewer";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
 import { createClient } from "@/lib/supabase/server";
+import type { UserTag } from "@/lib/tags";
 import { ProfileContent } from "./profile-content";
 import {
   PROFILE_DECKS_PER_PAGE,
@@ -59,8 +60,10 @@ export default async function UserProfilePage({
 
   const isOwner = profile.id === viewer.userId;
   const canViewContent = profile.is_public || isOwner;
-  const contentResults = canViewContent
-    ? await Promise.all([
+  const [tagsResult, contentResults] = await Promise.all([
+    supabase.rpc("get_profile_tags", { target_user_id: profile.id }),
+    canViewContent
+      ? Promise.all([
         supabase
           .from("profile_bios")
           .select("bio")
@@ -81,8 +84,9 @@ export default async function UserProfilePage({
       .eq("is_verified", true)
       .order("created_at", { ascending: false })
       .range(wordFrom, wordFrom + PROFILE_WORDS_PER_PAGE - 1),
-      ])
-    : null;
+        ])
+      : Promise.resolve(null),
+  ]);
   const bio = contentResults?.[0].data?.bio ?? null;
   const decksResult = contentResults?.[1] ?? { count: 0, data: [] };
   const termsResult = contentResults?.[2] ?? { count: 0, data: [] };
@@ -104,6 +108,7 @@ export default async function UserProfilePage({
       isPublic={profile.is_public}
       preferences={normalizeLanguagePreferences(viewer.profile)}
       terms={(termsResult.data ?? []) as ProfileTerm[]}
+      tags={(tagsResult.data ?? []) as UserTag[]}
       username={profile.username}
       wordCount={termsResult.count ?? 0}
       wordPage={wordPage}

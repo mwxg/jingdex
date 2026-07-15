@@ -21,6 +21,10 @@
   --moderator: #0067bc;
   --admin: #b600bc;
   --developer: #770000;
+  --contributor: #14734b;
+  --supporter: #805500;
+  --tag-neutral: #4f5b4d;
+  --on-tag: #ffffff;
 
   --community-deck: #6d00a7;
   --under-review: #a84400;
@@ -50,10 +54,18 @@
   --moderator: #58a9e8;
   --admin: #d56cdb;
   --developer: #e47777;
+  --contributor: #62d39a;
+  --supporter: #f1bd55;
+  --tag-neutral: #aab4a8;
+  --on-tag: #090c08;
 
   --community-deck: #b73dcd;
   --under-review: #ff9d4d;
-  
+
+  --font-family-body: var(--font-figtree), Arial, Helvetica, sans-serif;
+  --font-family-heading: var(--font-zilla-slab), Georgia, serif;
+  --font-family-chinese: var(--font-noto-sans-sc), var(--font-noto-sans-tc),
+    "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
 }
 
 .theme-logo-dark {
@@ -88,6 +100,10 @@
   --color-moderator: var(--moderator);
   --color-admin: var(--admin);
   --color-developer: var(--developer);
+  --color-contributor: var(--contributor);
+  --color-supporter: var(--supporter);
+  --color-tag-neutral: var(--tag-neutral);
+  --color-on-tag: var(--on-tag);
 
   --color-community-deck: var(--community-deck);
   --color-under-review: var(--under-review);

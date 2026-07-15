@@ -20,7 +20,8 @@ export type AppPermission =
   | "reviewTermSubmissions"
   | "manageTerms"
   | "manageModeratorRole"
-  | "manageAdminRole";
+  | "manageAdminRole"
+  | "manageUserTags";
 
 export const rolePermissions: Readonly<Record<AppRole, readonly AppPermission[]>> = {
   member: [],
@@ -41,6 +42,7 @@ export const rolePermissions: Readonly<Record<AppRole, readonly AppPermission[]>
     "manageTerms",
     "manageModeratorRole",
     "manageAdminRole",
+    "manageUserTags",
   ],
 };
 

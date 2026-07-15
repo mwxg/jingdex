@@ -28,6 +28,7 @@ export default async function ModerationPage() {
     profile?.role,
     "manageCommunityDecks",
   );
+  const canManageUserTags = hasPermission(profile?.role, "manageUserTags");
 
   if (!roleTitle) {
     redirect("/settings/account");
@@ -50,7 +51,10 @@ export default async function ModerationPage() {
         </h1>
       </div>
 
-      <ModerationSearch initialState={initialSearchState} />
+      <ModerationSearch
+        canManageUserTags={canManageUserTags}
+        initialState={initialSearchState}
+      />
 
       <TermSearch canEditTerms={canManageTerms} preferences={preferences} />
 

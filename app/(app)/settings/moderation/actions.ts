@@ -23,6 +23,7 @@ import {
   TERM_NOTES_MAX_LENGTH,
   TERM_SHORT_DEFINITION_MAX_LENGTH,
 } from "@/lib/terms/content-limits";
+import type { ManageableUserTag } from "@/lib/tags";
 
 const USERS_PER_PAGE = 20;
 const TERMS_PER_PAGE = 20;
@@ -301,6 +302,12 @@ type ModerationTermInsert = {
   is_verified: boolean;
 };
 
+export type TagManagementState = {
+  message?: string;
+  success?: string;
+  tags?: ManageableUserTag[];
+};
+
 type ModerationTermInsertResult = {
   inserted_count: number;
   skipped_count: number;
@@ -407,6 +414,111 @@ async function getAuthorizedTermsSupabaseClient() {
     userId: authData.user.id,
     authorized: true,
     message: null,
+  };
+}
+
+async function getTagManagementSupabaseClient() {
+  const supabase = await createClient();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !authData.user?.id) {
+    return {
+      supabase,
+      authorized: false,
+      message: "Sign in again before managing tags.",
+    };
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", authData.user.id)
+    .maybeSingle();
+
+  if (profileError || !profile || !hasPermission(profile.role, "manageUserTags")) {
+    return {
+      supabase,
+      authorized: false,
+      message: "Only developers can manage tags.",
+    };
+  }
+
+  return { supabase, authorized: true, message: null };
+}
+
+async function loadManageableUserTags(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  targetUserId: string,
+): Promise<TagManagementState> {
+  const { data, error } = await supabase.rpc("get_user_tags_for_management", {
+    target_user_id: targetUserId,
+  });
+
+  if (error) {
+    if (
+      error.message.includes("schema cache") ||
+      error.message.includes("get_user_tags_for_management")
+    ) {
+      return {
+        message: "Tag management is not installed in Supabase yet. Run the latest tag migration, then refresh this page.",
+        tags: [],
+      };
+    }
+
+    return { message: getErrorMessage(error, "Could not load user tags."), tags: [] };
+  }
+
+  return { tags: (data ?? []) as ManageableUserTag[] };
+}
+
+export async function getUserTagsForManagement(
+  targetUserId: string,
+): Promise<TagManagementState> {
+  const normalizedUserId = targetUserId.trim();
+  if (!normalizedUserId) return { message: "Choose a valid user.", tags: [] };
+
+  const { supabase, authorized, message } = await getTagManagementSupabaseClient();
+  if (!authorized) return { message: message ?? "Only developers can manage tags.", tags: [] };
+
+  return loadManageableUserTags(supabase, normalizedUserId);
+}
+
+export async function setUserTagForManagement(
+  targetUserId: string,
+  tagId: string,
+  shouldAssign: boolean,
+): Promise<TagManagementState> {
+  const normalizedUserId = targetUserId.trim();
+  const normalizedTagId = tagId.trim();
+  if (!normalizedUserId || !normalizedTagId || typeof shouldAssign !== "boolean") {
+    return { message: "Choose a valid user and tag.", tags: [] };
+  }
+
+  const { supabase, authorized, message } = await getTagManagementSupabaseClient();
+  if (!authorized) return { message: message ?? "Only developers can manage tags.", tags: [] };
+
+  const { error } = await supabase.rpc("set_user_tag_for_management", {
+    target_user_id: normalizedUserId,
+    target_tag_id: normalizedTagId,
+    should_assign: shouldAssign,
+  });
+
+  if (error) {
+    const current = await loadManageableUserTags(supabase, normalizedUserId);
+    return {
+      ...current,
+      message: getErrorMessage(error, "Could not update that tag."),
+    };
+  }
+
+  const current = await loadManageableUserTags(supabase, normalizedUserId);
+  return {
+    ...current,
+    success: current.message
+      ? undefined
+      : shouldAssign
+        ? "Tag added."
+        : "Tag removed.",
   };
 }
 

@@ -11,6 +11,7 @@ import {
   useTransition,
 } from "react";
 import { InlineLoadingStatus, PendingLabel } from "@/components/loading";
+import { UserTagBadge } from "@/components/user-tag";
 import { UsernameLink } from "@/components/username-link";
 import {
   getChineseDisplayForms,
@@ -20,6 +21,7 @@ import {
   getPartOfSpeechLabel,
 } from "@/lib/terms/parts-of-speech";
 import { getDefinitionPreview } from "@/lib/terms/definition-preview";
+import type { UserTag } from "@/lib/tags";
 import {
   getProfileDeckPage,
   getProfileWordPage,
@@ -201,6 +203,7 @@ export function ProfileContent({
   isPublic,
   preferences,
   terms,
+  tags,
   username,
   wordCount,
   wordPage,
@@ -215,6 +218,7 @@ export function ProfileContent({
   isPublic: boolean;
   preferences: LanguagePreferences;
   terms: ProfileTerm[];
+  tags: UserTag[];
   username: string;
   wordCount: number;
   wordPage: number;
@@ -240,6 +244,15 @@ export function ProfileContent({
             <h1 className="mt-1 wrap-break-word font-heading text-4xl font-semibold sm:text-5xl">
               {username}
             </h1>
+            {tags.length > 0 ? (
+              <ul aria-label={`${username}'s tags`} className="mt-3 flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <li key={tag.id}>
+                    <UserTagBadge tag={tag} />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <p className="mt-2 font-sans text-sm text-muted">
               Joined {createdAt}
             </p>
