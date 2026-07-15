@@ -36,4 +36,6 @@ Use the reusable dictionary short-definition preview logic whenever a compact te
 
 If something is created by Jingdex, do not link it to a profile. Otherwise, whenever usernames of users are displayed, they should link to the actual profile. Check how the site is currently wired up if guidance is needed on how it currently works.
 
+When adding an automatic user tag, use a Supabase migration to seed its metadata, extend reconcile_user_automatic_tags and the relevant database triggers for both assignment and removal, and backfill existing profiles; never rely on application code or manual assignment to maintain it.
+
 If there is anything I need to do on my end to complete a task, such as run an sql query in supabase, let me know.
