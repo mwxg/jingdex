@@ -450,7 +450,7 @@ export function ModerationSearch({
                       {user.role}
                     </span>
                   </div>
-                  <span className="flex flex-wrap gap-2 pl-[6.25rem] lg:justify-end lg:pl-0">
+                  <span className="flex flex-wrap gap-2 pl-25 lg:justify-end lg:pl-0">
                     {canEditUser(currentUserId, currentUserRole, user) ? (
                       <button
                         className="min-h-11 rounded-lg border border-muted-background px-4 font-sans text-xs font-bold text-foreground transition-colors hover:border-primary hover:text-primary lg:min-h-9 lg:px-3"
