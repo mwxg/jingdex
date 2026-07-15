@@ -254,11 +254,13 @@ function TagManagementModal({
                   </div>
                   <button
                     className={`min-h-11 shrink-0 rounded-lg px-4 font-sans text-sm font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${tag.is_assigned ? "border border-danger/40 text-danger hover:bg-danger/10" : "bg-primary text-on-primary hover:bg-primary/90"}`}
-                    disabled={pendingTagId !== null}
+                    disabled={pendingTagId !== null || tag.is_automatic}
                     onClick={() => onToggle(tag.id, !tag.is_assigned)}
                     type="button"
                   >
-                    {pendingTagId === tag.id ? (
+                    {tag.is_automatic ? (
+                      "Managed automatically"
+                    ) : pendingTagId === tag.id ? (
                       <PendingLabel>Updating tags</PendingLabel>
                     ) : tag.is_assigned ? (
                       `Remove ${tag.label}`

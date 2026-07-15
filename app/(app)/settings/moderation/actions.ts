@@ -522,9 +522,17 @@ export async function createTagStyleForManagement(
   const slug = getRequiredString(formData, "styleSlug").toLowerCase();
   const label = getRequiredString(formData, "styleLabel");
   const lightColor = getRequiredString(formData, "lightColor").toLowerCase();
+  const lightColorEnd = getRequiredString(formData, "lightColorEnd").toLowerCase();
   const darkColor = getRequiredString(formData, "darkColor").toLowerCase();
+  const darkColorEnd = getRequiredString(formData, "darkColorEnd").toLowerCase();
 
-  if (!slug || !label || !/^#[0-9a-f]{6}$/.test(lightColor) || !/^#[0-9a-f]{6}$/.test(darkColor)) {
+  if (
+    !slug ||
+    !label ||
+    ![lightColor, lightColorEnd, darkColor, darkColorEnd].every((color) =>
+      /^#[0-9a-f]{6}$/.test(color),
+    )
+  ) {
     return { message: "Add a valid style name, slug, and colors.", tags: [], styles: [] };
   }
 
@@ -535,7 +543,9 @@ export async function createTagStyleForManagement(
     style_slug: slug,
     style_label: label,
     style_light_color: lightColor,
+    style_light_color_end: lightColorEnd,
     style_dark_color: darkColor,
+    style_dark_color_end: darkColorEnd,
   });
 
   if (error) {
@@ -545,6 +555,45 @@ export async function createTagStyleForManagement(
 
   const current = await loadTagCatalog(supabase);
   return { ...current, success: current.message ? undefined : "Style created." };
+}
+
+export async function updateTagStyleColorsForManagement(
+  styleId: string,
+  formData: FormData,
+): Promise<TagCatalogState> {
+  const normalizedStyleId = styleId.trim();
+  const lightColor = getRequiredString(formData, "lightColor").toLowerCase();
+  const lightColorEnd = getRequiredString(formData, "lightColorEnd").toLowerCase();
+  const darkColor = getRequiredString(formData, "darkColor").toLowerCase();
+  const darkColorEnd = getRequiredString(formData, "darkColorEnd").toLowerCase();
+
+  if (
+    !normalizedStyleId ||
+    ![lightColor, lightColorEnd, darkColor, darkColorEnd].every((color) =>
+      /^#[0-9a-f]{6}$/.test(color),
+    )
+  ) {
+    return { message: "Choose valid colors for both gradients.", tags: [], styles: [] };
+  }
+
+  const { supabase, authorized, message } = await getTagManagementSupabaseClient();
+  if (!authorized) return { message: message ?? "Only developers can manage tags.", tags: [], styles: [] };
+
+  const { error } = await supabase.rpc("update_tag_style_colors_for_management", {
+    target_style_id: normalizedStyleId,
+    style_light_color: lightColor,
+    style_light_color_end: lightColorEnd,
+    style_dark_color: darkColor,
+    style_dark_color_end: darkColorEnd,
+  });
+
+  if (error) {
+    const current = await loadTagCatalog(supabase);
+    return { ...current, message: getErrorMessage(error, "Could not update that style.") };
+  }
+
+  const current = await loadTagCatalog(supabase);
+  return { ...current, success: current.message ? undefined : "Style colors updated." };
 }
 
 export async function createManualTagForManagement(

@@ -12,6 +12,7 @@ import {
   createTagStyleForManagement,
   deleteManualTagForManagement,
   reorderTagsForManagement,
+  updateTagStyleColorsForManagement,
   type TagCatalogState,
 } from "./actions";
 
@@ -45,9 +46,76 @@ function makePreviewTag(label: string, style: TagStyle): UserTag {
     style_slug: style.slug,
     style_label: style.label,
     light_color: style.light_color,
+    light_color_end: style.light_color_end,
     dark_color: style.dark_color,
+    dark_color_end: style.dark_color_end,
     is_automatic: false,
   };
+}
+
+function ColorPicker({
+  label,
+  name,
+  onChange,
+  value,
+}: Readonly<{
+  label: string;
+  name: string;
+  onChange: (value: string) => void;
+  value: string;
+}>) {
+  return (
+    <label className="space-y-2">
+      <span className="block font-sans text-sm font-bold text-foreground">{label}</span>
+      <div className="flex gap-3">
+        <input aria-label={`Choose ${label.toLowerCase()}`} className="h-12 w-16 cursor-pointer rounded-lg border border-muted-background bg-surface p-1" name={name} onChange={(event) => onChange(event.target.value)} type="color" value={value} />
+        <output className="flex h-12 flex-1 items-center rounded-lg border border-muted-background bg-surface px-4 font-mono text-sm text-foreground">{value}</output>
+      </div>
+    </label>
+  );
+}
+
+function StyleColorEditor({
+  disabled,
+  isSaving,
+  onSave,
+  style,
+}: Readonly<{
+  disabled: boolean;
+  isSaving: boolean;
+  onSave: (event: FormEvent<HTMLFormElement>, styleId: string) => void;
+  style: TagStyle;
+}>) {
+  const [lightColor, setLightColor] = useState(style.light_color);
+  const [lightColorEnd, setLightColorEnd] = useState(style.light_color_end);
+  const [darkColor, setDarkColor] = useState(style.dark_color);
+  const [darkColorEnd, setDarkColorEnd] = useState(style.dark_color_end);
+  const preview = makePreviewTag("Tag preview", {
+    ...style,
+    light_color: lightColor,
+    light_color_end: lightColorEnd,
+    dark_color: darkColor,
+    dark_color_end: darkColorEnd,
+  });
+
+  return (
+    <form className="rounded-lg border border-muted-background bg-surface p-4" onSubmit={(event) => onSave(event, style.id)}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h4 className="font-heading text-lg font-semibold text-foreground">{style.label}</h4>
+        <span className="font-mono text-xs text-muted">{style.slug}</span>
+      </div>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <ColorPicker label="Light gradient start" name="lightColor" onChange={setLightColor} value={lightColor} />
+        <ColorPicker label="Light gradient end" name="lightColorEnd" onChange={setLightColorEnd} value={lightColorEnd} />
+        <ColorPicker label="Dark gradient start" name="darkColor" onChange={setDarkColor} value={darkColor} />
+        <ColorPicker label="Dark gradient end" name="darkColorEnd" onChange={setDarkColorEnd} value={darkColorEnd} />
+      </div>
+      <div className="mt-4"><ThemePreviews tag={preview} /></div>
+      <button className="mt-4 min-h-11 rounded-lg border border-primary px-4 font-sans text-sm font-bold text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60" disabled={disabled} type="submit">
+        {isSaving ? <PendingLabel>Saving style colors</PendingLabel> : "Save colors"}
+      </button>
+    </form>
+  );
 }
 
 function ThemePreviews({ tag }: Readonly<{ tag: UserTag }>) {
@@ -73,8 +141,9 @@ export function TagCatalogManagement({
   const [state, setState] = useState(initialState);
   const [isPending, startTransition] = useTransition();
   const [pendingOperation, setPendingOperation] = useState<
-    "style" | "tag" | "delete" | "reorder" | null
+    "style" | "style-edit" | "tag" | "delete" | "reorder" | null
   >(null);
+  const [editingStyleId, setEditingStyleId] = useState<string | null>(null);
   const [deletingTagId, setDeletingTagId] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [tagLabel, setTagLabel] = useState("");
@@ -83,7 +152,9 @@ export function TagCatalogManagement({
   );
   const [styleLabel, setStyleLabel] = useState("");
   const [lightColor, setLightColor] = useState("#3458a4");
+  const [lightColorEnd, setLightColorEnd] = useState("#3458a4");
   const [darkColor, setDarkColor] = useState("#8cabef");
+  const [darkColorEnd, setDarkColorEnd] = useState("#8cabef");
 
   const selectedStyle =
     state.styles.find((style) => style.id === selectedStyleId) ??
@@ -98,10 +169,12 @@ export function TagCatalogManagement({
       slug: "new-style",
       label: styleLabel.trim() || "New style",
       light_color: lightColor,
+      light_color_end: lightColorEnd,
       dark_color: darkColor,
+      dark_color_end: darkColorEnd,
       is_system: false,
     }),
-    [darkColor, lightColor, styleLabel],
+    [darkColor, darkColorEnd, lightColor, lightColorEnd, styleLabel],
   );
   const stylePreview = makePreviewTag("Tag preview", pendingStyle);
 
@@ -119,12 +192,27 @@ export function TagCatalogManagement({
         form.reset();
         setStyleLabel("");
         setLightColor("#3458a4");
+        setLightColorEnd("#3458a4");
         setDarkColor("#8cabef");
+        setDarkColorEnd("#8cabef");
         const createdStyle = nextState.styles.find(
           (style) => style.slug === requestedSlug.trim().toLowerCase(),
         );
         if (createdStyle) setSelectedStyleId(createdStyle.id);
       }
+      setPendingOperation(null);
+    });
+  }
+
+  function editStyle(event: FormEvent<HTMLFormElement>, styleId: string) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    setEditingStyleId(styleId);
+    setPendingOperation("style-edit");
+    startTransition(async () => {
+      setState(await updateTagStyleColorsForManagement(styleId, formData));
+      setEditingStyleId(null);
       setPendingOperation(null);
     });
   }
@@ -201,20 +289,10 @@ export function TagCatalogManagement({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-2">
-              <span className="block font-sans text-sm font-bold text-foreground">Light-mode color</span>
-              <div className="flex gap-3">
-                <input aria-label="Choose light-mode color" className="h-12 w-16 cursor-pointer rounded-lg border border-muted-background bg-surface p-1" name="lightColor" onChange={(event) => setLightColor(event.target.value)} type="color" value={lightColor} />
-                <output className="flex h-12 flex-1 items-center rounded-lg border border-muted-background bg-surface px-4 font-mono text-sm text-foreground">{lightColor}</output>
-              </div>
-            </label>
-            <label className="space-y-2">
-              <span className="block font-sans text-sm font-bold text-foreground">Dark-mode color</span>
-              <div className="flex gap-3">
-                <input aria-label="Choose dark-mode color" className="h-12 w-16 cursor-pointer rounded-lg border border-muted-background bg-surface p-1" name="darkColor" onChange={(event) => setDarkColor(event.target.value)} type="color" value={darkColor} />
-                <output className="flex h-12 flex-1 items-center rounded-lg border border-muted-background bg-surface px-4 font-mono text-sm text-foreground">{darkColor}</output>
-              </div>
-            </label>
+            <ColorPicker label="Light gradient start" name="lightColor" onChange={setLightColor} value={lightColor} />
+            <ColorPicker label="Light gradient end" name="lightColorEnd" onChange={setLightColorEnd} value={lightColorEnd} />
+            <ColorPicker label="Dark gradient start" name="darkColor" onChange={setDarkColor} value={darkColor} />
+            <ColorPicker label="Dark gradient end" name="darkColorEnd" onChange={setDarkColorEnd} value={darkColorEnd} />
           </div>
 
           <ThemePreviews tag={stylePreview} />
@@ -223,6 +301,22 @@ export function TagCatalogManagement({
             {pendingOperation === "style" ? <PendingLabel>Creating style</PendingLabel> : "Create style"}
           </button>
         </form>
+      </section>
+
+      <section className="mt-6" aria-labelledby="edit-style-heading">
+        <h3 className="font-heading text-xl font-semibold text-foreground" id="edit-style-heading">Edit style colors</h3>
+        <p className="mt-1 font-sans text-sm text-muted">Adjust both gradient endpoints for light and dark mode.</p>
+        <div className="mt-4 grid gap-4 xl:grid-cols-2">
+          {state.styles.map((style) => (
+            <StyleColorEditor
+              disabled={isPending}
+              isSaving={pendingOperation === "style-edit" && editingStyleId === style.id}
+              key={style.id}
+              onSave={editStyle}
+              style={style}
+            />
+          ))}
+        </div>
       </section>
 
       <section className="mt-6 rounded-lg border border-muted-background bg-background p-4 sm:p-5" aria-labelledby="create-tag-heading">

@@ -3,7 +3,9 @@ import type { UserTag } from "@/lib/tags";
 
 type TagColorProperties = CSSProperties & {
   "--tag-color-light": string;
+  "--tag-color-light-end": string;
   "--tag-color-dark": string;
+  "--tag-color-dark-end": string;
 };
 
 export function UserTagBadge({
@@ -16,7 +18,9 @@ export function UserTagBadge({
   const previewClass = previewTheme ? `user-tag-preview-${previewTheme}` : "";
   const style: TagColorProperties = {
     "--tag-color-light": tag.light_color,
+    "--tag-color-light-end": tag.light_color_end,
     "--tag-color-dark": tag.dark_color,
+    "--tag-color-dark-end": tag.dark_color_end,
   };
 
   return (

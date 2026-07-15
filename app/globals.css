@@ -120,13 +120,18 @@ body {
 
 .user-tag-badge {
   --tag-color: var(--tag-color-light);
+  --tag-color-end: var(--tag-color-light-end);
   display: inline-flex;
   min-height: 1.75rem;
   align-items: center;
   border: 2px solid var(--tag-color);
   border-radius: 9999px;
   padding: 0.25rem 0.75rem;
-  background: color-mix(in srgb, var(--tag-color) 10%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--tag-color) 10%, transparent),
+    color-mix(in srgb, var(--tag-color-end) 10%, transparent)
+  );
   color: var(--tag-color);
   font-family: var(--font-family-body);
   font-size: 0.75rem;
@@ -136,10 +141,12 @@ body {
 :root[data-theme="dark"] .user-tag-badge:not(.user-tag-preview-light),
 .user-tag-badge.user-tag-preview-dark {
   --tag-color: var(--tag-color-dark);
+  --tag-color-end: var(--tag-color-dark-end);
 }
 
 .user-tag-badge.user-tag-preview-light {
   --tag-color: var(--tag-color-light);
+  --tag-color-end: var(--tag-color-light-end);
 }
 
 .tag-preview-light {

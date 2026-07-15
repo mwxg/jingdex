@@ -3,7 +3,9 @@ export type TagStyle = {
   slug: string;
   label: string;
   light_color: string;
+  light_color_end: string;
   dark_color: string;
+  dark_color_end: string;
   is_system: boolean;
 };
 
@@ -16,7 +18,9 @@ export type UserTag = {
   style_slug: string;
   style_label: string;
   light_color: string;
+  light_color_end: string;
   dark_color: string;
+  dark_color_end: string;
   is_automatic: boolean;
 };
 
