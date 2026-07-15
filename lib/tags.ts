@@ -1,20 +1,22 @@
-export const tagStyleKeys = [
-  "neutral",
-  "moderator",
-  "admin",
-  "developer",
-  "contributor",
-  "supporter",
-] as const;
-
-export type TagStyleKey = (typeof tagStyleKeys)[number];
+export type TagStyle = {
+  id: string;
+  slug: string;
+  label: string;
+  light_color: string;
+  dark_color: string;
+  is_system: boolean;
+};
 
 export type UserTag = {
   id: string;
   slug: string;
   label: string;
   description: string | null;
-  style_key: string;
+  style_id: string;
+  style_slug: string;
+  style_label: string;
+  light_color: string;
+  dark_color: string;
   is_automatic: boolean;
 };
 
@@ -22,6 +24,6 @@ export type ManageableUserTag = UserTag & {
   is_assigned: boolean;
 };
 
-export function isTagStyleKey(value: string): value is TagStyleKey {
-  return tagStyleKeys.includes(value as TagStyleKey);
-}
+export type TagDefinition = UserTag & {
+  display_order: number;
+};

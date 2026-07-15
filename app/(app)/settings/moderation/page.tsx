@@ -7,11 +7,14 @@ import {
 } from "@/lib/auth/roles";
 import { getViewer } from "@/lib/auth/viewer";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
-import { type UserSearchState } from "./actions";
+import { createClient } from "@/lib/supabase/server";
+import type { TagDefinition, TagStyle } from "@/lib/tags";
+import { type TagCatalogState, type UserSearchState } from "./actions";
 import { CommunityDeckManagement } from "./community-deck-management";
 import { ModerationSearch } from "./moderation-search";
 import { TermManagement } from "./term-management";
 import { TermSearch } from "./term-search";
+import { TagCatalogManagement } from "./tag-catalog-management";
 
 export default async function ModerationPage() {
   const { profile, userId } = await getViewer();
@@ -42,6 +45,22 @@ export default async function ModerationPage() {
     results: [],
     totalCount: 0,
   };
+  let initialTagCatalogState: TagCatalogState | null = null;
+  if (canManageUserTags) {
+    const supabase = await createClient();
+    const [tagsResult, stylesResult] = await Promise.all([
+      supabase.rpc("get_tag_catalog_for_management"),
+      supabase.rpc("get_tag_styles_for_management"),
+    ]);
+    initialTagCatalogState = {
+      message:
+        tagsResult.error || stylesResult.error
+          ? "Could not load the tag catalog. Run the latest tag migration, then refresh this page."
+          : undefined,
+      tags: (tagsResult.data ?? []) as TagDefinition[],
+      styles: (stylesResult.data ?? []) as TagStyle[],
+    };
+  }
 
   return (
     <div className="space-y-8">
@@ -55,6 +74,10 @@ export default async function ModerationPage() {
         canManageUserTags={canManageUserTags}
         initialState={initialSearchState}
       />
+
+      {initialTagCatalogState ? (
+        <TagCatalogManagement initialState={initialTagCatalogState} />
+      ) : null}
 
       <TermSearch canEditTerms={canManageTerms} preferences={preferences} />
 

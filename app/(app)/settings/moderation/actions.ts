@@ -23,7 +23,11 @@ import {
   TERM_NOTES_MAX_LENGTH,
   TERM_SHORT_DEFINITION_MAX_LENGTH,
 } from "@/lib/terms/content-limits";
-import type { ManageableUserTag } from "@/lib/tags";
+import {
+  type ManageableUserTag,
+  type TagDefinition,
+  type TagStyle,
+} from "@/lib/tags";
 
 const USERS_PER_PAGE = 20;
 const TERMS_PER_PAGE = 20;
@@ -308,6 +312,13 @@ export type TagManagementState = {
   tags?: ManageableUserTag[];
 };
 
+export type TagCatalogState = {
+  message?: string;
+  success?: string;
+  tags: TagDefinition[];
+  styles: TagStyle[];
+};
+
 type ModerationTermInsertResult = {
   inserted_count: number;
   skipped_count: number;
@@ -469,6 +480,152 @@ async function loadManageableUserTags(
   }
 
   return { tags: (data ?? []) as ManageableUserTag[] };
+}
+
+async function loadTagCatalog(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<TagCatalogState> {
+  const [tagsResult, stylesResult] = await Promise.all([
+    supabase.rpc("get_tag_catalog_for_management"),
+    supabase.rpc("get_tag_styles_for_management"),
+  ]);
+  const error = tagsResult.error ?? stylesResult.error;
+
+  if (error) {
+    if (
+      error.message.includes("schema cache") ||
+      error.message.includes("get_tag_catalog_for_management")
+    ) {
+      return {
+        message: "Tag catalog management is not installed in Supabase yet. Run the latest tag migration, then refresh this page.",
+        tags: [],
+        styles: [],
+      };
+    }
+
+    return {
+      message: getErrorMessage(error, "Could not load the tag catalog."),
+      tags: [],
+      styles: [],
+    };
+  }
+
+  return {
+    tags: (tagsResult.data ?? []) as TagDefinition[],
+    styles: (stylesResult.data ?? []) as TagStyle[],
+  };
+}
+
+export async function createTagStyleForManagement(
+  formData: FormData,
+): Promise<TagCatalogState> {
+  const slug = getRequiredString(formData, "styleSlug").toLowerCase();
+  const label = getRequiredString(formData, "styleLabel");
+  const lightColor = getRequiredString(formData, "lightColor").toLowerCase();
+  const darkColor = getRequiredString(formData, "darkColor").toLowerCase();
+
+  if (!slug || !label || !/^#[0-9a-f]{6}$/.test(lightColor) || !/^#[0-9a-f]{6}$/.test(darkColor)) {
+    return { message: "Add a valid style name, slug, and colors.", tags: [], styles: [] };
+  }
+
+  const { supabase, authorized, message } = await getTagManagementSupabaseClient();
+  if (!authorized) return { message: message ?? "Only developers can manage tags.", tags: [], styles: [] };
+
+  const { error } = await supabase.rpc("create_tag_style_for_management", {
+    style_slug: slug,
+    style_label: label,
+    style_light_color: lightColor,
+    style_dark_color: darkColor,
+  });
+
+  if (error) {
+    const current = await loadTagCatalog(supabase);
+    return { ...current, message: getErrorMessage(error, "Could not create that style.") };
+  }
+
+  const current = await loadTagCatalog(supabase);
+  return { ...current, success: current.message ? undefined : "Style created." };
+}
+
+export async function createManualTagForManagement(
+  formData: FormData,
+): Promise<TagCatalogState> {
+  const slug = getRequiredString(formData, "slug").toLowerCase();
+  const label = getRequiredString(formData, "label");
+  const description = getRequiredString(formData, "description");
+  const styleId = getRequiredString(formData, "styleId");
+
+  if (!slug || !label || !styleId) {
+    return { message: "Add a valid label, slug, and style.", tags: [], styles: [] };
+  }
+
+  const { supabase, authorized, message } = await getTagManagementSupabaseClient();
+  if (!authorized) return { message: message ?? "Only developers can manage tags.", tags: [], styles: [] };
+
+  const { error } = await supabase.rpc("create_manual_tag_for_management", {
+    tag_slug: slug,
+    tag_label: label,
+    tag_description: description,
+    tag_style_id: styleId,
+  });
+
+  if (error) {
+    const current = await loadTagCatalog(supabase);
+    return { ...current, message: getErrorMessage(error, "Could not create that tag.") };
+  }
+
+  const current = await loadTagCatalog(supabase);
+  return { ...current, success: current.message ? undefined : "Tag created." };
+}
+
+export async function deleteManualTagForManagement(
+  tagId: string,
+): Promise<TagCatalogState> {
+  const normalizedTagId = tagId.trim();
+  if (!normalizedTagId) return { message: "Choose a valid tag.", tags: [], styles: [] };
+
+  const { supabase, authorized, message } = await getTagManagementSupabaseClient();
+  if (!authorized) return { message: message ?? "Only developers can manage tags.", tags: [], styles: [] };
+
+  const { error } = await supabase.rpc("delete_manual_tag_for_management", {
+    target_tag_id: normalizedTagId,
+  });
+
+  if (error) {
+    const current = await loadTagCatalog(supabase);
+    return { ...current, message: getErrorMessage(error, "Could not delete that tag.") };
+  }
+
+  const current = await loadTagCatalog(supabase);
+  return { ...current, success: current.message ? undefined : "Tag deleted." };
+}
+
+export async function reorderTagsForManagement(
+  orderedTagIds: string[],
+): Promise<TagCatalogState> {
+  if (
+    !Array.isArray(orderedTagIds) ||
+    orderedTagIds.length === 0 ||
+    orderedTagIds.some((tagId) => typeof tagId !== "string" || !tagId.trim()) ||
+    new Set(orderedTagIds).size !== orderedTagIds.length
+  ) {
+    return { message: "The tag order is invalid.", tags: [], styles: [] };
+  }
+
+  const { supabase, authorized, message } = await getTagManagementSupabaseClient();
+  if (!authorized) return { message: message ?? "Only developers can manage tags.", tags: [], styles: [] };
+
+  const { error } = await supabase.rpc("reorder_tags_for_management", {
+    ordered_tag_ids: orderedTagIds,
+  });
+
+  if (error) {
+    const current = await loadTagCatalog(supabase);
+    return { ...current, message: getErrorMessage(error, "Could not reorder tags.") };
+  }
+
+  const current = await loadTagCatalog(supabase);
+  return { ...current, success: current.message ? undefined : "Tag order updated." };
 }
 
 export async function getUserTagsForManagement(
