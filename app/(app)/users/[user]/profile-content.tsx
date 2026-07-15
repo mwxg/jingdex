@@ -247,7 +247,7 @@ export function ProfileContent({
             <p className="mt-2 font-sans text-sm text-muted">
               Joined {createdAt}
             </p>
-            {isPublic && tags.length > 0 ? (
+            {(isPublic || isOwner) && tags.length > 0 ? (
               <ul aria-label={`${username}'s tags`} className="mt-3 flex flex-wrap gap-2">
                 {tags.map((tag) => (
                   <li key={tag.id}>

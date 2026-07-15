@@ -61,7 +61,7 @@ export default async function UserProfilePage({
   const isOwner = profile.id === viewer.userId;
   const canViewContent = profile.is_public || isOwner;
   const [tagsResult, contentResults] = await Promise.all([
-    profile.is_public
+    profile.is_public || isOwner
       ? supabase.rpc("get_profile_tags", { target_user_id: profile.id })
       : Promise.resolve({ data: [] as UserTag[] }),
     canViewContent
