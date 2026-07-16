@@ -1,11 +1,11 @@
 import { CollectionPageSkeleton } from "@/components/loading";
 
-export default function LoadingFeaturedDecks() {
+export default function LoadingFeaturedContent() {
   return (
     <CollectionPageSkeleton
       cardCount={3}
       controls={false}
-      label="Loading featured decks"
+      label="Loading featured content"
     />
   );
 }

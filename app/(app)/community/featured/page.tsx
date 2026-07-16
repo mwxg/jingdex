@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { normalizeLanguagePreferences } from "@/lib/preferences/language";
 import { getViewer } from "@/lib/auth/viewer";
-import { getCommunityDecks } from "../data";
+import { getCommunityDecks, getRecentTerms } from "../data";
 import { CommunityDeckCard } from "../deck-card";
 import { PageHeader } from "@/components/page-header";
+import { RecentTerms } from "./recent-terms";
 
 export default async function FeaturedCommunityPage() {
-  const [{ profile }, deckState] = await Promise.all([
+  const [{ profile }, deckState, recentTermState] = await Promise.all([
     getViewer(),
     getCommunityDecks(),
+    getRecentTerms(),
   ]);
   const preferences = normalizeLanguagePreferences(profile);
 
@@ -16,10 +18,19 @@ export default async function FeaturedCommunityPage() {
     <main className="flex-1 bg-background text-foreground">
       <div className="w-full space-y-8">
         <PageHeader
-          description="Discover Chinese vocabulary decks selected by Jingdex."
+          description="Discover recently added terms, featured decks, and more from the Jingdex community."
           eyebrow="Community"
-          title="Featured decks"
+          title="Featured"
         />
+
+        {recentTermState.message ? (
+          <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-sans text-sm font-bold text-danger">{recentTermState.message}</p>
+        ) : recentTermState.terms.length > 0 ? (
+          <section aria-labelledby="recent-terms-title" className="rounded-lg border border-muted-background bg-surface p-3">
+            <h2 className="mb-2 font-heading text-base font-semibold text-foreground" id="recent-terms-title">Recently added terms</h2>
+            <RecentTerms preferences={preferences} terms={recentTermState.terms} />
+          </section>
+        ) : null}
 
         {deckState.message ? (
           <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-sans text-sm font-bold text-danger">{deckState.message}</p>

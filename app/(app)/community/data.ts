@@ -232,6 +232,30 @@ export async function getCommunityDecks() {
   return getJingdexDeckSummaries("", 3);
 }
 
+export async function getRecentTerms() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("terms")
+    .select(
+      "id,simplified,traditional,pinyin,zhuyin,english_definition,short_definition,parts_of_speech,notes,added_by",
+    )
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(10);
+
+  if (error) {
+    return {
+      terms: [],
+      message: getErrorMessage(error, "Could not load recent terms."),
+    };
+  }
+
+  return {
+    terms: addAttributionLabels((data ?? []) as CommunityTerm[]),
+    message: null,
+  };
+}
+
 export async function getAllJingdexDecks(query = "") {
   return getJingdexDeckSummaries(query);
 }
