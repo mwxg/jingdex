@@ -41,11 +41,11 @@ export async function submitContribution(
   }
 
   if (definition.length > TERM_DEFINITION_MAX_LENGTH) {
-    return { message: "Keep the definition to 10,000 characters or fewer." };
+    return { message: `Keep the definition to ${TERM_DEFINITION_MAX_LENGTH.toLocaleString()} characters or fewer.` };
   }
 
   if (notes.length > TERM_NOTES_MAX_LENGTH) {
-    return { message: "Keep contributor notes to 4,000 characters or fewer." };
+    return { message: `Keep contributor notes to ${TERM_NOTES_MAX_LENGTH.toLocaleString()} characters or fewer.` };
   }
 
   const supabase = await createClient();

@@ -5,9 +5,6 @@ export default function Home() {
         <h1 className="font-heading text-5xl font-semibold leading-none sm:text-7xl">
           Welcome to Jingdex.
         </h1>
-        <p className="mx-auto mt-4 max-w-xl font-sans text-lg leading-8 text-muted">
-          Build flashcards, practice Chinese, and keep your study rhythm steady.
-        </p>
       </div>
     </main>
   );

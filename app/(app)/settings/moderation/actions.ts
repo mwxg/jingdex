@@ -1093,7 +1093,7 @@ export async function updateTerm(formData: FormData): Promise<TermEditState> {
   }
 
   if (englishDefinition.length > TERM_DEFINITION_MAX_LENGTH) {
-    return { message: "Keep the definition to 10,000 characters or fewer." };
+    return { message: `Keep the definition to ${TERM_DEFINITION_MAX_LENGTH.toLocaleString()} characters or fewer.` };
   }
 
   if (shortDefinition.length > TERM_SHORT_DEFINITION_MAX_LENGTH) {
@@ -1101,7 +1101,7 @@ export async function updateTerm(formData: FormData): Promise<TermEditState> {
   }
 
   if (notes.length > TERM_NOTES_MAX_LENGTH) {
-    return { message: "Keep notes to 4,000 characters or fewer." };
+    return { message: `Keep notes to ${TERM_NOTES_MAX_LENGTH.toLocaleString()} characters or fewer.` };
   }
 
   const canonicalSimplified = getCanonicalSimplified(simplifiedInput);
@@ -1209,7 +1209,7 @@ export async function addSingleTerm(
   }
 
   if (englishDefinition.length > TERM_DEFINITION_MAX_LENGTH) {
-    return { message: "Keep the definition to 10,000 characters or fewer." };
+    return { message: `Keep the definition to ${TERM_DEFINITION_MAX_LENGTH.toLocaleString()} characters or fewer.` };
   }
 
   const canonicalSimplified = getCanonicalSimplified(simplifiedInput);

@@ -89,7 +89,7 @@ function TextAreaInput({
         required
       />
       <span className="block font-sans text-xs text-muted">
-        Up to 10,000 characters.
+        Up to {TERM_DEFINITION_MAX_LENGTH.toLocaleString()} characters.
       </span>
     </label>
   );
