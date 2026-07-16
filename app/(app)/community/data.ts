@@ -241,7 +241,7 @@ export async function getRecentTerms() {
     )
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
-    .limit(10);
+    .limit(50);
 
   if (error) {
     return {
