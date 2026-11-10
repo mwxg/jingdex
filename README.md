@@ -6,6 +6,10 @@
   A community-built Chinese dictionary and vocabulary deck platform.
 </p>
 
+<p align="center">
+  <a href="https://jingdex.com">Visit Jingdex</a>
+</p>
+
 # Jingdex
 
 Jingdex (精典) helps Chinese learners find useful vocabulary, study curated decks, and improve the shared learning library. Members can suggest dictionary entries and build private decks, then submit their work for review before it becomes available to the wider community.
@@ -30,7 +34,8 @@ The interface supports simplified and Traditional Chinese (Taiwan) characters, p
 | `/` | Product overview and contribution entry points | Public |
 | `/dictionary/search` | Search and inspect dictionary terms | Public |
 | `/dictionary/contribute` | Submit a term for review | Signed in |
-| `/community/featured` | View decks selected by Jingdex | Public |
+| `/community/featured` | View recently added terms and featured Jingdex decks | Public |
+| `/community/jingdex` | Search all decks created by Jingdex | Public |
 | `/community/browse` | Search and sort approved community decks | Public |
 | `/community/[deckId]` | Browse the terms in a public deck | Public |
 | `/my-stuff/decks` | Create, edit, submit, and track personal decks | Signed in |
@@ -98,6 +103,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
 ```
 
 The publishable key may appear as the legacy `anon` key in older Supabase projects. Do not place a service-role key in a `NEXT_PUBLIC_` variable.
+
+For production, set `NEXT_PUBLIC_SITE_URL` to the canonical origin (`https://jingdex.com`) and configure the matching Supabase Auth Site URL and callback redirect (`https://jingdex.com/auth/callback`). The live application is available at [jingdex.com](https://jingdex.com). This repository does not currently include hosting-provider configuration or a CI/CD workflow.
 
 ### 4. Run the app
 
@@ -172,4 +179,4 @@ Automatic tags are maintained in the database from profile roles and contributio
 
 ## Current project status
 
-Jingdex is under active development. Core dictionary, deck, contribution, profile, preference, and moderation workflows are implemented; operational deployment documentation and automated tests are not yet included in the repository.
+Jingdex is live at [jingdex.com](https://jingdex.com) and remains under active development. Core dictionary, deck, contribution, profile, preference, and moderation workflows are implemented. Automated tests, CI/CD workflows, and hosting-provider configuration are not currently included in the repository.
