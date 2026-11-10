@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { getGeneratedTermForms } from "@/lib/terms/generated-forms";
 import { PartOfSpeechSelect } from "@/app/(app)/settings/moderation/part-of-speech-select";
 import { PendingLabel } from "@/components/loading";
@@ -33,9 +33,20 @@ export function ContributionForm() {
   const [traditional, setTraditional] = useState("");
   const [pinyin, setPinyin] = useState("");
   const [zhuyin, setZhuyin] = useState("");
+  const generationSource = useRef<"simplified" | "traditional">("simplified");
+
+  function updateSimplified(value: string) {
+    generationSource.current = "simplified";
+    setSimplified(value);
+  }
+
+  function updateTraditional(value: string) {
+    generationSource.current = "traditional";
+    setTraditional(value);
+  }
 
   useEffect(() => {
-    if (!simplified.trim()) return;
+    if (generationSource.current !== "simplified" || !simplified.trim()) return;
     const timeout = window.setTimeout(() => {
       const forms = getGeneratedTermForms(simplified);
       setTraditional(forms.traditional === forms.simplified ? "" : forms.traditional);
@@ -45,12 +56,23 @@ export function ContributionForm() {
     return () => window.clearTimeout(timeout);
   }, [simplified]);
 
+  useEffect(() => {
+    if (generationSource.current !== "traditional" || !traditional.trim()) return;
+    const timeout = window.setTimeout(() => {
+      const forms = getGeneratedTermForms(traditional);
+      setSimplified(forms.simplified);
+      setPinyin(forms.pinyin);
+      setZhuyin(forms.zhuyin);
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [traditional]);
+
   return (
     <form action={action} aria-busy={pending} className="space-y-5">
       <ActionMessage state={state} />
       <div className="grid gap-4 lg:grid-cols-2">
-        <Field label="Simplified" name="simplified" value={simplified} onChange={setSimplified} />
-        <Field label="Traditional" name="traditional" required={false} value={traditional} onChange={setTraditional} />
+        <Field label="Simplified" name="simplified" value={simplified} onChange={updateSimplified} />
+        <Field label="Traditional" name="traditional" required={false} value={traditional} onChange={updateTraditional} />
         <Field label="Pinyin" name="pinyin" value={pinyin} onChange={setPinyin} />
         <Field label="Zhuyin" name="zhuyin" value={zhuyin} onChange={setZhuyin} />
         <PartOfSpeechSelect />

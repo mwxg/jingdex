@@ -1,7 +1,7 @@
 "use client";
 
 import { getGeneratedTermForms } from "@/lib/terms/generated-forms";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   addBulkTerms,
   addSingleTerm,
@@ -106,8 +106,10 @@ export function TermManagement() {
   const [pinyin, setPinyin] = useState("");
   const [zhuyin, setZhuyin] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const generationSource = useRef<"simplified" | "traditional">("simplified");
 
   function updateSimplified(value: string) {
+    generationSource.current = "simplified";
     setSimplified(value);
 
     if (!value.trim()) {
@@ -121,10 +123,25 @@ export function TermManagement() {
     setIsGenerating(true);
   }
 
+  function updateTraditional(value: string) {
+    generationSource.current = "traditional";
+    setTraditional(value);
+
+    if (!value.trim()) {
+      setIsGenerating(false);
+      setSimplified("");
+      setPinyin("");
+      setZhuyin("");
+      return;
+    }
+
+    setIsGenerating(true);
+  }
+
   useEffect(() => {
     const trimmedSimplified = simplified.trim();
 
-    if (!trimmedSimplified) {
+    if (generationSource.current !== "simplified" || !trimmedSimplified) {
       return;
     }
 
@@ -150,6 +167,31 @@ export function TermManagement() {
 
     return () => window.clearTimeout(timeoutId);
   }, [simplified]);
+
+  useEffect(() => {
+    const trimmedTraditional = traditional.trim();
+
+    if (generationSource.current !== "traditional" || !trimmedTraditional) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      try {
+        const generatedForms = getGeneratedTermForms(trimmedTraditional);
+        setSimplified(generatedForms.simplified);
+        setPinyin(generatedForms.pinyin);
+        setZhuyin(generatedForms.zhuyin);
+      } catch {
+        setSimplified("");
+        setPinyin("");
+        setZhuyin("");
+      } finally {
+        setIsGenerating(false);
+      }
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [traditional]);
 
   return (
     <section className="rounded-lg border border-muted-background bg-surface p-6">
@@ -180,22 +222,22 @@ export function TermManagement() {
             <TextInput
               label="Traditional"
               name="traditional"
-              onChange={setTraditional}
-              placeholder="Generated from simplified"
+              onChange={updateTraditional}
+              placeholder="Traditional Chinese"
               value={traditional}
             />
             <TextInput
               label="Pinyin"
               name="pinyin"
               onChange={setPinyin}
-              placeholder="Generated from simplified"
+              placeholder="Generated from either form"
               value={pinyin}
             />
             <TextInput
               label="Zhuyin"
               name="zhuyin"
               onChange={setZhuyin}
-              placeholder="Generated from simplified"
+              placeholder="Generated from either form"
               value={zhuyin}
             />
             <PartOfSpeechSelect />
@@ -206,7 +248,7 @@ export function TermManagement() {
               aria-live="polite"
               className="font-sans text-sm font-bold text-primary"
             >
-              Generating traditional, pinyin, and zhuyin...
+              Generating character forms, pinyin, and zhuyin...
             </p>
           ) : null}
 
